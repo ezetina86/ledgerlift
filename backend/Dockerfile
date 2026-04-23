@@ -1,7 +1,7 @@
 # ── Stage 1: Build frontend ───────────────────────────────────────────────────
 FROM oven/bun:1.3-alpine AS frontend
 WORKDIR /app
-COPY frontend/package.json frontend/bun.lockb* ./
+COPY frontend/package.json frontend/bun.lock* ./
 RUN bun install --frozen-lockfile
 COPY frontend/ .
 RUN bun run build
@@ -23,8 +23,8 @@ WORKDIR /data
 COPY --from=builder /app/ledgerlift /usr/local/bin/ledgerlift
 VOLUME ["/data"]
 ENV DB_PATH=/data/ledgerlift.db
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=9090
+EXPOSE 9090
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s \
-  CMD wget -qO- http://localhost:8080/api/health || exit 1
+  CMD wget -qO- http://localhost:9090/api/health || exit 1
 CMD ["ledgerlift"]

@@ -1,6 +1,6 @@
 module ledgerlift/backend
 
-go 1.26.2
+go 1.22
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
