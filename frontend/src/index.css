@@ -1,0 +1,97 @@
+/* ── Fonts ───────────────────────────────────────────────────────────────── */
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/barlow-condensed/700.css';
+@import '@fontsource/barlow-condensed/800.css';
+
+/* ── Tailwind ────────────────────────────────────────────────────────────── */
+@import "tailwindcss";
+
+/* ── Design tokens ───────────────────────────────────────────────────────── */
+@theme {
+  /* Brand accent — vivid purple, matches favicon */
+  --color-accent:         oklch(62% 0.24 293);
+  --color-accent-hover:   oklch(67% 0.22 293);
+  --color-accent-press:   oklch(55% 0.26 293);
+  --color-accent-dim:     oklch(28% 0.16 293);
+  --color-accent-subtle:  oklch(17% 0.10 293);
+
+  /* Surfaces — near-black with subtle purple tint */
+  --color-base:           oklch(7%  0.008 293);
+  --color-surface:        oklch(12% 0.010 293);
+  --color-elevated:       oklch(18% 0.012 293);
+  --color-overlay:        oklch(24% 0.010 293);
+  --color-border:         oklch(24% 0.010 293);
+  --color-border-subtle:  oklch(19% 0.008 293);
+
+  /* Text */
+  --color-text-1: oklch(97% 0.005 293);
+  --color-text-2: oklch(72% 0.012 293);
+  --color-text-3: oklch(50% 0.010 293);
+  --color-text-4: oklch(34% 0.008 293);
+
+  /* Semantic */
+  --color-danger:   oklch(60% 0.22 25);
+  --color-warning:  oklch(76% 0.16 85);
+  --color-success:  oklch(68% 0.18 150);
+
+  /* Fonts */
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body:    'Barlow', sans-serif;
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Utilities ───────────────────────────────────────────────────────────── */
+@layer utilities {
+  .animate-slide-up { animation: slide-up 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+  .animate-fade-in  { animation: fade-in  0.18s ease-out; }
+
+  .scrollbar-hide { scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  .safe-area-pb { padding-bottom: env(safe-area-inset-bottom); }
+
+  /* Metric numerals — the hero of the app */
+  .num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+@layer base {
+  :root { color-scheme: dark; }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: oklch(7% 0.008 293);
+    color: oklch(97% 0.005 293);
+    font-family: 'Barlow', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: contain;
+  }
+
+  #root { height: 100%; }
+}

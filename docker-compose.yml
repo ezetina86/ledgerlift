@@ -1,0 +1,22 @@
+services:
+  ledgerlift:
+    build:
+      context: .           # repo root so Dockerfile can access both frontend/ and backend/
+      dockerfile: backend/Dockerfile
+    container_name: ledgerlift
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ledgerlift-data:/data
+    environment:
+      - PORT=8080
+      - DB_PATH=/data/ledgerlift.db
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  ledgerlift-data:

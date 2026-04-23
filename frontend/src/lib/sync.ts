@@ -1,0 +1,116 @@
+import { db } from '../db/index.ts'
+
+const LAST_SYNC_KEY = 'ledgerlift:lastSyncAt'
+const SERVER_URL_KEY = 'ledgerlift:serverUrl'
+
+export function getServerUrl(): string {
+  return localStorage.getItem(SERVER_URL_KEY) ?? ''
+}
+
+export function setServerUrl(url: string) {
+  localStorage.setItem(SERVER_URL_KEY, url.replace(/\/$/, ''))
+}
+
+export function getLastSyncAt(): number {
+  return parseInt(localStorage.getItem(LAST_SYNC_KEY) ?? '0', 10)
+}
+
+function setLastSyncAt(ts: number) {
+  localStorage.setItem(LAST_SYNC_KEY, String(ts))
+}
+
+export type SyncStatus = 'idle' | 'syncing' | 'ok' | 'error'
+
+export interface SyncResult {
+  status: SyncStatus
+  message: string
+  syncedAt?: number
+  pushed: number
+  pulled: number
+}
+
+/**
+ * Delta sync with the Go backend.
+ * Pushes all local records, pulls everything newer than lastSyncAt.
+ * Last-write-wins on updatedAt conflict.
+ */
+export async function syncWithBackend(): Promise<SyncResult> {
+  const url = getServerUrl()
+  if (!url) return { status: 'error', message: 'No server URL configured', pushed: 0, pulled: 0 }
+
+  const lastSyncAt = getLastSyncAt()
+
+  // Gather all local data to push
+  const [sessions, sets, routines] = await Promise.all([
+    db.sessions.toArray(),
+    db.sets.toArray(),
+    db.routines.toArray(),
+  ])
+
+  // Stamp updatedAt if missing (older records before sync was added)
+  const now = Date.now()
+  const stampedSessions = sessions.map(s => ({ ...s, updatedAt: (s as any).updatedAt ?? now }))
+  const stampedSets     = sets.map(s     => ({ ...s, updatedAt: (s as any).updatedAt ?? now }))
+  const stampedRoutines = routines.map(r => ({ ...r, updatedAt: (r as any).updatedAt ?? now }))
+
+  const pushed = sessions.length + sets.length + routines.length
+
+  let res: Response
+  try {
+    res = await fetch(`${url}/api/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lastSyncAt, sessions: stampedSessions, sets: stampedSets, routines: stampedRoutines }),
+      signal: AbortSignal.timeout(10_000),
+    })
+  } catch (e) {
+    return { status: 'error', message: `Network error: ${(e as Error).message}`, pushed: 0, pulled: 0 }
+  }
+
+  if (!res.ok) {
+    return { status: 'error', message: `Server error: ${res.status}`, pushed: 0, pulled: 0 }
+  }
+
+  const data = await res.json() as {
+    syncedAt: number
+    sessions: typeof stampedSessions
+    sets: typeof stampedSets
+    routines: typeof stampedRoutines
+  }
+
+  // Merge server response into IndexedDB
+  let pulled = 0
+  if (data.routines?.length) {
+    await db.routines.bulkPut(data.routines as any)
+    pulled += data.routines.length
+  }
+  if (data.sessions?.length) {
+    await db.sessions.bulkPut(data.sessions as any)
+    pulled += data.sessions.length
+  }
+  if (data.sets?.length) {
+    await db.sets.bulkPut(data.sets as any)
+    pulled += data.sets.length
+  }
+
+  setLastSyncAt(data.syncedAt)
+
+  return {
+    status: 'ok',
+    message: `Sync complete`,
+    syncedAt: data.syncedAt,
+    pushed,
+    pulled,
+  }
+}
+
+export async function checkHealth(): Promise<boolean> {
+  const url = getServerUrl()
+  if (!url) return false
+  try {
+    const res = await fetch(`${url}/api/health`, { signal: AbortSignal.timeout(3_000) })
+    return res.ok
+  } catch {
+    return false
+  }
+}
