@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { formatWeight } from '../lib/utils.ts'
 
 export interface SetInput {
@@ -26,20 +26,16 @@ const RPE_COLORS: Record<number, string> = {
   10: 'oklch(60% 0.22 25)',
 }
 
-export default function SetSheet({ open, initial, setNumber, exerciseName, onConfirm, onClose }: Props) {
+// Wrapper mounts/unmounts the inner sheet so state always initialises fresh
+export default function SetSheet({ open, ...props }: Props) {
+  if (!open) return null
+  return <SetSheetInner {...props} />
+}
+
+function SetSheetInner({ initial, setNumber, exerciseName, onConfirm, onClose }: Omit<Props, 'open'>) {
   const [weight, setWeight] = useState(initial.weightKg)
   const [reps, setReps] = useState(initial.reps)
   const [rpe, setRpe] = useState<number | null>(initial.rpe)
-
-  useEffect(() => {
-    if (open) {
-      setWeight(initial.weightKg)
-      setReps(initial.reps)
-      setRpe(initial.rpe)
-    }
-  }, [open, initial.weightKg, initial.reps, initial.rpe])
-
-  if (!open) return null
 
   function nudgeWeight(delta: number) {
     setWeight(w => Math.max(0, Math.round((w + delta) * 4) / 4))

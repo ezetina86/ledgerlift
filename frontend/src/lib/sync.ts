@@ -49,9 +49,9 @@ export async function syncWithBackend(): Promise<SyncResult> {
 
   // Stamp updatedAt if missing (older records before sync was added)
   const now = Date.now()
-  const stampedSessions = sessions.map(s => ({ ...s, updatedAt: (s as any).updatedAt ?? now }))
-  const stampedSets     = sets.map(s     => ({ ...s, updatedAt: (s as any).updatedAt ?? now }))
-  const stampedRoutines = routines.map(r => ({ ...r, updatedAt: (r as any).updatedAt ?? now }))
+  const stampedSessions = sessions.map(s => ({ ...s, updatedAt: (s.updatedAt ?? now) }))
+  const stampedSets     = sets.map(s     => ({ ...s, updatedAt: (s.updatedAt ?? now) }))
+  const stampedRoutines = routines.map(r => ({ ...r, updatedAt: (r.updatedAt ?? now) }))
 
   const pushed = sessions.length + sets.length + routines.length
 
@@ -84,15 +84,15 @@ export async function syncWithBackend(): Promise<SyncResult> {
   setSyncing(true)
   try {
     if (data.routines?.length) {
-      await db.routines.bulkPut(data.routines as any)
+      await db.routines.bulkPut(data.routines)
       pulled += data.routines.length
     }
     if (data.sessions?.length) {
-      await db.sessions.bulkPut(data.sessions as any)
+      await db.sessions.bulkPut(data.sessions)
       pulled += data.sessions.length
     }
     if (data.sets?.length) {
-      await db.sets.bulkPut(data.sets as any)
+      await db.sets.bulkPut(data.sets)
       pulled += data.sets.length
     }
   } finally {

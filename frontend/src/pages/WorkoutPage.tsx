@@ -13,18 +13,19 @@ interface Props {
 }
 
 export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
-  const [elapsed, setElapsed] = useState('')
+  const [, setTick] = useState(0)
   const [confirming, setConfirming] = useState(false)
 
   const session = useLiveQuery<WorkoutSession | undefined>(() => db.sessions.get(sessionId), [sessionId])
   const routine  = useLiveQuery<Routine | undefined>(() => session ? db.routines.get(session.routineId) : undefined, [session?.routineId])
 
+  // Tick every second to recompute elapsed during render
   useEffect(() => {
-    if (!session) return
-    setElapsed(formatElapsed(session.startedAt))
-    const id = setInterval(() => setElapsed(formatElapsed(session.startedAt)), 1000)
+    const id = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(id)
-  }, [session?.startedAt])
+  }, [])
+
+  const elapsed = session ? formatElapsed(session.startedAt) : ''
 
   async function completeWorkout() {
     await db.sessions.update(sessionId, { completedAt: Date.now() })

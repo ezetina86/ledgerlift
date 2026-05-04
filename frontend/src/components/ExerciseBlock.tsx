@@ -22,7 +22,7 @@ interface Props {
   defaultReps: string
 }
 
-export default function ExerciseBlock({ sessionId, exerciseId, order: _order, defaultSets, defaultReps }: Props) {
+export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defaultReps }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingSetId, setEditingSetId] = useState<string | null>(null)
 
