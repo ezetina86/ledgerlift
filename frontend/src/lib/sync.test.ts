@@ -1,4 +1,5 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+import type { WorkoutSession, Routine } from '../db/index.ts'
 
 // Mock Dexie before importing sync.ts so we don't try to open IndexedDB
 vi.mock('../db/index.ts', () => ({
@@ -133,9 +134,9 @@ describe('syncWithBackend', () => {
     const { db } = await import('../db/index.ts')
     // Return 2 sessions and 1 routine from local DB
     vi.mocked(db.sessions.toArray).mockResolvedValue([
-      { id: 's1' } as any, { id: 's2' } as any,
+      { id: 's1' } as WorkoutSession, { id: 's2' } as WorkoutSession,
     ])
-    vi.mocked(db.routines.toArray).mockResolvedValue([{ id: 'r1' } as any])
+    vi.mocked(db.routines.toArray).mockResolvedValue([{ id: 'r1' } as Routine])
 
     const serverPayload = {
       syncedAt: 9999,

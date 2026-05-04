@@ -147,16 +147,16 @@ export class LedgerLiftDB extends Dexie {
 
     // Auto-stamp updatedAt on every write — skipped during sync pull
     this.sessions.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
-    this.sessions.hook('updating', (mods: Partial<WorkoutSession>) => {
-      if (!_isSyncing) (mods as any).updatedAt = Date.now()
+    this.sessions.hook('updating', (mods: Partial<WorkoutSession> & { updatedAt?: number }) => {
+      if (!_isSyncing) mods.updatedAt = Date.now()
     })
     this.sets.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
-    this.sets.hook('updating', (mods: Partial<SetLog>) => {
-      if (!_isSyncing) (mods as any).updatedAt = Date.now()
+    this.sets.hook('updating', (mods: Partial<SetLog> & { updatedAt?: number }) => {
+      if (!_isSyncing) mods.updatedAt = Date.now()
     })
     this.routines.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
-    this.routines.hook('updating', (mods: Partial<Routine>) => {
-      if (!_isSyncing) (mods as any).updatedAt = Date.now()
+    this.routines.hook('updating', (mods: Partial<Routine> & { updatedAt?: number }) => {
+      if (!_isSyncing) mods.updatedAt = Date.now()
     })
   }
 }

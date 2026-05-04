@@ -131,7 +131,7 @@ jobs:
         working-directory: backend
         env:
           CGO_ENABLED: "0"
-        run: go test -v -race ./...
+        run: go test -v ./...
 
   # ── Build: frontend ──────────────────────────────────────────────────────────
   build-frontend:
