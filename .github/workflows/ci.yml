@@ -126,11 +126,30 @@ jobs:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
 
-      - name: Run Go tests
+      - name: Run Go tests with coverage
         working-directory: backend
         env:
           CGO_ENABLED: "0"
-        run: go test -v ./...
+        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Check coverage threshold (≥ 80%)
+        working-directory: backend
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,""); print $3}')
+          echo "Total coverage: ${COVERAGE}%"
+          if awk "BEGIN { exit (${COVERAGE} >= 80) ? 0 : 1 }"; then
+            echo "Coverage ${COVERAGE}% meets the 80% threshold."
+          else
+            echo "Coverage ${COVERAGE}% is below the 80% threshold. Failing."
+            exit 1
+          fi
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-${{ github.sha }}
+          path: backend/coverage.out
+          retention-days: 7
 
   # ── Build: frontend ───────────────────────────────────────────────────────
   # Verifies that frontend/dist/ can be produced cleanly.

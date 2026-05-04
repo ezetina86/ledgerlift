@@ -31,7 +31,11 @@ func main() {
 	mux.HandleFunc("POST /api/sync",  makeSync(db))
 
 	// SPA static files — serve embedded frontend/dist
-	mux.HandleFunc("/", makeSPA())
+	sub, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		log.Fatalf("embed sub: %v", err)
+	}
+	mux.HandleFunc("/", makeSPA(sub))
 
 	handler := corsMiddleware(mux)
 
@@ -42,14 +46,10 @@ func main() {
 	}
 }
 
-// makeSPA serves the embedded static directory and falls back to index.html
+// makeSPA serves the given fs.FS and falls back to index.html
 // for any path not matching a real file (client-side routing).
-func makeSPA() http.HandlerFunc {
-	sub, err := fs.Sub(staticFiles, "static")
-	if err != nil {
-		log.Fatalf("embed sub: %v", err)
-	}
-	fileServer := http.FileServer(http.FS(sub))
+func makeSPA(fsys fs.FS) http.HandlerFunc {
+	fileServer := http.FileServer(http.FS(fsys))
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := strings.TrimPrefix(r.URL.Path, "/")
@@ -57,7 +57,7 @@ func makeSPA() http.HandlerFunc {
 			path = "index.html"
 		}
 		// Check if the file exists; fall back to index.html for SPA routes
-		f, err := sub.Open(path)
+		f, err := fsys.Open(path)
 		if err != nil {
 			r2 := r.Clone(r.Context())
 			r2.URL.Path = "/"

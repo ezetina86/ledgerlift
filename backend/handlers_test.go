@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
+	"testing/fstest"
 )
 
 // ── handleHealth ──────────────────────────────────────────────────────────────
@@ -312,6 +314,114 @@ func TestMakeSync_DeltaFetch_LastSyncAt(t *testing.T) {
 	}
 	if resp.Routines[0].ID != "r-2" {
 		t.Errorf("expected r-2, got %q", resp.Routines[0].ID)
+	}
+}
+
+// ── makeSPA ───────────────────────────────────────────────────────────────────
+
+func TestMakeSPA_ServesExistingFile(t *testing.T) {
+	fsys := fstest.MapFS{
+		"index.html": &fstest.MapFile{Data: []byte("<html>index</html>")},
+		"app.js":     &fstest.MapFile{Data: []byte("console.log('app')")},
+	}
+	handler := makeSPA(fsys)
+
+	req := httptest.NewRequest(http.MethodGet, "/app.js", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200 for existing file, got %d", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "console.log") {
+		t.Errorf("expected js content in body, got %q", w.Body.String())
+	}
+}
+
+func TestMakeSPA_FallsBackToIndexHTML(t *testing.T) {
+	fsys := fstest.MapFS{
+		"index.html": &fstest.MapFile{Data: []byte("<html>SPA</html>")},
+	}
+	handler := makeSPA(fsys)
+
+	req := httptest.NewRequest(http.MethodGet, "/some/unknown/route", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200 for SPA fallback, got %d", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "SPA") {
+		t.Errorf("expected index.html content for fallback, got %q", w.Body.String())
+	}
+}
+
+func TestMakeSPA_RootServesIndexHTML(t *testing.T) {
+	fsys := fstest.MapFS{
+		"index.html": &fstest.MapFile{Data: []byte("<html>ROOT</html>")},
+	}
+	handler := makeSPA(fsys)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200 for root path, got %d", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "ROOT") {
+		t.Errorf("expected index.html content for root, got %q", w.Body.String())
+	}
+}
+
+// ── makeSync error paths ──────────────────────────────────────────────────────
+
+// TestMakeSync_DBClosed_UpsertErrors verifies that makeSync handles upsert
+// failures gracefully: errors are logged but the handler still returns 200
+// with empty arrays (nil-guarded), covering the log.Printf error branches.
+func TestMakeSync_DBClosed_UpsertErrors(t *testing.T) {
+	db := testDB(t)
+	handler := makeSync(db)
+	// Close DB to force all upsert and fetch operations to fail.
+	// testDB cleanup will call Close() a second time, which is safe.
+	db.Close()
+
+	rpe := 8.0
+	completedAt := int64(2_000_000)
+	reqBody := SyncRequest{
+		LastSyncAt: 0,
+		Routines: []Routine{{
+			ID: "r-err", Name: "Error Routine", SplitDay: "upperA",
+			CreatedAt: 1000, UpdatedAt: 500,
+		}},
+		Sessions: []WorkoutSession{{
+			ID: "s-err", RoutineID: "r-err", RoutineName: "Error Routine",
+			SplitDay: "upperA", StartedAt: 1_000_000, CompletedAt: &completedAt,
+			Notes: "", UpdatedAt: 100,
+		}},
+		Sets: []SetLog{{
+			ID: "set-err", SessionID: "s-err", ExerciseID: "bench-press",
+			ExerciseName: "Bench Press", SetNumber: 1, Reps: 8, WeightKg: 80,
+			RPE: &rpe, Volume: 640, Timestamp: 1_500_000, UpdatedAt: 200,
+		}},
+	}
+	encoded, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/sync", bytes.NewBuffer(encoded))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	// Handler must not panic; upsert/fetch errors are logged, response is 200
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200 even with DB errors, got %d", w.Code)
+	}
+	var resp SyncResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("response should still be valid JSON: %v", err)
+	}
+	// All slices nil-guarded to empty arrays
+	if resp.Routines == nil || resp.Sessions == nil || resp.Sets == nil {
+		t.Error("expected non-nil (empty) slices in error response")
 	}
 }
 
