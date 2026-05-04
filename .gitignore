@@ -31,3 +31,7 @@ backups/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code — local machine config (permissions, etc.)
+.claude/settings.local.json
+.claude/agent-memory/
