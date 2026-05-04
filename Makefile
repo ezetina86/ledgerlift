@@ -1,10 +1,13 @@
-BUN   := $(HOME)/.bun/bin/bun
-GO    := go
-DC    := docker compose
+BUN     := $(HOME)/.bun/bin/bun
+GO      := go
+DC      := docker compose
+VERSION := $(shell cat VERSION)
+IMAGE   := ezetina86/ledgerlift
 
 .PHONY: dev dev-frontend dev-backend build build-frontend build-backend \
         docker deploy logs backup restore catalog clean help \
-        test test-frontend test-backend lint ci
+        test test-frontend test-backend lint ci \
+        version bump-patch bump-minor bump-major tag release
 
 # ── Development ───────────────────────────────────────────────────────────────
 
@@ -95,6 +98,33 @@ clean:
 	rm -f backend/ledgerlift backend/ledgerlift.db
 	rm -rf frontend/dist backend/static
 	cp -n /dev/null backend/static/index.html 2>/dev/null || true
+
+# ── Versioning ────────────────────────────────────────────────────────────────
+
+version: ## Show current version
+	@echo "$(VERSION)"
+
+bump-patch: ## Bump patch version (0.0.X)
+	@NEW=$$(echo "$(VERSION)" | awk -F. '{print $$1"."$$2"."$$3+1}'); \
+	echo $$NEW > VERSION; \
+	echo "Bumped → $$NEW"
+
+bump-minor: ## Bump minor version (0.X.0)
+	@NEW=$$(echo "$(VERSION)" | awk -F. '{print $$1"."$$2+1".0"}'); \
+	echo $$NEW > VERSION; \
+	echo "Bumped → $$NEW"
+
+bump-major: ## Bump major version (X.0.0)
+	@NEW=$$(echo "$(VERSION)" | awk -F. '{print $$1+1".0.0"}'); \
+	echo $$NEW > VERSION; \
+	echo "Bumped → $$NEW"
+
+tag: ## Create and push git tag for current VERSION (e.g. v0.6.0)
+	@echo "Tagging v$(VERSION)"
+	git tag -a "v$(VERSION)" -m "Release v$(VERSION)"
+	git push origin "v$(VERSION)"
+
+release: bump-patch tag ## Bump patch + tag + push (quick release shortcut)
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*##"}{printf "  \033[36m%-16s\033[0m %s\n",$$1,$$2}'

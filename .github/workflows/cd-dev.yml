@@ -7,14 +7,11 @@
 #                   │   test-backend  ──┼── build-frontend ── docker-publish-dev
 #                   └───────────────────┘
 #
-# Docker image is tagged `ledgerlift:dev-<sha>` and `ledgerlift:dev-latest`.
-# Images are pushed to GitHub Container Registry (ghcr.io) when the
-# GHCR_TOKEN secret is present.  If the secret is absent the push step
-# is skipped so the pipeline doesn't fail in forks.
+# Docker image is tagged `ezetina86/ledgerlift:dev-<sha>` and `:dev-latest`.
+# Images are pushed to Docker Hub.
 #
 # Required GitHub Actions secrets:
-#   GHCR_TOKEN  — a Personal Access Token (classic) with `write:packages` scope,
-#                 or use GITHUB_TOKEN with packages:write permission.
+#   DOCKERHUB_TOKEN  — Docker Hub access token (Account Settings → Security)
 
 name: CD Dev
 
@@ -28,8 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/ledgerlift
+  IMAGE: ezetina86/ledgerlift
 
 jobs:
 
@@ -179,38 +175,27 @@ jobs:
 
   # ── Docker publish: dev ───────────────────────────────────────────────────
   docker-publish-dev:
-    name: Docker publish (dev)
+    name: Docker publish (dev → Docker Hub)
     runs-on: ubuntu-latest
     needs: [build-frontend]
-    # Grant the built-in GITHUB_TOKEN permission to push packages.
-    permissions:
-      contents: read
-      packages: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Log in only when the GHCR_TOKEN secret exists.
-      # This allows the job to run (but skip pushing) in forks.
-      - name: Log in to GitHub Container Registry
-        if: ${{ env.GHCR_TOKEN != '' }}
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
-        env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          username: ezetina86
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE }}
           tags: |
             type=raw,value=dev-${{ github.sha }}
             type=raw,value=dev-latest
@@ -220,8 +205,7 @@ jobs:
         with:
           context: .
           file: backend/Dockerfile
-          # Only push when GHCR_TOKEN secret is configured
-          push: ${{ secrets.GHCR_TOKEN != '' || github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
