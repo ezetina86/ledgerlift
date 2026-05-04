@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import type { WorkoutSession, Routine } from '../db/index.ts'
+import type { WorkoutSession, Routine, SetLog } from '../db/index.ts'
 
 // Mock Dexie before importing sync.ts so we don't try to open IndexedDB
 vi.mock('../db/index.ts', () => ({
@@ -175,5 +175,81 @@ describe('syncWithBackend', () => {
     expect(db.sessions.bulkPut).toHaveBeenCalled()
     expect(db.sets.bulkPut).toHaveBeenCalled()
     expect(db.routines.bulkPut).toHaveBeenCalled()
+  })
+
+  it('stamps updatedAt=now for sets that are missing updatedAt', async () => {
+    // Exercises the `s.updatedAt ?? now` fallback on the stampedSets map (line 53)
+    // by returning a set record without updatedAt from the local DB mock.
+    setServerUrl('http://localhost:8080')
+    const { db } = await import('../db/index.ts')
+
+    const before = Date.now()
+    vi.mocked(db.sets.toArray).mockResolvedValue([{ id: 'set-old' } as SetLog])
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ syncedAt: 1000, sessions: [], sets: [], routines: [] }),
+    }))
+
+    const result = await syncWithBackend()
+    expect(result.status).toBe('ok')
+
+    // Verify the outgoing request body has updatedAt stamped for the set
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string)
+    expect(body.sets[0].updatedAt).toBeGreaterThanOrEqual(before)
+  })
+
+  it('reports pulled=0 and skips bulkPut when server returns all empty arrays', async () => {
+    // Covers the false branches of `if (data.sessions?.length)` and
+    // `if (data.sets?.length)` (lines 90-97) when the server has nothing new.
+    setServerUrl('http://localhost:8080')
+    const { db } = await import('../db/index.ts')
+
+    // vi.restoreAllMocks() is a no-op for vi.fn() mocks — clear accumulated
+    // call counts from previous tests before making our assertions.
+    vi.mocked(db.sessions.bulkPut).mockClear()
+    vi.mocked(db.sets.bulkPut).mockClear()
+    vi.mocked(db.routines.bulkPut).mockClear()
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ syncedAt: 5000, sessions: [], sets: [], routines: [] }),
+    }))
+
+    const result = await syncWithBackend()
+    expect(result.status).toBe('ok')
+    expect(result.pulled).toBe(0)
+    expect(db.sessions.bulkPut).not.toHaveBeenCalled()
+    expect(db.sets.bulkPut).not.toHaveBeenCalled()
+  })
+
+  it('calls setSyncing(false) in finally even when bulkPut throws', async () => {
+    // Exercises the try/finally block: setSyncing must be reset to false
+    // regardless of whether the bulkPut operation succeeds or throws.
+    setServerUrl('http://localhost:8080')
+    const { db, setSyncing } = await import('../db/index.ts')
+
+    vi.mocked(db.routines.bulkPut).mockRejectedValue(new Error('DB write error'))
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        syncedAt: 1000,
+        sessions: [],
+        sets: [],
+        routines: [{ id: 'r1' }],  // non-empty → triggers bulkPut which throws
+      }),
+    }))
+
+    let threw = false
+    try {
+      await syncWithBackend()
+    } catch {
+      threw = true
+    }
+
+    expect(threw).toBe(true)
+    // setSyncing(false) must have been the last call despite the throw
+    expect(vi.mocked(setSyncing)).toHaveBeenLastCalledWith(false)
   })
 })

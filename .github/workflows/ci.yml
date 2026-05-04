@@ -105,10 +105,20 @@ jobs:
         working-directory: frontend
         run: bun install --frozen-lockfile
 
-      # Use `bun run test` (Vitest runner) — NOT `bun test` (Bun native runner)
-      - name: Run Vitest suite
+      # Use `bun run test:coverage` (Vitest runner with V8 coverage)
+      # NOT `bun test` (Bun native runner) — coverage thresholds are
+      # enforced by vitest.config.ts (≥80% statements/branches/functions/lines).
+      - name: Run Vitest suite with coverage
         working-directory: frontend
-        run: bun run test
+        run: bun run test:coverage
+
+      - name: Upload frontend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-${{ github.sha }}
+          path: frontend/coverage/
+          retention-days: 7
 
   # ── Test: backend ─────────────────────────────────────────────────────────
   test-backend:
