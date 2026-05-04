@@ -275,7 +275,9 @@ func TestMakeSync_PushSessionAndSet(t *testing.T) {
 
 func TestMakeSync_DeltaFetch_LastSyncAt(t *testing.T) {
 	db := testDB(t)
-	handler := makeSync(db)
+	// Use a fixed clock so serverNow (50) < all UpdatedAt values,
+	// preserving the original timestamps for the delta filter assertion.
+	handler := makeSync(db, func() int64 { return 50 })
 
 	// Push two routines with different updatedAt values
 	firstPush := SyncRequest{

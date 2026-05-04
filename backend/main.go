@@ -77,7 +77,11 @@ func handleHealth(w http.ResponseWriter, _ *http.Request) {
 
 // ── Sync ──────────────────────────────────────────────────────────────────────
 
-func makeSync(db *sql.DB) http.HandlerFunc {
+func makeSync(db *sql.DB, nowFn ...func() int64) http.HandlerFunc {
+	clock := nowMs
+	if len(nowFn) > 0 && nowFn[0] != nil {
+		clock = nowFn[0]
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req SyncRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -85,7 +89,7 @@ func makeSync(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		now := nowMs()
+		now := clock()
 
 		for _, routine := range req.Routines {
 			if err := upsertRoutine(db, routine, now); err != nil {

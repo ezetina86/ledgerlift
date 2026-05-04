@@ -57,7 +57,7 @@ func TestUpsertRoutine_Insert(t *testing.T) {
 		},
 		CreatedAt: 1000, UpdatedAt: 100,
 	}
-	if err := upsertRoutine(db, r); err != nil {
+	if err := upsertRoutine(db, r, 0); err != nil {
 		t.Fatalf("upsertRoutine: %v", err)
 	}
 
@@ -85,8 +85,8 @@ func TestUpsertRoutine_Insert(t *testing.T) {
 func TestUpsertRoutine_NewerWins(t *testing.T) {
 	db := testDB(t)
 
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Original", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 100})
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Updated", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 200})
+	upsertRoutine(db, Routine{ID: "r-1", Name: "Original", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 100}, 0)
+	upsertRoutine(db, Routine{ID: "r-1", Name: "Updated", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 200}, 0)
 
 	rows, _ := fetchRoutinesSince(db, 0)
 	if len(rows) != 1 {
@@ -103,9 +103,9 @@ func TestUpsertRoutine_NewerWins(t *testing.T) {
 func TestUpsertRoutine_OlderNoOverwrite(t *testing.T) {
 	db := testDB(t)
 
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Original", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 200})
+	upsertRoutine(db, Routine{ID: "r-1", Name: "Original", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 200}, 0)
 	// Stale record with older updated_at — should NOT overwrite
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Stale", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 50})
+	upsertRoutine(db, Routine{ID: "r-1", Name: "Stale", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 50}, 0)
 
 	rows, _ := fetchRoutinesSince(db, 0)
 	if rows[0].Name != "Original" {
@@ -116,8 +116,8 @@ func TestUpsertRoutine_OlderNoOverwrite(t *testing.T) {
 func TestFetchRoutinesSince_FiltersOlder(t *testing.T) {
 	db := testDB(t)
 
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Early", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 50})
-	upsertRoutine(db, Routine{ID: "r-2", Name: "Late", SplitDay: "lowerA", CreatedAt: 1000, UpdatedAt: 200})
+	upsertRoutine(db, Routine{ID: "r-1", Name: "Early", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 50}, 0)
+	upsertRoutine(db, Routine{ID: "r-2", Name: "Late", SplitDay: "lowerA", CreatedAt: 1000, UpdatedAt: 200}, 0)
 
 	rows, err := fetchRoutinesSince(db, 100)
 	if err != nil {
@@ -152,7 +152,7 @@ func TestUpsertSession_Insert(t *testing.T) {
 		SplitDay: "upperA", StartedAt: 1_000_000, Notes: "felt good",
 		UpdatedAt: 100,
 	}
-	if err := upsertSession(db, s); err != nil {
+	if err := upsertSession(db, s, 0); err != nil {
 		t.Fatalf("upsertSession: %v", err)
 	}
 
@@ -177,11 +177,11 @@ func TestUpsertSession_NewerWins(t *testing.T) {
 	upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, Notes: "original", UpdatedAt: 100,
-	})
+	}, 0)
 	upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, Notes: "updated", UpdatedAt: 200,
-	})
+	}, 0)
 
 	rows, _ := fetchSessionsSince(db, 0)
 	if rows[0].Notes != "updated" {
@@ -195,11 +195,11 @@ func TestUpsertSession_OlderNoOverwrite(t *testing.T) {
 	upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, Notes: "original", UpdatedAt: 200,
-	})
+	}, 0)
 	upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, Notes: "stale", UpdatedAt: 50,
-	})
+	}, 0)
 
 	rows, _ := fetchSessionsSince(db, 0)
 	if rows[0].Notes != "original" {
@@ -214,7 +214,7 @@ func TestUpsertSession_CompletedAt_Nullable(t *testing.T) {
 	upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, UpdatedAt: 100,
-	})
+	}, 0)
 
 	rows, _ := fetchSessionsSince(db, 0)
 	if rows[0].CompletedAt != nil {
@@ -226,7 +226,7 @@ func TestUpsertSession_CompletedAt_Nullable(t *testing.T) {
 	upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, CompletedAt: &completed, UpdatedAt: 300,
-	})
+	}, 0)
 
 	rows, _ = fetchSessionsSince(db, 0)
 	if rows[0].CompletedAt == nil {
@@ -242,11 +242,11 @@ func TestFetchSessionsSince_FiltersOlder(t *testing.T) {
 	upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "A",
 		SplitDay: "upperA", StartedAt: 1000, UpdatedAt: 50,
-	})
+	}, 0)
 	upsertSession(db, WorkoutSession{
 		ID: "sess-2", RoutineID: "r-1", RoutineName: "B",
 		SplitDay: "lowerA", StartedAt: 2000, UpdatedAt: 300,
-	})
+	}, 0)
 
 	rows, err := fetchSessionsSince(db, 100)
 	if err != nil {
@@ -265,7 +265,7 @@ func insertTestSession(t *testing.T, db *sql.DB) {
 	err := upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, UpdatedAt: 1,
-	})
+	}, 0)
 	if err != nil {
 		t.Fatalf("insertTestSession: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestUpsertSet_Insert(t *testing.T) {
 		ExerciseName: "Bench Press", SetNumber: 1, Reps: 8,
 		WeightKg: 80, RPE: &rpe, Volume: 640, Timestamp: 1_000_000, UpdatedAt: 100,
 	}
-	if err := upsertSet(db, s); err != nil {
+	if err := upsertSet(db, s, 0); err != nil {
 		t.Fatalf("upsertSet: %v", err)
 	}
 
@@ -312,7 +312,7 @@ func TestUpsertSet_NullRPE(t *testing.T) {
 		ExerciseName: "Squat", SetNumber: 1, Reps: 5,
 		WeightKg: 140, RPE: nil, Volume: 700, Timestamp: 1_000_000, UpdatedAt: 100,
 	}
-	if err := upsertSet(db, s); err != nil {
+	if err := upsertSet(db, s, 0); err != nil {
 		t.Fatalf("upsertSet: %v", err)
 	}
 
@@ -331,14 +331,14 @@ func TestUpsertSet_NewerWins(t *testing.T) {
 		ExerciseName: "Bench", SetNumber: 1, Reps: 8, WeightKg: 80,
 		Volume: 640, Timestamp: 1_000_000, UpdatedAt: 100,
 	}
-	upsertSet(db, base)
+	upsertSet(db, base, 0)
 
 	updated := base
 	updated.Reps = 10
 	updated.WeightKg = 85
 	updated.Volume = 850
 	updated.UpdatedAt = 200
-	upsertSet(db, updated)
+	upsertSet(db, updated, 0)
 
 	rows, _ := fetchSetsSince(db, 0)
 	if rows[0].Reps != 10 || rows[0].WeightKg != 85 {
@@ -355,13 +355,13 @@ func TestUpsertSet_OlderNoOverwrite(t *testing.T) {
 		ExerciseName: "Bench", SetNumber: 1, Reps: 8, WeightKg: 80,
 		Volume: 640, Timestamp: 1_000_000, UpdatedAt: 200,
 	}
-	upsertSet(db, base)
+	upsertSet(db, base, 0)
 
 	stale := base
 	stale.Reps = 5
 	stale.WeightKg = 50
 	stale.UpdatedAt = 50
-	upsertSet(db, stale)
+	upsertSet(db, stale, 0)
 
 	rows, _ := fetchSetsSince(db, 0)
 	if rows[0].Reps != 8 {
@@ -377,12 +377,12 @@ func TestFetchSetsSince_FiltersOlder(t *testing.T) {
 		ID: "set-1", SessionID: "sess-1", ExerciseID: "e1",
 		ExerciseName: "E1", SetNumber: 1, Reps: 8, WeightKg: 80,
 		Volume: 640, Timestamp: 1000, UpdatedAt: 50,
-	})
+	}, 0)
 	upsertSet(db, SetLog{
 		ID: "set-2", SessionID: "sess-1", ExerciseID: "e2",
 		ExerciseName: "E2", SetNumber: 2, Reps: 6, WeightKg: 100,
 		Volume: 600, Timestamp: 2000, UpdatedAt: 300,
-	})
+	}, 0)
 
 	rows, err := fetchSetsSince(db, 100)
 	if err != nil {
