@@ -17,6 +17,7 @@ vi.mock('../db/index.ts', () => ({
       bulkPut: vi.fn().mockResolvedValue(undefined),
     },
   },
+  setSyncing: vi.fn(),
 }))
 
 import {
