@@ -67,8 +67,11 @@ func initDB(path string) *sql.DB {
 
 // ── Upsert helpers ────────────────────────────────────────────────────────────
 
-func upsertRoutine(db *sql.DB, r Routine) error {
+// upsertRoutine writes r to DB. serverNow ensures pushed records are always
+// visible to subsequent delta fetches (updated_at >= server receipt time).
+func upsertRoutine(db *sql.DB, r Routine, serverNow int64) error {
 	exJSON, _ := json.Marshal(r.Exercises)
+	effectiveUpdatedAt := max(r.UpdatedAt, serverNow)
 	_, err := db.Exec(`
 		INSERT INTO routines(id,name,split_day,exercises,created_at,updated_at)
 		VALUES(?,?,?,?,?,?)
@@ -76,12 +79,13 @@ func upsertRoutine(db *sql.DB, r Routine) error {
 			name=excluded.name, split_day=excluded.split_day,
 			exercises=excluded.exercises, updated_at=excluded.updated_at
 		WHERE excluded.updated_at > routines.updated_at`,
-		r.ID, r.Name, r.SplitDay, string(exJSON), r.CreatedAt, r.UpdatedAt,
+		r.ID, r.Name, r.SplitDay, string(exJSON), r.CreatedAt, effectiveUpdatedAt,
 	)
 	return err
 }
 
-func upsertSession(db *sql.DB, s WorkoutSession) error {
+func upsertSession(db *sql.DB, s WorkoutSession, serverNow int64) error {
+	effectiveUpdatedAt := max(s.UpdatedAt, serverNow)
 	_, err := db.Exec(`
 		INSERT INTO sessions(id,routine_id,routine_name,split_day,started_at,completed_at,notes,updated_at)
 		VALUES(?,?,?,?,?,?,?,?)
@@ -90,12 +94,13 @@ func upsertSession(db *sql.DB, s WorkoutSession) error {
 			updated_at=excluded.updated_at
 		WHERE excluded.updated_at > sessions.updated_at`,
 		s.ID, s.RoutineID, s.RoutineName, s.SplitDay,
-		s.StartedAt, s.CompletedAt, s.Notes, s.UpdatedAt,
+		s.StartedAt, s.CompletedAt, s.Notes, effectiveUpdatedAt,
 	)
 	return err
 }
 
-func upsertSet(db *sql.DB, s SetLog) error {
+func upsertSet(db *sql.DB, s SetLog, serverNow int64) error {
+	effectiveUpdatedAt := max(s.UpdatedAt, serverNow)
 	_, err := db.Exec(`
 		INSERT INTO sets(id,session_id,exercise_id,exercise_name,set_number,reps,weight_kg,rpe,volume,timestamp,updated_at)
 		VALUES(?,?,?,?,?,?,?,?,?,?,?)
@@ -104,7 +109,7 @@ func upsertSet(db *sql.DB, s SetLog) error {
 			volume=excluded.volume, updated_at=excluded.updated_at
 		WHERE excluded.updated_at > sets.updated_at`,
 		s.ID, s.SessionID, s.ExerciseID, s.ExerciseName,
-		s.SetNumber, s.Reps, s.WeightKg, s.RPE, s.Volume, s.Timestamp, s.UpdatedAt,
+		s.SetNumber, s.Reps, s.WeightKg, s.RPE, s.Volume, s.Timestamp, effectiveUpdatedAt,
 	)
 	return err
 }

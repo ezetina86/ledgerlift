@@ -68,7 +68,7 @@ export default function SettingsPage() {
                 type="url"
                 value={url}
                 onChange={e => { setUrl(e.target.value); setSaved(false) }}
-                placeholder="http://192.168.1.x:8080"
+                placeholder="https://ledgerlift.ezetina.com"
                 className="flex-1 h-11 rounded-xl px-3 text-sm focus:outline-none"
                 style={{
                   background: 'oklch(18% 0.012 293)',

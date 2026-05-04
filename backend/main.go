@@ -88,26 +88,17 @@ func makeSync(db *sql.DB) http.HandlerFunc {
 		now := nowMs()
 
 		for _, routine := range req.Routines {
-			if routine.UpdatedAt == 0 {
-				routine.UpdatedAt = now
-			}
-			if err := upsertRoutine(db, routine); err != nil {
+			if err := upsertRoutine(db, routine, now); err != nil {
 				log.Printf("upsert routine %s: %v", routine.ID, err)
 			}
 		}
 		for _, s := range req.Sessions {
-			if s.UpdatedAt == 0 {
-				s.UpdatedAt = now
-			}
-			if err := upsertSession(db, s); err != nil {
+			if err := upsertSession(db, s, now); err != nil {
 				log.Printf("upsert session %s: %v", s.ID, err)
 			}
 		}
 		for _, s := range req.Sets {
-			if s.UpdatedAt == 0 {
-				s.UpdatedAt = now
-			}
-			if err := upsertSet(db, s); err != nil {
+			if err := upsertSet(db, s, now); err != nil {
 				log.Printf("upsert set %s: %v", s.ID, err)
 			}
 		}

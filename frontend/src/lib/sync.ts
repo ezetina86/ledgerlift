@@ -1,4 +1,4 @@
-import { db } from '../db/index.ts'
+import { db, setSyncing } from '../db/index.ts'
 
 const LAST_SYNC_KEY = 'ledgerlift:lastSyncAt'
 const SERVER_URL_KEY = 'ledgerlift:serverUrl'
@@ -78,19 +78,25 @@ export async function syncWithBackend(): Promise<SyncResult> {
     routines: typeof stampedRoutines
   }
 
-  // Merge server response into IndexedDB
+  // Merge server response into IndexedDB — disable updatedAt hooks so
+  // server-stamped timestamps are preserved (not overwritten by local time)
   let pulled = 0
-  if (data.routines?.length) {
-    await db.routines.bulkPut(data.routines as any)
-    pulled += data.routines.length
-  }
-  if (data.sessions?.length) {
-    await db.sessions.bulkPut(data.sessions as any)
-    pulled += data.sessions.length
-  }
-  if (data.sets?.length) {
-    await db.sets.bulkPut(data.sets as any)
-    pulled += data.sets.length
+  setSyncing(true)
+  try {
+    if (data.routines?.length) {
+      await db.routines.bulkPut(data.routines as any)
+      pulled += data.routines.length
+    }
+    if (data.sessions?.length) {
+      await db.sessions.bulkPut(data.sessions as any)
+      pulled += data.sessions.length
+    }
+    if (data.sets?.length) {
+      await db.sets.bulkPut(data.sets as any)
+      pulled += data.sets.length
+    }
+  } finally {
+    setSyncing(false)
   }
 
   setLastSyncAt(data.syncedAt)

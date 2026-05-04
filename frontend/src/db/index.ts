@@ -114,6 +114,11 @@ export const DEFAULT_ROUTINES: Omit<Routine, 'createdAt' | 'updatedAt'>[] = [
   },
 ]
 
+// ─── Sync flag — disables updatedAt hooks during pull ─────────────────────────
+
+let _isSyncing = false
+export function setSyncing(v: boolean) { _isSyncing = v }
+
 // ─── Database class ───────────────────────────────────────────────────────────
 
 export class LedgerLiftDB extends Dexie {
@@ -140,18 +145,18 @@ export class LedgerLiftDB extends Dexie {
       sets:      'id, sessionId, exerciseId, timestamp, updatedAt',
     })
 
-    // Auto-stamp updatedAt on every write
-    this.sessions.hook('creating', (_pk, obj) => { obj.updatedAt = Date.now() })
+    // Auto-stamp updatedAt on every write — skipped during sync pull
+    this.sessions.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
     this.sessions.hook('updating', (mods: Partial<WorkoutSession>) => {
-      (mods as any).updatedAt = Date.now()
+      if (!_isSyncing) (mods as any).updatedAt = Date.now()
     })
-    this.sets.hook('creating', (_pk, obj) => { obj.updatedAt = Date.now() })
+    this.sets.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
     this.sets.hook('updating', (mods: Partial<SetLog>) => {
-      (mods as any).updatedAt = Date.now()
+      if (!_isSyncing) (mods as any).updatedAt = Date.now()
     })
-    this.routines.hook('creating', (_pk, obj) => { obj.updatedAt = Date.now() })
+    this.routines.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
     this.routines.hook('updating', (mods: Partial<Routine>) => {
-      (mods as any).updatedAt = Date.now()
+      if (!_isSyncing) (mods as any).updatedAt = Date.now()
     })
   }
 }
