@@ -1,0 +1,228 @@
+# CD Dev — integration branch image publish
+# Triggered on every push to the `dev` branch.
+#
+# Pipeline:
+#   lint-frontend ──┐
+#   lint-backend  ──┼── test-frontend ──┐
+#                   │   test-backend  ──┼── build-frontend ── docker-publish-dev
+#                   └───────────────────┘
+#
+# Docker image is tagged `ledgerlift:dev-<sha>` and `ledgerlift:dev-latest`.
+# Images are pushed to GitHub Container Registry (ghcr.io) when the
+# GHCR_TOKEN secret is present.  If the secret is absent the push step
+# is skipped so the pipeline doesn't fail in forks.
+#
+# Required GitHub Actions secrets:
+#   GHCR_TOKEN  — a Personal Access Token (classic) with `write:packages` scope,
+#                 or use GITHUB_TOKEN with packages:write permission.
+
+name: CD Dev
+
+on:
+  push:
+    branches:
+      - dev
+
+concurrency:
+  group: cd-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/ledgerlift
+
+jobs:
+
+  # ── Lint & type-check: frontend ───────────────────────────────────────────
+  lint-frontend:
+    name: Lint & type-check (frontend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: TypeScript type-check
+        working-directory: frontend
+        run: bun run tsc --noEmit
+
+      - name: ESLint
+        working-directory: frontend
+        run: bun run lint
+
+  # ── Lint & vet: backend ───────────────────────────────────────────────────
+  lint-backend:
+    name: Lint & vet (backend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: go vet
+        working-directory: backend
+        run: go vet ./...
+
+  # ── Test: frontend ────────────────────────────────────────────────────────
+  test-frontend:
+    name: Test (frontend — Vitest)
+    runs-on: ubuntu-latest
+    needs: [lint-frontend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Run Vitest suite
+        working-directory: frontend
+        run: bun run test
+
+  # ── Test: backend ─────────────────────────────────────────────────────────
+  test-backend:
+    name: Test (backend — Go)
+    runs-on: ubuntu-latest
+    needs: [lint-backend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Run Go tests
+        working-directory: backend
+        env:
+          CGO_ENABLED: "0"
+        run: go test -v -race ./...
+
+  # ── Build: frontend ───────────────────────────────────────────────────────
+  build-frontend:
+    name: Build frontend (Vite)
+    runs-on: ubuntu-latest
+    needs: [test-frontend, test-backend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Build (tsc + vite)
+        working-directory: frontend
+        run: bun run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist-${{ github.sha }}
+          path: frontend/dist/
+          retention-days: 1
+
+  # ── Docker publish: dev ───────────────────────────────────────────────────
+  docker-publish-dev:
+    name: Docker publish (dev)
+    runs-on: ubuntu-latest
+    needs: [build-frontend]
+    # Grant the built-in GITHUB_TOKEN permission to push packages.
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Log in only when the GHCR_TOKEN secret exists.
+      # This allows the job to run (but skip pushing) in forks.
+      - name: Log in to GitHub Container Registry
+        if: ${{ env.GHCR_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=dev-${{ github.sha }}
+            type=raw,value=dev-latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          # Only push when GHCR_TOKEN secret is configured
+          push: ${{ secrets.GHCR_TOKEN != '' || github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

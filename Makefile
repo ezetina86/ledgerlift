@@ -3,7 +3,8 @@ GO    := go
 DC    := docker compose
 
 .PHONY: dev dev-frontend dev-backend build build-frontend build-backend \
-        docker deploy logs backup restore catalog clean help
+        docker deploy logs backup restore catalog clean help \
+        test test-frontend test-backend lint ci
 
 # ── Development ───────────────────────────────────────────────────────────────
 
@@ -64,6 +65,29 @@ restore: ## Restore latest backup into Docker volume (DESTRUCTIVE)
 
 catalog: ## Re-export exercise catalog from xlsx → exercises.json
 	.venv/bin/python scripts/parse_catalog.py
+
+# ── Testing ────────────────────────────────────────────────────────────────
+
+test: test-frontend test-backend ## Run all tests (frontend + backend)
+
+test-frontend: ## Run frontend Vitest suite
+	cd frontend && $(BUN) run test
+
+test-backend: ## Run backend Go tests
+	cd backend && CGO_ENABLED=0 $(GO) test -v ./...
+
+# ── Linting ────────────────────────────────────────────────────────────────
+
+lint: ## Lint + type-check frontend and vet backend
+	cd frontend && $(BUN) run tsc --noEmit
+	cd frontend && $(BUN) run lint
+	cd backend && $(GO) vet ./...
+
+# ── CI simulation ─────────────────────────────────────────────────────────
+
+ci: lint test build ## Full local CI simulation (lint → test → build)
+	@echo ""
+	@echo "CI simulation complete — all checks passed."
 
 # ── Misc ──────────────────────────────────────────────────────────────────────
 

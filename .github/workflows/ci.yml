@@ -1,0 +1,198 @@
+# CI — Pull Request quality gate
+# Runs on every PR targeting dev or master.
+# All jobs must pass before a PR can be merged.
+#
+# Jobs run in dependency order:
+#   lint-frontend ──┐
+#   lint-backend  ──┼── test-frontend ──┐
+#                   │   test-backend  ──┼── build-frontend ── docker-verify
+#                   └───────────────────┘
+#
+# The docker-verify job does a full multi-stage build but does NOT push.
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - master
+
+# Cancel in-flight runs for the same PR so pushes don't queue up.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ── Lint & type-check: frontend ───────────────────────────────────────────
+  lint-frontend:
+    name: Lint & type-check (frontend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: TypeScript type-check
+        working-directory: frontend
+        run: bun run tsc --noEmit
+
+      - name: ESLint
+        working-directory: frontend
+        run: bun run lint
+
+  # ── Lint & vet: backend ───────────────────────────────────────────────────
+  lint-backend:
+    name: Lint & vet (backend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: go vet
+        working-directory: backend
+        run: go vet ./...
+
+  # ── Test: frontend ────────────────────────────────────────────────────────
+  test-frontend:
+    name: Test (frontend — Vitest)
+    runs-on: ubuntu-latest
+    needs: [lint-frontend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      # Use `bun run test` (Vitest runner) — NOT `bun test` (Bun native runner)
+      - name: Run Vitest suite
+        working-directory: frontend
+        run: bun run test
+
+  # ── Test: backend ─────────────────────────────────────────────────────────
+  test-backend:
+    name: Test (backend — Go)
+    runs-on: ubuntu-latest
+    needs: [lint-backend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Run Go tests
+        working-directory: backend
+        env:
+          CGO_ENABLED: "0"
+        run: go test -v -race ./...
+
+  # ── Build: frontend ───────────────────────────────────────────────────────
+  # Verifies that frontend/dist/ can be produced cleanly.
+  # The artifact is uploaded so the docker-verify job can skip a second bun build.
+  build-frontend:
+    name: Build frontend (Vite)
+    runs-on: ubuntu-latest
+    needs: [test-frontend, test-backend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Build (tsc + vite)
+        working-directory: frontend
+        run: bun run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist-${{ github.sha }}
+          path: frontend/dist/
+          retention-days: 1
+
+  # ── Docker verify (no push) ───────────────────────────────────────────────
+  # Full multi-stage Dockerfile build — confirms the image compiles correctly.
+  docker-verify:
+    name: Docker build verify (no push)
+    runs-on: ubuntu-latest
+    needs: [build-frontend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (cache only, no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: false
+          tags: ledgerlift:ci-${{ github.sha }}
+          # Use GitHub Actions cache to speed up subsequent runs
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
