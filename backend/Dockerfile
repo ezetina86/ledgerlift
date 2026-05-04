@@ -8,7 +8,7 @@ RUN bun run build
 
 # ── Stage 2: Build Go backend ─────────────────────────────────────────────────
 FROM golang:1.23-alpine AS builder
-ENV GOTOOLCHAIN=auto
+ENV GOTOOLCHAIN=local
 WORKDIR /app
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
