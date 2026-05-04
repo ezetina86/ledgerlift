@@ -7,7 +7,7 @@ COPY frontend/ .
 RUN bun run build
 
 # ── Stage 2: Build Go backend ─────────────────────────────────────────────────
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 ENV GOTOOLCHAIN=local
 WORKDIR /app
 COPY backend/go.mod backend/go.sum ./
