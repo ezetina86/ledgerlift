@@ -306,6 +306,18 @@ describe('exerciseProgression', () => {
     expect(result[0].maxWeightKg).toBe(80)
     expect(result[1].maxWeightKg).toBe(90)
   })
+
+  it('does not update session date when a later set has an earlier timestamp', () => {
+    // First set seen establishes date=2000; second has timestamp=1000 (earlier),
+    // so the false branch of `if (s.timestamp > entry.date)` is exercised.
+    const sets = [
+      makeSet({ id: 's1', sessionId: 'sess-1', weightKg: 80, timestamp: 2000, volume: 640 }),
+      makeSet({ id: 's2', sessionId: 'sess-1', weightKg: 85, timestamp: 1000, volume: 680 }),
+    ]
+    const result = exerciseProgression(sets, 'ex-1')
+    expect(result).toHaveLength(1)
+    expect(result[0].sessionDate).toBe(2000) // sessionDate NOT updated because 1000 < 2000
+  })
 })
 
 // ── rpeColor ──────────────────────────────────────────────────────────────────
