@@ -5,7 +5,7 @@ VERSION := $(shell cat VERSION)
 IMAGE   := ezetina86/ledgerlift
 
 .PHONY: dev dev-frontend dev-backend build build-frontend build-backend \
-        docker deploy logs backup restore catalog clean help \
+        docker deploy pull pull-dev logs backup restore catalog clean help \
         test test-frontend test-backend lint ci \
         version bump-patch bump-minor bump-major tag release
 
@@ -38,6 +38,14 @@ docker: ## Build Docker image
 
 deploy: ## Build + restart container (home lab)
 	$(DC) up -d --build
+
+pull: ## Pull latest prod image from Docker Hub and restart (no local build)
+	TAG=latest $(DC) pull
+	TAG=latest $(DC) up -d
+
+pull-dev: ## Pull latest dev image from Docker Hub and restart
+	TAG=dev-latest $(DC) pull
+	TAG=dev-latest $(DC) up -d
 
 stop:
 	$(DC) down
