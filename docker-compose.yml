@@ -1,5 +1,6 @@
 services:
   ledgerlift:
+    image: ezetina86/ledgerlift:${TAG:-latest}
     build:
       context: .           # repo root so Dockerfile can access both frontend/ and backend/
       dockerfile: backend/Dockerfile
