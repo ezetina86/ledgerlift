@@ -1,7 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import type { WorkoutSession, SetLog } from '../db/index.ts'
-import { formatDate, formatTime, totalVolume } from '../lib/utils.ts'
+import { formatDate, formatTime, totalVolume, formatWeight, kgToLbs, KG_TO_LBS } from '../lib/utils.ts'
+import { useWeightUnit } from '../lib/prefs.ts'
 import { SPLIT_LABELS } from '../lib/split.ts'
 
 export default function HistoryPage() {
@@ -59,7 +60,9 @@ function SessionCard({ session }: { session: WorkoutSession }) {
     [session.id]
   ) ?? []
 
+  const { unit } = useWeightUnit()
   const vol = totalVolume(sets)
+  const displayVol = unit === 'lb' ? vol * KG_TO_LBS : vol
   const duration = session.completedAt
     ? Math.round((session.completedAt - session.startedAt) / 60000)
     : null
@@ -95,7 +98,7 @@ function SessionCard({ session }: { session: WorkoutSession }) {
 
         {/* Stats row */}
         <div className="flex gap-5 mt-3">
-          <Stat label="VOLUME" value={`${Math.round(vol / 100) / 10}k`} unit="kg" />
+          <Stat label="VOLUME" value={`${Math.round(displayVol / 100) / 10}k`} unit={unit} />
           <Stat label="SETS" value={String(sets.length)} />
           {duration !== null && <Stat label="TIME" value={String(duration)} unit="min" />}
         </div>
@@ -115,7 +118,7 @@ function SessionCard({ session }: { session: WorkoutSession }) {
                   {name}
                 </p>
                 <p className="num ml-4 shrink-0" style={{ fontSize: '13px', color: 'oklch(72% 0.012 293)' }}>
-                  {exSets.length}× {best.weightKg}kg
+                  {exSets.length}× {formatWeight(unit === 'lb' ? kgToLbs(best.weightKg) : best.weightKg)}{unit}
                 </p>
               </div>
             )

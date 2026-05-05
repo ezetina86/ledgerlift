@@ -3,7 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import type { Exercise, SetLog } from '../db/index.ts'
 import { weeklyVolumeByGroup, computePRs, exerciseProgression } from '../lib/overload.ts'
-import { formatDate, formatWeight } from '../lib/utils.ts'
+import { formatDate, formatWeight, kgToLbs, KG_TO_LBS } from '../lib/utils.ts'
+import { useWeightUnit } from '../lib/prefs.ts'
 
 const GROUP_COLORS: Record<string, string> = {
   Back:      'oklch(55% 0.18 265)',
@@ -37,6 +38,7 @@ function Empty({ text }: { text: string }) {
 
 export default function ProgressPage() {
   const [selectedExId, setSelectedExId] = useState<string | null>(null)
+  const { unit } = useWeightUnit()
 
   const allSets      = useLiveQuery<SetLog[]>(() => db.sets.toArray(), []) ?? []
   const allExercises = useLiveQuery<Exercise[]>(() => db.exercises.toArray(), []) ?? []
@@ -70,7 +72,7 @@ export default function ProgressPage() {
                     {row.group}
                   </span>
                   <span className="num" style={{ fontSize: '13px', color: 'oklch(50% 0.010 293)' }}>
-                    {Math.round(row.volume / 100) / 10}k · {row.sets}s
+                    {Math.round((unit === 'lb' ? row.volume * KG_TO_LBS : row.volume) / 100) / 10}k · {row.sets}s
                   </span>
                 </div>
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'oklch(18% 0.012 293)' }}>
@@ -108,7 +110,7 @@ export default function ProgressPage() {
                     <div key={i} className="flex items-center justify-between">
                       <span style={{ fontSize: '12px', color: 'oklch(44% 0.008 293)' }}>{formatDate(p.sessionDate)}</span>
                       <span className="num" style={{ fontSize: '16px', fontWeight: 800, color: i === 0 ? 'oklch(62% 0.24 293)' : 'oklch(97% 0.005 293)' }}>
-                        {formatWeight(p.maxWeightKg)} <span style={{ fontSize: '11px', fontFamily: "'Barlow', sans-serif", fontWeight: 400, color: 'oklch(44% 0.008 293)' }}>kg</span>
+                        {formatWeight(unit === 'lb' ? kgToLbs(p.maxWeightKg) : p.maxWeightKg)} <span style={{ fontSize: '11px', fontFamily: "'Barlow', sans-serif", fontWeight: 400, color: 'oklch(44% 0.008 293)' }}>{unit}</span>
                       </span>
                     </div>
                   ))}
@@ -137,7 +139,7 @@ export default function ProgressPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <p className="num" style={{ fontSize: '20px', fontWeight: 800, color: 'oklch(97% 0.005 293)' }}>
-                    {formatWeight(pr.bestWeightKg)}<span style={{ fontSize: '11px', fontFamily: "'Barlow', sans-serif", fontWeight: 400, color: 'oklch(44% 0.008 293)' }}> kg</span>
+                    {formatWeight(unit === 'lb' ? kgToLbs(pr.bestWeightKg) : pr.bestWeightKg)}<span style={{ fontSize: '11px', fontFamily: "'Barlow', sans-serif", fontWeight: 400, color: 'oklch(44% 0.008 293)' }}> {unit}</span>
                   </p>
                   <p style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)' }}>{pr.bestReps} reps</p>
                 </div>

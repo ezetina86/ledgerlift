@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { formatWeight } from '../lib/utils.ts'
+import { formatWeight, kgToLbs, lbsToKg } from '../lib/utils.ts'
+import { useWeightUnit } from '../lib/prefs.ts'
 
 export interface SetInput {
   weightKg: number
@@ -33,12 +34,16 @@ export default function SetSheet({ open, ...props }: Props) {
 }
 
 function SetSheetInner({ initial, setNumber, exerciseName, onConfirm, onClose }: Omit<Props, 'open'>) {
-  const [weight, setWeight] = useState(initial.weightKg)
+  const { unit } = useWeightUnit()
+  const [weight, setWeight] = useState(unit === 'lb' ? kgToLbs(initial.weightKg) : initial.weightKg)
   const [reps, setReps] = useState(initial.reps)
   const [rpe, setRpe] = useState<number | null>(initial.rpe)
 
+  const MAIN_STEP = unit === 'lb' ? 5 : 2.5
+
   function nudgeWeight(delta: number) {
-    setWeight(w => Math.max(0, Math.round((w + delta) * 4) / 4))
+    const precision = unit === 'lb' ? 2 : 4
+    setWeight(w => Math.max(0, Math.round((w + delta) * precision) / precision))
   }
   function nudgeReps(delta: number) {
     setReps(r => Math.max(1, r + delta))
@@ -98,7 +103,7 @@ function SetSheetInner({ initial, setNumber, exerciseName, onConfirm, onClose }:
                 textTransform: 'uppercase',
               }}
             >
-              KG
+              {unit.toUpperCase()}
             </span>
             <div
               className="num text-center mb-3"
@@ -108,12 +113,12 @@ function SetSheetInner({ initial, setNumber, exerciseName, onConfirm, onClose }:
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => nudgeWeight(-2.5)}
+                onClick={() => nudgeWeight(-MAIN_STEP)}
                 className="flex-1 h-10 rounded-xl text-lg font-medium transition-colors active:scale-95"
                 style={{ background: 'oklch(24% 0.010 293)', color: 'oklch(72% 0.012 293)' }}
               >−</button>
               <button
-                onClick={() => nudgeWeight(2.5)}
+                onClick={() => nudgeWeight(MAIN_STEP)}
                 className="flex-1 h-10 rounded-xl text-lg font-medium transition-colors active:scale-95"
                 style={{ background: 'oklch(24% 0.010 293)', color: 'oklch(72% 0.012 293)' }}
               >+</button>
@@ -213,13 +218,13 @@ function SetSheetInner({ initial, setNumber, exerciseName, onConfirm, onClose }:
             className="num"
             style={{ fontSize: '16px', color: 'oklch(72% 0.012 293)' }}
           >
-            {formatWeight(weight * reps)} kg
+            {formatWeight(weight * reps)} {unit}
           </span>
         </div>
 
         {/* CTA */}
         <button
-          onClick={() => onConfirm({ weightKg: weight, reps, rpe })}
+          onClick={() => onConfirm({ weightKg: unit === 'lb' ? lbsToKg(weight) : weight, reps, rpe })}
           className="w-full h-14 rounded-2xl font-bold text-base transition-all active:scale-[0.98]"
           style={{
             background: 'oklch(62% 0.24 293)',

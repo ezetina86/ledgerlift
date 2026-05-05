@@ -3,7 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import type { SetLog, Exercise } from '../db/index.ts'
 import { suggestNext } from '../lib/overload.ts'
-import { formatWeight, uid } from '../lib/utils.ts'
+import { formatWeight, uid, kgToLbs } from '../lib/utils.ts'
+import { useWeightUnit } from '../lib/prefs.ts'
 import SetSheet, { type SetInput } from './SetSheet.tsx'
 
 const RPE_COLORS: Record<number, string> = {
@@ -25,6 +26,7 @@ interface Props {
 export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defaultReps }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingSetId, setEditingSetId] = useState<string | null>(null)
+  const { unit } = useWeightUnit()
 
   const exercise = useLiveQuery<Exercise | undefined>(() => db.exercises.get(exerciseId), [exerciseId])
 
@@ -133,7 +135,7 @@ export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defa
               NEXT TARGET
             </span>
             <span className="num" style={{ fontSize: '14px', color: 'oklch(97% 0.005 293)' }}>
-              {formatWeight(suggestion.weightKg)} kg × {suggestion.reps}
+              {formatWeight(unit === 'lb' ? kgToLbs(suggestion.weightKg) : suggestion.weightKg)} {unit} × {suggestion.reps}
             </span>
           </div>
         )}
@@ -152,7 +154,7 @@ export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defa
               background: 'oklch(15% 0.008 293)',
             }}
           >
-            {['#', 'KG', 'REPS', 'RPE', ''].map((h, i) => (
+            {['#', unit.toUpperCase(), 'REPS', 'RPE', ''].map((h, i) => (
               <span key={i} className="text-center" style={{ fontSize: '9px', letterSpacing: '0.1em', color: 'oklch(34% 0.008 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700 }}>
                 {h}
               </span>
@@ -169,7 +171,7 @@ export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defa
               }}
             >
               <span className="num text-center" style={{ fontSize: '13px', color: 'oklch(34% 0.008 293)' }}>{s.setNumber}</span>
-              <span className="num text-center" style={{ fontSize: '16px', fontWeight: 800, color: 'oklch(97% 0.005 293)' }}>{formatWeight(s.weightKg)}</span>
+              <span className="num text-center" style={{ fontSize: '16px', fontWeight: 800, color: 'oklch(97% 0.005 293)' }}>{formatWeight(unit === 'lb' ? kgToLbs(s.weightKg) : s.weightKg)}</span>
               <span className="num text-center" style={{ fontSize: '16px', fontWeight: 800, color: 'oklch(97% 0.005 293)' }}>{s.reps}</span>
               <span className="num text-center" style={{ fontSize: '13px', color: s.rpe ? RPE_COLORS[Math.round(s.rpe)] ?? 'oklch(50% 0.010 293)' : 'oklch(34% 0.008 293)' }}>
                 {s.rpe ?? '—'}

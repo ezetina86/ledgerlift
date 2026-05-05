@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { uid, formatWeight, formatDate, formatTime, formatElapsed, totalVolume } from './utils.ts'
+import { uid, formatWeight, formatDate, formatTime, formatElapsed, totalVolume, kgToLbs, lbsToKg, KG_TO_LBS } from './utils.ts'
 
 describe('uid', () => {
   it('returns a string', () => {
@@ -121,5 +121,37 @@ describe('formatTime', () => {
   it('contains AM or PM', () => {
     const result = formatTime(new Date('2024-01-01T14:30:00Z').getTime())
     expect(result).toMatch(/AM|PM/)
+  })
+})
+
+describe('kgToLbs', () => {
+  it('converts 1 kg to ~2.20462 lbs', () => {
+    expect(kgToLbs(1)).toBeCloseTo(2.20462, 3)
+  })
+
+  it('converts 100 kg correctly', () => {
+    expect(kgToLbs(100)).toBeCloseTo(220.462, 2)
+  })
+
+  it('converts 0 kg to 0 lbs', () => {
+    expect(kgToLbs(0)).toBe(0)
+  })
+
+  it('roundtrip kg → lbs → kg preserves value', () => {
+    expect(lbsToKg(kgToLbs(80))).toBeCloseTo(80, 5)
+  })
+})
+
+describe('lbsToKg', () => {
+  it('converts 2.20462 lbs to ~1 kg', () => {
+    expect(lbsToKg(2.20462)).toBeCloseTo(1, 3)
+  })
+
+  it('converts 0 lbs to 0 kg', () => {
+    expect(lbsToKg(0)).toBe(0)
+  })
+
+  it('KG_TO_LBS constant matches conversion factor', () => {
+    expect(KG_TO_LBS).toBe(2.20462)
   })
 })

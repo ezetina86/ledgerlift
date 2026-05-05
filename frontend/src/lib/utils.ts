@@ -29,3 +29,13 @@ export function formatWeight(kg: number): string {
 export function totalVolume(sets: { reps: number; weightKg: number }[]): number {
   return sets.reduce((acc, s) => acc + s.reps * s.weightKg, 0)
 }
+
+export const KG_TO_LBS = 2.20462
+
+export function kgToLbs(kg: number): number {
+  return kg * KG_TO_LBS
+}
+
+export function lbsToKg(lbs: number): number {
+  return lbs / KG_TO_LBS
+}
