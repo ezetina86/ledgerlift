@@ -2,7 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import type { WorkoutSession } from '../db/index.ts'
 import { nextSplitDay, SPLIT_LABELS, SPLIT_FOCUS, ROUTINE_ID } from '../lib/split.ts'
-import { totalVolume, uid } from '../lib/utils.ts'
+import { totalVolume, uid, KG_TO_LBS } from '../lib/utils.ts'
+import { useWeightUnit } from '../lib/prefs.ts'
 
 interface Props {
   onStartWorkout: (sessionId: string) => void
@@ -258,7 +259,9 @@ function RecentCard({ session }: { session: WorkoutSession }) {
   const sets = useLiveQuery<{ reps: number; weightKg: number }[]>(
     () => db.sets.where('sessionId').equals(session.id).toArray(), [session.id]
   ) ?? []
+  const { unit } = useWeightUnit()
   const vol = totalVolume(sets)
+  const displayVol = unit === 'lb' ? vol * KG_TO_LBS : vol
 
   return (
     <div
@@ -275,7 +278,7 @@ function RecentCard({ session }: { session: WorkoutSession }) {
       </div>
       <div className="text-right">
         <p className="num" style={{ fontSize: '18px', color: 'oklch(62% 0.24 293)' }}>
-          {Math.round(vol / 100) / 10}<span style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)', fontFamily: "'Barlow', sans-serif" }}>k kg</span>
+          {Math.round(displayVol / 100) / 10}<span style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)', fontFamily: "'Barlow', sans-serif" }}>k {unit}</span>
         </p>
         <p style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)' }}>{sets.length} sets</p>
       </div>

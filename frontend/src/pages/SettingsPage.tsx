@@ -5,6 +5,7 @@ import {
   type SyncResult,
 } from '../lib/sync.ts'
 import { formatDate, formatTime } from '../lib/utils.ts'
+import { useWeightUnit } from '../lib/prefs.ts'
 
 function Label({ children }: { children: string }) {
   return (
@@ -17,6 +18,7 @@ function Label({ children }: { children: string }) {
 export default function SettingsPage() {
   const [url, setUrl] = useState(getServerUrl)
   const [saved, setSaved] = useState(false)
+  const { unit, toggle } = useWeightUnit()
   const [healthy, setHealthy] = useState<boolean | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [result, setResult] = useState<SyncResult | null>(null)
@@ -177,6 +179,39 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* Units */}
+      <section className="px-4 mb-6">
+        <Label>Units</Label>
+        <div
+          className="rounded-2xl p-4"
+          style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}
+        >
+          <div className="flex items-center justify-between">
+            <span style={{ fontSize: '13px', color: 'oklch(72% 0.012 293)', fontFamily: "'Barlow', sans-serif" }}>
+              Weight Unit
+            </span>
+            <button
+              onClick={toggle}
+              className="px-4 h-9 rounded-xl transition-all active:scale-95"
+              style={{
+                background: 'oklch(18% 0.012 293)',
+                border: '1px solid oklch(26% 0.012 293)',
+                color: 'oklch(62% 0.24 293)',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: '14px',
+                letterSpacing: '0.06em',
+              }}
+            >
+              {unit === 'kg' ? 'KG → LB' : 'LB → KG'}
+            </button>
+          </div>
+          <p style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)', fontFamily: "'Barlow', sans-serif", marginTop: 8 }}>
+            Currently: {unit === 'kg' ? 'Kilograms (kg)' : 'Pounds (lb)'}
+          </p>
+        </div>
+      </section>
+
       {/* About */}
       <section className="px-4">
         <Label>About</Label>
@@ -188,7 +223,7 @@ export default function SettingsPage() {
             ['App', 'LedgerLift'],
             ['Protocol', 'Jeff Nippard Upper/Lower'],
             ['Storage', 'IndexedDB (local-first)'],
-            ['Weights', 'Kilograms (kg)'],
+            ['Weights', unit === 'kg' ? 'Kilograms (kg)' : 'Pounds (lb)'],
             ['RPE Scale', '1–10 (Nippard)'],
           ].map(([label, value], i) => (
             <div
