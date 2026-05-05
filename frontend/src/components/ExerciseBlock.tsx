@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/index.ts'
+import { db, getLastSetsForExercise } from '../db/index.ts'
 import type { SetLog, Exercise } from '../db/index.ts'
 import { suggestNext } from '../lib/overload.ts'
 import { formatWeight, uid, kgToLbs } from '../lib/utils.ts'
@@ -35,15 +35,10 @@ export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defa
     [sessionId, exerciseId]
   ) ?? []
 
-  const lastSets = useLiveQuery<SetLog[]>(async () => {
-    const prev = await db.sessions
-      .where('routineId').notEqual('')
-      .filter(s => s.id !== sessionId && s.completedAt !== null)
-      .reverse()
-      .sortBy('completedAt')
-    if (!prev.length) return []
-    return db.sets.where('sessionId').equals(prev[0].id).filter(s => s.exerciseId === exerciseId).sortBy('setNumber')
-  }, [sessionId, exerciseId]) ?? []
+  const lastSets = useLiveQuery<SetLog[]>(
+    () => getLastSetsForExercise(exerciseId, sessionId),
+    [sessionId, exerciseId],
+  ) ?? []
 
   const suggestion = suggestNext(lastSets)
   const lastSet = sets[sets.length - 1]

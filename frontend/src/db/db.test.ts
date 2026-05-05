@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { db, setSyncing, seedDatabase, DEFAULT_ROUTINES } from './index'
+import { db, setSyncing, seedDatabase, DEFAULT_ROUTINES, getLastSetsForExercise } from './index'
 import type { WorkoutSession, SetLog, Routine } from './index'
 
 // fake-indexeddb/auto is loaded via setupFiles in vitest.config.ts,
@@ -193,6 +193,94 @@ describe('routine updating hook', () => {
     await db.routines.update('r4', { name: 'Sync Updated' })
     const r = await db.routines.get('r4')
     expect(r?.updatedAt).toBe(8888)
+  })
+})
+
+// ── getLastSetsForExercise ────────────────────────────────────────────────────
+
+describe('getLastSetsForExercise', () => {
+  it('returns [] when no sets exist for the exercise', async () => {
+    const result = await getLastSetsForExercise('hack-squat', 'current-sess')
+    expect(result).toEqual([])
+  })
+
+  it('returns [] when only sets from the current session exist', async () => {
+    setSyncing(true)
+    await db.sessions.add(makeSession('current-sess', { completedAt: null }))
+    await db.sets.add(makeSet('set1', 'current-sess', { exerciseId: 'hack-squat' }))
+    setSyncing(false)
+
+    const result = await getLastSetsForExercise('hack-squat', 'current-sess')
+    expect(result).toEqual([])
+  })
+
+  it('returns [] when the only prior session with this exercise is still active', async () => {
+    setSyncing(true)
+    await db.sessions.add(makeSession('active-sess', { completedAt: null }))
+    await db.sets.add(makeSet('set1', 'active-sess', { exerciseId: 'hack-squat' }))
+    setSyncing(false)
+
+    const result = await getLastSetsForExercise('hack-squat', 'current-sess')
+    expect(result).toEqual([])
+  })
+
+  it('returns sets from the last completed session for this exercise', async () => {
+    setSyncing(true)
+    await db.sessions.add(makeSession('sess-lower-a', { completedAt: 1_000 }))
+    await db.sets.add(makeSet('set1', 'sess-lower-a', { exerciseId: 'hack-squat', weightKg: 100, setNumber: 1 }))
+    await db.sets.add(makeSet('set2', 'sess-lower-a', { exerciseId: 'hack-squat', weightKg: 100, setNumber: 2 }))
+    setSyncing(false)
+
+    const result = await getLastSetsForExercise('hack-squat', 'current-sess')
+    expect(result).toHaveLength(2)
+    expect(result[0].weightKg).toBe(100)
+    expect(result[0].setNumber).toBe(1)
+  })
+
+  it('picks the most recently completed session across different routines', async () => {
+    setSyncing(true)
+    // First Lower A session — hack squats at 80 kg
+    await db.sessions.add(makeSession('sess-lower-a-1', { completedAt: 1_000 }))
+    await db.sets.add(makeSet('set1', 'sess-lower-a-1', { exerciseId: 'hack-squat', weightKg: 80, setNumber: 1 }))
+
+    // Second Lower A session — hack squats at 100 kg (more recent)
+    await db.sessions.add(makeSession('sess-lower-a-2', { completedAt: 2_000 }))
+    await db.sets.add(makeSet('set2', 'sess-lower-a-2', { exerciseId: 'hack-squat', weightKg: 100, setNumber: 1 }))
+
+    // Upper A session in between — no hack squats
+    await db.sessions.add(makeSession('sess-upper-a', { completedAt: 1_500, splitDay: 'upperA', routineName: 'Upper A' }))
+    await db.sets.add(makeSet('set3', 'sess-upper-a', { exerciseId: 'bench-press', weightKg: 80, setNumber: 1 }))
+    setSyncing(false)
+
+    const result = await getLastSetsForExercise('hack-squat', 'current-sess')
+    expect(result).toHaveLength(1)
+    expect(result[0].weightKg).toBe(100)  // most recent lower-a session
+    expect(result[0].sessionId).toBe('sess-lower-a-2')
+  })
+
+  it('does not pick up sets from other exercises in the same session', async () => {
+    setSyncing(true)
+    await db.sessions.add(makeSession('sess-1', { completedAt: 1_000 }))
+    await db.sets.add(makeSet('set1', 'sess-1', { exerciseId: 'hack-squat', weightKg: 100, setNumber: 1 }))
+    await db.sets.add(makeSet('set2', 'sess-1', { exerciseId: 'bench-press', weightKg: 80, setNumber: 1 }))
+    setSyncing(false)
+
+    const result = await getLastSetsForExercise('hack-squat', 'current-sess')
+    expect(result).toHaveLength(1)
+    expect(result[0].exerciseId).toBe('hack-squat')
+  })
+
+  it('returns sets sorted by setNumber ascending', async () => {
+    setSyncing(true)
+    await db.sessions.add(makeSession('sess-1', { completedAt: 1_000 }))
+    // Insert out of order
+    await db.sets.add(makeSet('set3', 'sess-1', { exerciseId: 'hack-squat', weightKg: 100, setNumber: 3 }))
+    await db.sets.add(makeSet('set1', 'sess-1', { exerciseId: 'hack-squat', weightKg: 80,  setNumber: 1 }))
+    await db.sets.add(makeSet('set2', 'sess-1', { exerciseId: 'hack-squat', weightKg: 90,  setNumber: 2 }))
+    setSyncing(false)
+
+    const result = await getLastSetsForExercise('hack-squat', 'current-sess')
+    expect(result.map(s => s.setNumber)).toEqual([1, 2, 3])
   })
 })
 
