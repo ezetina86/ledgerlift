@@ -163,6 +163,41 @@ export class LedgerLiftDB extends Dexie {
 
 export const db = new LedgerLiftDB()
 
+// ─── Query helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Fetch sets from the most recently completed session where this exercise was
+ * performed, excluding the current session. Used to pre-fill default weight in
+ * ExerciseBlock. Returns [] when no prior history exists for the exercise.
+ */
+export async function getLastSetsForExercise(
+  exerciseId: string,
+  excludeSessionId: string,
+): Promise<SetLog[]> {
+  const exerciseSets = await db.sets
+    .where('exerciseId').equals(exerciseId)
+    .filter(s => s.sessionId !== excludeSessionId)
+    .toArray()
+
+  if (!exerciseSets.length) return []
+
+  const sessionIds = [...new Set(exerciseSets.map(s => s.sessionId))]
+  const sessions = await db.sessions
+    .where('id').anyOf(sessionIds)
+    .filter(s => s.completedAt !== null)
+    .toArray()
+
+  if (!sessions.length) return []
+
+  const latest = sessions.reduce((best, s) =>
+    (s.completedAt ?? 0) > (best.completedAt ?? 0) ? s : best
+  )
+
+  return exerciseSets
+    .filter(s => s.sessionId === latest.id)
+    .sort((a, b) => a.setNumber - b.setNumber)
+}
+
 // ─── Seed on first load ───────────────────────────────────────────────────────
 
 export async function seedDatabase() {
