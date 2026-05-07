@@ -19,14 +19,36 @@ type Routine struct {
 }
 
 type WorkoutSession struct {
-	ID          string  `json:"id"`
-	RoutineID   string  `json:"routineId"`
-	RoutineName string  `json:"routineName"`
-	SplitDay    string  `json:"splitDay"`
-	StartedAt   int64   `json:"startedAt"`
-	CompletedAt *int64  `json:"completedAt"`
-	Notes       string  `json:"notes"`
-	UpdatedAt   int64   `json:"updatedAt"`
+	ID           string  `json:"id"`
+	RoutineID    string  `json:"routineId"`
+	RoutineName  string  `json:"routineName"`
+	SplitDay     string  `json:"splitDay"`
+	StartedAt    int64   `json:"startedAt"`
+	CompletedAt  *int64  `json:"completedAt"`
+	Notes        string  `json:"notes"`
+	MesocycleID  *string `json:"mesocycleId"`
+	IsDeload     bool    `json:"isDeload"`
+	UpdatedAt    int64   `json:"updatedAt"`
+}
+
+type Mesocycle struct {
+	ID           string  `json:"id"`
+	Number       int     `json:"number"`
+	Name         string  `json:"name"`
+	TargetWeeks  int     `json:"targetWeeks"`
+	StartedAt    int64   `json:"startedAt"`
+	EndedAt      *int64  `json:"endedAt"`
+	IsDeloadWeek bool    `json:"isDeloadWeek"`
+	UpdatedAt    int64   `json:"updatedAt"`
+}
+
+type ExerciseSwap struct {
+	ID                string `json:"id"`
+	MesocycleID       string `json:"mesocycleId"`
+	RoutineID         string `json:"routineId"`
+	RemovedExerciseID string `json:"removedExerciseId"`
+	AddedExerciseID   string `json:"addedExerciseId"`
+	SwappedAt         int64  `json:"swappedAt"`
 }
 
 type SetLog struct {
@@ -46,15 +68,19 @@ type SetLog struct {
 // Sync request/response
 
 type SyncRequest struct {
-	LastSyncAt int64            `json:"lastSyncAt"`
-	Sessions   []WorkoutSession `json:"sessions"`
-	Sets       []SetLog         `json:"sets"`
-	Routines   []Routine        `json:"routines"`
+	LastSyncAt    int64            `json:"lastSyncAt"`
+	Sessions      []WorkoutSession `json:"sessions"`
+	Sets          []SetLog         `json:"sets"`
+	Routines      []Routine        `json:"routines"`
+	Mesocycles    []Mesocycle      `json:"mesocycles"`
+	ExerciseSwaps []ExerciseSwap   `json:"exerciseSwaps"`
 }
 
 type SyncResponse struct {
-	SyncedAt int64            `json:"syncedAt"`
-	Sessions []WorkoutSession `json:"sessions"`
-	Sets     []SetLog         `json:"sets"`
-	Routines []Routine        `json:"routines"`
+	SyncedAt      int64            `json:"syncedAt"`
+	Sessions      []WorkoutSession `json:"sessions"`
+	Sets          []SetLog         `json:"sets"`
+	Routines      []Routine        `json:"routines"`
+	Mesocycles    []Mesocycle      `json:"mesocycles"`
+	ExerciseSwaps []ExerciseSwap   `json:"exerciseSwaps"`
 }

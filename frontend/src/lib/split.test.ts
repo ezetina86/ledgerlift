@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
-  nextSplitDay, upcomingSchedule,
+  nextSplitDay, upcomingSchedule, mesocycleWeek,
   SPLIT_LABELS, SPLIT_FOCUS, ROUTINE_ID,
 } from './split.ts'
-import type { WorkoutSession } from '../db/index.ts'
+import type { WorkoutSession, Mesocycle } from '../db/index.ts'
 
 function mockSession(splitDay: WorkoutSession['splitDay']): WorkoutSession {
   return {
@@ -107,5 +107,52 @@ describe('ROUTINE_ID', () => {
     expect(ROUTINE_ID.lowerA).toBe('lower-a')
     expect(ROUTINE_ID.upperB).toBe('upper-b')
     expect(ROUTINE_ID.lowerB).toBe('lower-b')
+  })
+})
+
+// ── mesocycleWeek ──────────────────────────────────────────────────────────────
+
+function makeMesocycle(startedAtOffset = 0): Mesocycle {
+  return {
+    id: 'meso-1',
+    number: 1,
+    name: 'Mesocycle 1',
+    targetWeeks: 5,
+    startedAt: Date.now() - startedAtOffset,
+    endedAt: null,
+    isDeloadWeek: false,
+    updatedAt: 0,
+  }
+}
+
+describe('mesocycleWeek', () => {
+  it('returns 1 on day 0 (just started)', () => {
+    expect(mesocycleWeek(makeMesocycle(0))).toBe(1)
+  })
+
+  it('returns 1 after 6 days (still week 1)', () => {
+    const sixDaysMs = 6 * 24 * 60 * 60 * 1000
+    expect(mesocycleWeek(makeMesocycle(sixDaysMs))).toBe(1)
+  })
+
+  it('returns 2 after exactly 7 days', () => {
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+    expect(mesocycleWeek(makeMesocycle(sevenDaysMs))).toBe(2)
+  })
+
+  it('returns 3 after 14 days', () => {
+    const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000
+    expect(mesocycleWeek(makeMesocycle(fourteenDaysMs))).toBe(3)
+  })
+
+  it('handles a 6-week cycle correctly at week 6', () => {
+    const fiveWeeksMs = 35 * 24 * 60 * 60 * 1000
+    const meso = { ...makeMesocycle(fiveWeeksMs), targetWeeks: 6 }
+    expect(mesocycleWeek(meso)).toBe(6)
+  })
+
+  it('returns week > targetWeeks when cycle runs long', () => {
+    const eightWeeksMs = 56 * 24 * 60 * 60 * 1000
+    expect(mesocycleWeek(makeMesocycle(eightWeeksMs))).toBeGreaterThan(5)
   })
 })

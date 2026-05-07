@@ -38,6 +38,8 @@ func initDB(path string) *sql.DB {
 		started_at    INTEGER NOT NULL,
 		completed_at  INTEGER,
 		notes         TEXT NOT NULL DEFAULT '',
+		mesocycle_id  TEXT,
+		is_deload     INTEGER NOT NULL DEFAULT 0,
 		updated_at    INTEGER NOT NULL
 	);
 
@@ -55,9 +57,31 @@ func initDB(path string) *sql.DB {
 		updated_at    INTEGER NOT NULL
 	);
 
-	CREATE INDEX IF NOT EXISTS idx_sessions_updated ON sessions(updated_at);
-	CREATE INDEX IF NOT EXISTS idx_sets_updated     ON sets(updated_at);
-	CREATE INDEX IF NOT EXISTS idx_sets_session     ON sets(session_id);
+	CREATE TABLE IF NOT EXISTS mesocycles (
+		id             TEXT PRIMARY KEY,
+		number         INTEGER NOT NULL,
+		name           TEXT NOT NULL,
+		target_weeks   INTEGER NOT NULL DEFAULT 5,
+		started_at     INTEGER NOT NULL,
+		ended_at       INTEGER,
+		is_deload_week INTEGER NOT NULL DEFAULT 0,
+		updated_at     INTEGER NOT NULL
+	);
+
+	CREATE TABLE IF NOT EXISTS exercise_swaps (
+		id                  TEXT PRIMARY KEY,
+		mesocycle_id        TEXT NOT NULL,
+		routine_id          TEXT NOT NULL,
+		removed_exercise_id TEXT NOT NULL,
+		added_exercise_id   TEXT NOT NULL,
+		swapped_at          INTEGER NOT NULL
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_sessions_updated  ON sessions(updated_at);
+	CREATE INDEX IF NOT EXISTS idx_sets_updated      ON sets(updated_at);
+	CREATE INDEX IF NOT EXISTS idx_sets_session      ON sets(session_id);
+	CREATE INDEX IF NOT EXISTS idx_mesos_updated     ON mesocycles(updated_at);
+	CREATE INDEX IF NOT EXISTS idx_swaps_mesocycle   ON exercise_swaps(mesocycle_id);
 	`
 	if _, err = db.Exec(schema); err != nil {
 		log.Fatalf("schema: %v", err)
@@ -86,15 +110,20 @@ func upsertRoutine(db *sql.DB, r Routine, serverNow int64) error {
 
 func upsertSession(db *sql.DB, s WorkoutSession, serverNow int64) error {
 	effectiveUpdatedAt := max(s.UpdatedAt, serverNow)
+	isDeloadInt := 0
+	if s.IsDeload {
+		isDeloadInt = 1
+	}
 	_, err := db.Exec(`
-		INSERT INTO sessions(id,routine_id,routine_name,split_day,started_at,completed_at,notes,updated_at)
-		VALUES(?,?,?,?,?,?,?,?)
+		INSERT INTO sessions(id,routine_id,routine_name,split_day,started_at,completed_at,notes,mesocycle_id,is_deload,updated_at)
+		VALUES(?,?,?,?,?,?,?,?,?,?)
 		ON CONFLICT(id) DO UPDATE SET
 			completed_at=excluded.completed_at, notes=excluded.notes,
+			mesocycle_id=excluded.mesocycle_id, is_deload=excluded.is_deload,
 			updated_at=excluded.updated_at
 		WHERE excluded.updated_at > sessions.updated_at`,
 		s.ID, s.RoutineID, s.RoutineName, s.SplitDay,
-		s.StartedAt, s.CompletedAt, s.Notes, effectiveUpdatedAt,
+		s.StartedAt, s.CompletedAt, s.Notes, s.MesocycleID, isDeloadInt, effectiveUpdatedAt,
 	)
 	return err
 }
@@ -137,7 +166,7 @@ func fetchRoutinesSince(db *sql.DB, since int64) ([]Routine, error) {
 }
 
 func fetchSessionsSince(db *sql.DB, since int64) ([]WorkoutSession, error) {
-	rows, err := db.Query(`SELECT id,routine_id,routine_name,split_day,started_at,completed_at,notes,updated_at FROM sessions WHERE updated_at > ?`, since)
+	rows, err := db.Query(`SELECT id,routine_id,routine_name,split_day,started_at,completed_at,notes,mesocycle_id,is_deload,updated_at FROM sessions WHERE updated_at > ?`, since)
 	if err != nil {
 		return nil, err
 	}
@@ -146,9 +175,11 @@ func fetchSessionsSince(db *sql.DB, since int64) ([]WorkoutSession, error) {
 	var out []WorkoutSession
 	for rows.Next() {
 		var s WorkoutSession
-		if err := rows.Scan(&s.ID, &s.RoutineID, &s.RoutineName, &s.SplitDay, &s.StartedAt, &s.CompletedAt, &s.Notes, &s.UpdatedAt); err != nil {
+		var isDeloadInt int
+		if err := rows.Scan(&s.ID, &s.RoutineID, &s.RoutineName, &s.SplitDay, &s.StartedAt, &s.CompletedAt, &s.Notes, &s.MesocycleID, &isDeloadInt, &s.UpdatedAt); err != nil {
 			return nil, err
 		}
+		s.IsDeload = isDeloadInt != 0
 		out = append(out, s)
 	}
 	return out, rows.Err()
@@ -165,6 +196,74 @@ func fetchSetsSince(db *sql.DB, since int64) ([]SetLog, error) {
 	for rows.Next() {
 		var s SetLog
 		if err := rows.Scan(&s.ID, &s.SessionID, &s.ExerciseID, &s.ExerciseName, &s.SetNumber, &s.Reps, &s.WeightKg, &s.RPE, &s.Volume, &s.Timestamp, &s.UpdatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func upsertMesocycle(db *sql.DB, m Mesocycle, serverNow int64) error {
+	effectiveUpdatedAt := max(m.UpdatedAt, serverNow)
+	isDeloadInt := 0
+	if m.IsDeloadWeek {
+		isDeloadInt = 1
+	}
+	_, err := db.Exec(`
+		INSERT INTO mesocycles(id,number,name,target_weeks,started_at,ended_at,is_deload_week,updated_at)
+		VALUES(?,?,?,?,?,?,?,?)
+		ON CONFLICT(id) DO UPDATE SET
+			name=excluded.name, ended_at=excluded.ended_at,
+			is_deload_week=excluded.is_deload_week,
+			updated_at=excluded.updated_at
+		WHERE excluded.updated_at > mesocycles.updated_at`,
+		m.ID, m.Number, m.Name, m.TargetWeeks,
+		m.StartedAt, m.EndedAt, isDeloadInt, effectiveUpdatedAt,
+	)
+	return err
+}
+
+func upsertExerciseSwap(db *sql.DB, s ExerciseSwap) error {
+	_, err := db.Exec(`
+		INSERT OR IGNORE INTO exercise_swaps(id,mesocycle_id,routine_id,removed_exercise_id,added_exercise_id,swapped_at)
+		VALUES(?,?,?,?,?,?)`,
+		s.ID, s.MesocycleID, s.RoutineID,
+		s.RemovedExerciseID, s.AddedExerciseID, s.SwappedAt,
+	)
+	return err
+}
+
+func fetchMesocyclesSince(db *sql.DB, since int64) ([]Mesocycle, error) {
+	rows, err := db.Query(`SELECT id,number,name,target_weeks,started_at,ended_at,is_deload_week,updated_at FROM mesocycles WHERE updated_at > ?`, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []Mesocycle
+	for rows.Next() {
+		var m Mesocycle
+		var isDeloadInt int
+		if err := rows.Scan(&m.ID, &m.Number, &m.Name, &m.TargetWeeks, &m.StartedAt, &m.EndedAt, &isDeloadInt, &m.UpdatedAt); err != nil {
+			return nil, err
+		}
+		m.IsDeloadWeek = isDeloadInt != 0
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+func fetchExerciseSwapsSince(db *sql.DB, since int64) ([]ExerciseSwap, error) {
+	rows, err := db.Query(`SELECT id,mesocycle_id,routine_id,removed_exercise_id,added_exercise_id,swapped_at FROM exercise_swaps WHERE swapped_at > ?`, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []ExerciseSwap
+	for rows.Next() {
+		var s ExerciseSwap
+		if err := rows.Scan(&s.ID, &s.MesocycleID, &s.RoutineID, &s.RemovedExerciseID, &s.AddedExerciseID, &s.SwappedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, s)

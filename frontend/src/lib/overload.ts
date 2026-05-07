@@ -1,4 +1,4 @@
-import type { SetLog, Exercise } from '../db/index.ts'
+import type { SetLog, Exercise, WorkoutSession } from '../db/index.ts'
 
 export interface OverloadSuggestion {
   weightKg: number
@@ -122,4 +122,91 @@ export function rpeColor(rpe: number): string {
   if (rpe === 8) return 'text-yellow-400'
   if (rpe === 9) return 'text-orange-400'
   return 'text-red-400'
+}
+
+// ── Fatigue detection ──────────────────────────────────────────────────────────
+
+export interface FatigueSignal {
+  exerciseId: string
+  exerciseName: string
+  consecutiveHighRpe: number   // sessions in a row with maxRpe >= 9
+  avgRpeLast3: number
+  shouldDeload: boolean        // true when consecutiveHighRpe >= 2
+}
+
+/**
+ * Returns per-exercise RPE history grouped by session (ordered oldest → newest).
+ * Only completed sessions are included.
+ */
+export function rpeHistory(
+  sets: SetLog[],
+  sessions: WorkoutSession[],
+  exerciseId: string,
+): { sessionId: string; date: number; maxRpe: number }[] {
+  const completedIds = new Set(sessions.filter(s => s.completedAt !== null).map(s => s.id))
+  const sessionDateMap = new Map(sessions.map(s => [s.id, s.startedAt]))
+
+  const bySess = new Map<string, { date: number; maxRpe: number }>()
+  for (const s of sets) {
+    if (s.exerciseId !== exerciseId) continue
+    if (!completedIds.has(s.sessionId)) continue
+    const rpe = s.rpe ?? 8
+    const existing = bySess.get(s.sessionId)
+    if (!existing) {
+      bySess.set(s.sessionId, { date: sessionDateMap.get(s.sessionId) ?? s.timestamp, maxRpe: rpe })
+    } else {
+      if (rpe > existing.maxRpe) existing.maxRpe = rpe
+    }
+  }
+
+  return [...bySess.entries()]
+    .map(([sessionId, v]) => ({ sessionId, date: v.date, maxRpe: v.maxRpe }))
+    .sort((a, b) => a.date - b.date)
+}
+
+/**
+ * Detects fatigue signals across all exercises in the last N sessions.
+ * Returns exercises where RPE >= 9 appeared in 2+ consecutive sessions.
+ */
+export function detectFatigue(
+  sets: SetLog[],
+  sessions: WorkoutSession[],
+  exercises: Map<string, Exercise>,
+  minConsecutive = 2,
+): FatigueSignal[] {
+  const exerciseIds = [...new Set(sets.map(s => s.exerciseId))]
+  const signals: FatigueSignal[] = []
+
+  for (const exerciseId of exerciseIds) {
+    const history = rpeHistory(sets, sessions, exerciseId)
+    if (history.length === 0) continue
+
+    // Count consecutive high-RPE sessions from the most recent going backwards
+    let consecutive = 0
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].maxRpe >= 9) {
+        consecutive++
+      } else {
+        break
+      }
+    }
+
+    const last3 = history.slice(-3).map(h => h.maxRpe)
+    const avgRpeLast3 = last3.length > 0
+      ? last3.reduce((a, b) => a + b, 0) / last3.length
+      : 0
+
+    if (consecutive >= minConsecutive) {
+      const ex = exercises.get(exerciseId)
+      signals.push({
+        exerciseId,
+        exerciseName: ex?.name ?? exerciseId,
+        consecutiveHighRpe: consecutive,
+        avgRpeLast3: Math.round(avgRpeLast3 * 10) / 10,
+        shouldDeload: consecutive >= minConsecutive,
+      })
+    }
+  }
+
+  return signals
 }

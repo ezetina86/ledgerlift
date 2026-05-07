@@ -1,4 +1,4 @@
-import type { SplitDay, WorkoutSession } from '../db/index.ts'
+import type { SplitDay, WorkoutSession, Mesocycle } from '../db/index.ts'
 
 const SPLIT_ORDER: SplitDay[] = ['upperA', 'lowerA', 'upperB', 'lowerB']
 
@@ -35,4 +35,9 @@ export function upcomingSchedule(lastSession: WorkoutSession | undefined): Split
   const next = nextSplitDay(lastSession)
   const start = SPLIT_ORDER.indexOf(next)
   return [0, 1, 2, 3].map(i => SPLIT_ORDER[(start + i) % SPLIT_ORDER.length])
+}
+
+/** Returns 1-based week number within a mesocycle. */
+export function mesocycleWeek(mesocycle: Mesocycle): number {
+  return Math.floor((Date.now() - mesocycle.startedAt) / (7 * 24 * 60 * 60 * 1000)) + 1
 }

@@ -16,6 +16,14 @@ vi.mock('../db/index.ts', () => ({
       toArray: vi.fn().mockResolvedValue([]),
       bulkPut: vi.fn().mockResolvedValue(undefined),
     },
+    mesocycles: {
+      toArray: vi.fn().mockResolvedValue([]),
+      bulkPut: vi.fn().mockResolvedValue(undefined),
+    },
+    exerciseSwaps: {
+      toArray: vi.fn().mockResolvedValue([]),
+      bulkPut: vi.fn().mockResolvedValue(undefined),
+    },
   },
   setSyncing: vi.fn(),
 }))

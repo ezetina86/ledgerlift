@@ -6,8 +6,9 @@ import CatalogPage from './pages/CatalogPage.tsx'
 import ProgressPage from './pages/ProgressPage.tsx'
 import HistoryPage from './pages/HistoryPage.tsx'
 import SettingsPage from './pages/SettingsPage.tsx'
+import PlanPage from './pages/PlanPage.tsx'
 
-type Page = 'home' | 'catalog' | 'progress' | 'history' | 'settings'
+type Page = 'home' | 'catalog' | 'progress' | 'history' | 'settings' | 'plan'
 
 export default function App() {
   const [page, setPage] = useState<Page>('home')
@@ -30,11 +31,13 @@ export default function App() {
           <HomePage
             onStartWorkout={id => setActiveSessionId(id)}
             onResumeWorkout={id => setActiveSessionId(id)}
+            onNavigatePlan={() => setPage('plan')}
           />
         )}
         {page === 'catalog'  && <CatalogPage />}
         {page === 'progress' && <ProgressPage />}
         {page === 'history'  && <HistoryPage />}
+        {page === 'plan'     && <PlanPage onNavigate={setPage} />}
         {page === 'settings' && <SettingsPage />}
       </main>
 

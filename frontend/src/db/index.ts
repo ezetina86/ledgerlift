@@ -32,6 +32,26 @@ export interface Routine {
   updatedAt: number         // auto-stamped by Dexie hook
 }
 
+export interface Mesocycle {
+  id: string
+  number: number           // 1-based, auto-incremented
+  name: string             // "Mesocycle 1"
+  targetWeeks: number      // 4 | 5 | 6
+  startedAt: number
+  endedAt: number | null   // null = active
+  isDeloadWeek: boolean
+  updatedAt: number        // auto-stamped by Dexie hook
+}
+
+export interface ExerciseSwap {
+  id: string
+  mesocycleId: string
+  routineId: string
+  removedExerciseId: string
+  addedExerciseId: string
+  swappedAt: number
+}
+
 export interface WorkoutSession {
   id: string
   routineId: string
@@ -40,7 +60,9 @@ export interface WorkoutSession {
   startedAt: number
   completedAt: number | null
   notes: string
-  updatedAt: number         // auto-stamped by Dexie hook
+  mesocycleId: string | null  // FK to Mesocycle
+  isDeload: boolean
+  updatedAt: number            // auto-stamped by Dexie hook
 }
 
 export interface SetLog {
@@ -126,6 +148,8 @@ export class LedgerLiftDB extends Dexie {
   routines!: EntityTable<Routine, 'id'>
   sessions!: EntityTable<WorkoutSession, 'id'>
   sets!: EntityTable<SetLog, 'id'>
+  mesocycles!: EntityTable<Mesocycle, 'id'>
+  exerciseSwaps!: EntityTable<ExerciseSwap, 'id'>
 
   constructor() {
     super('ledgerlift')
@@ -145,6 +169,22 @@ export class LedgerLiftDB extends Dexie {
       sets:      'id, sessionId, exerciseId, timestamp, updatedAt',
     })
 
+    // v3: add mesocycles + exerciseSwaps tables; add mesocycleId + isDeload to sessions
+    this.version(3).stores({
+      exercises:     'id, primaryMuscleGroup, nippardTierList, muscleLadder',
+      routines:      'id, splitDay, createdAt, updatedAt',
+      sessions:      'id, routineId, splitDay, startedAt, completedAt, updatedAt, mesocycleId',
+      sets:          'id, sessionId, exerciseId, timestamp, updatedAt',
+      mesocycles:    'id, startedAt, endedAt, updatedAt',
+      exerciseSwaps: 'id, mesocycleId, routineId, swappedAt',
+    }).upgrade(tx => {
+      // Backfill new nullable columns on existing sessions
+      return tx.table('sessions').toCollection().modify(s => {
+        if (s.mesocycleId === undefined) s.mesocycleId = null
+        if (s.isDeload === undefined) s.isDeload = false
+      })
+    })
+
     // Auto-stamp updatedAt on every write — skipped during sync pull
     this.sessions.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
     this.sessions.hook('updating', (mods: Partial<WorkoutSession> & { updatedAt?: number }) => {
@@ -156,6 +196,10 @@ export class LedgerLiftDB extends Dexie {
     })
     this.routines.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
     this.routines.hook('updating', (mods: Partial<Routine> & { updatedAt?: number }) => {
+      if (!_isSyncing) mods.updatedAt = Date.now()
+    })
+    this.mesocycles.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
+    this.mesocycles.hook('updating', (mods: Partial<Mesocycle> & { updatedAt?: number }) => {
       if (!_isSyncing) mods.updatedAt = Date.now()
     })
   }
@@ -200,6 +244,10 @@ export async function getLastSetsForExercise(
 
 // ─── Seed on first load ───────────────────────────────────────────────────────
 
+function _seedUid(): string {
+  return Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10)
+}
+
 export async function seedDatabase() {
   const { default: exercises } = await import('../data/exercises.json')
 
@@ -214,5 +262,21 @@ export async function seedDatabase() {
     await db.routines.bulkAdd(
       DEFAULT_ROUTINES.map(r => ({ ...r, createdAt: now, updatedAt: now }))
     )
+  }
+
+  const existingMesos = await db.mesocycles.count()
+  if (existingMesos === 0) {
+    const now = Date.now()
+    const meso: Mesocycle = {
+      id: _seedUid(),
+      number: 1,
+      name: 'Mesocycle 1',
+      targetWeeks: 5,
+      startedAt: now,
+      endedAt: null,
+      isDeloadWeek: false,
+      updatedAt: now,
+    }
+    await db.mesocycles.add(meso)
   }
 }

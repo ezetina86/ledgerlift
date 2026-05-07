@@ -21,9 +21,10 @@ interface Props {
   order: number
   defaultSets: number
   defaultReps: string
+  isDeload?: boolean
 }
 
-export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defaultReps }: Props) {
+export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defaultReps, isDeload = false }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingSetId, setEditingSetId] = useState<string | null>(null)
   const { unit } = useWeightUnit()
@@ -72,7 +73,7 @@ export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defa
   const name = exercise?.name ?? exerciseId
   const demoLink = exercise?.demonstrationLink
   const setsLogged = sets.length
-  const totalTarget = defaultSets
+  const totalTarget = isDeload ? Math.ceil(defaultSets / 2) : defaultSets
 
   return (
     <div
@@ -121,7 +122,19 @@ export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defa
           </div>
         </div>
 
-        {suggestion && (
+        {isDeload ? (
+          <div
+            className="mt-2 px-3 py-1.5 rounded-lg flex items-center gap-2"
+            style={{ background: 'oklch(16% 0.10 55)' }}
+          >
+            <span style={{ fontSize: '11px', color: 'oklch(72% 0.18 55)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.06em' }}>
+              DELOAD TARGET
+            </span>
+            <span style={{ fontSize: '13px', color: 'oklch(80% 0.12 55)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600 }}>
+              {totalTarget} sets × same weight
+            </span>
+          </div>
+        ) : suggestion && (
           <div
             className="mt-2 px-3 py-1.5 rounded-lg flex items-center gap-2"
             style={{ background: 'oklch(17% 0.10 293)' }}

@@ -106,6 +106,16 @@ func makeSync(db *sql.DB, nowFn ...func() int64) http.HandlerFunc {
 				log.Printf("upsert set %s: %v", s.ID, err)
 			}
 		}
+		for _, m := range req.Mesocycles {
+			if err := upsertMesocycle(db, m, now); err != nil {
+				log.Printf("upsert mesocycle %s: %v", m.ID, err)
+			}
+		}
+		for _, sw := range req.ExerciseSwaps {
+			if err := upsertExerciseSwap(db, sw); err != nil {
+				log.Printf("upsert exercise_swap %s: %v", sw.ID, err)
+			}
+		}
 
 		routines, err := fetchRoutinesSince(db, req.LastSyncAt)
 		if err != nil {
@@ -119,16 +129,28 @@ func makeSync(db *sql.DB, nowFn ...func() int64) http.HandlerFunc {
 		if err != nil {
 			log.Printf("fetch sets: %v", err)
 		}
+		mesocycles, err := fetchMesocyclesSince(db, req.LastSyncAt)
+		if err != nil {
+			log.Printf("fetch mesocycles: %v", err)
+		}
+		exerciseSwaps, err := fetchExerciseSwapsSince(db, req.LastSyncAt)
+		if err != nil {
+			log.Printf("fetch exercise_swaps: %v", err)
+		}
 
-		if routines == nil { routines = []Routine{} }
-		if sessions == nil { sessions = []WorkoutSession{} }
-		if sets == nil     { sets = []SetLog{} }
+		if routines == nil      { routines = []Routine{} }
+		if sessions == nil      { sessions = []WorkoutSession{} }
+		if sets == nil          { sets = []SetLog{} }
+		if mesocycles == nil    { mesocycles = []Mesocycle{} }
+		if exerciseSwaps == nil { exerciseSwaps = []ExerciseSwap{} }
 
 		writeJSON(w, http.StatusOK, SyncResponse{
-			SyncedAt: now,
-			Routines: routines,
-			Sessions: sessions,
-			Sets:     sets,
+			SyncedAt:      now,
+			Routines:      routines,
+			Sessions:      sessions,
+			Sets:          sets,
+			Mesocycles:    mesocycles,
+			ExerciseSwaps: exerciseSwaps,
 		})
 	}
 }

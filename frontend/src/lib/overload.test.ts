@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
   suggestNext, weeklyVolumeByGroup, computePRs,
-  exerciseProgression, rpeColor,
+  exerciseProgression, rpeColor, rpeHistory, detectFatigue,
 } from './overload.ts'
-import type { SetLog, Exercise } from '../db/index.ts'
+import type { SetLog, Exercise, WorkoutSession } from '../db/index.ts'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -317,6 +317,139 @@ describe('exerciseProgression', () => {
     const result = exerciseProgression(sets, 'ex-1')
     expect(result).toHaveLength(1)
     expect(result[0].sessionDate).toBe(2000) // sessionDate NOT updated because 1000 < 2000
+  })
+})
+
+// ── rpeHistory ────────────────────────────────────────────────────────────────
+
+function makeSession(overrides: Partial<WorkoutSession> = {}): WorkoutSession {
+  return {
+    id: 'sess-1', routineId: 'r-1', routineName: 'Upper A',
+    splitDay: 'upperA', startedAt: 1000, completedAt: 2000,
+    notes: '', mesocycleId: null, isDeload: false, updatedAt: 0,
+    ...overrides,
+  }
+}
+
+describe('rpeHistory', () => {
+  it('returns empty when no sets for exercise', () => {
+    const sets = [makeSet({ exerciseId: 'squat' })]
+    const sessions = [makeSession()]
+    expect(rpeHistory(sets, sessions, 'bench')).toEqual([])
+  })
+
+  it('excludes sets from incomplete sessions', () => {
+    const sess = makeSession({ id: 'sess-1', completedAt: null })
+    const sets = [makeSet({ sessionId: 'sess-1', exerciseId: 'ex-1' })]
+    expect(rpeHistory(sets, [sess], 'ex-1')).toHaveLength(0)
+  })
+
+  it('groups sets by session and picks maxRpe', () => {
+    const sess = makeSession({ id: 'sess-1', startedAt: 1000, completedAt: 2000 })
+    const sets = [
+      makeSet({ id: 's1', sessionId: 'sess-1', exerciseId: 'ex-1', rpe: 7 }),
+      makeSet({ id: 's2', sessionId: 'sess-1', exerciseId: 'ex-1', rpe: 9 }),
+    ]
+    const result = rpeHistory(sets, [sess], 'ex-1')
+    expect(result).toHaveLength(1)
+    expect(result[0].maxRpe).toBe(9)
+    expect(result[0].sessionId).toBe('sess-1')
+  })
+
+  it('orders results oldest first', () => {
+    const sessA = makeSession({ id: 'sess-a', startedAt: 1000, completedAt: 2000 })
+    const sessB = makeSession({ id: 'sess-b', startedAt: 5000, completedAt: 6000 })
+    const sets = [
+      makeSet({ id: 's1', sessionId: 'sess-b', exerciseId: 'ex-1', rpe: 8 }),
+      makeSet({ id: 's2', sessionId: 'sess-a', exerciseId: 'ex-1', rpe: 6 }),
+    ]
+    const result = rpeHistory(sets, [sessA, sessB], 'ex-1')
+    expect(result[0].sessionId).toBe('sess-a')
+    expect(result[1].sessionId).toBe('sess-b')
+  })
+
+  it('defaults null RPE to 8', () => {
+    const sess = makeSession({ id: 'sess-1', completedAt: 2000 })
+    const sets = [makeSet({ sessionId: 'sess-1', exerciseId: 'ex-1', rpe: null })]
+    const result = rpeHistory(sets, [sess], 'ex-1')
+    expect(result[0].maxRpe).toBe(8)
+  })
+})
+
+// ── detectFatigue ─────────────────────────────────────────────────────────────
+
+describe('detectFatigue', () => {
+  function makeSessionPair(id: string, ts: number): WorkoutSession {
+    return makeSession({ id, startedAt: ts, completedAt: ts + 1000 })
+  }
+
+  it('returns signal when 2+ consecutive sessions have RPE >= 9', () => {
+    const sessions = [
+      makeSessionPair('s1', 1000),
+      makeSessionPair('s2', 2000),
+    ]
+    const sets = [
+      makeSet({ id: 'a1', sessionId: 's1', exerciseId: 'ex-1', rpe: 9 }),
+      makeSet({ id: 'a2', sessionId: 's2', exerciseId: 'ex-1', rpe: 10 }),
+    ]
+    const exMap = new Map([['ex-1', makeExercise({ id: 'ex-1', name: 'Bench Press' })]])
+    const signals = detectFatigue(sets, sessions, exMap)
+    expect(signals).toHaveLength(1)
+    expect(signals[0].exerciseId).toBe('ex-1')
+    expect(signals[0].shouldDeload).toBe(true)
+    expect(signals[0].consecutiveHighRpe).toBe(2)
+  })
+
+  it('no signal when only 1 high-RPE session', () => {
+    const sessions = [makeSessionPair('s1', 1000)]
+    const sets = [makeSet({ sessionId: 's1', exerciseId: 'ex-1', rpe: 9 })]
+    const exMap = new Map([['ex-1', makeExercise()]])
+    expect(detectFatigue(sets, sessions, exMap)).toHaveLength(0)
+  })
+
+  it('signal clears when a low-RPE session resets the streak', () => {
+    const sessions = [
+      makeSessionPair('s1', 1000),
+      makeSessionPair('s2', 2000),
+      makeSessionPair('s3', 3000),
+    ]
+    const sets = [
+      makeSet({ id: 'a1', sessionId: 's1', exerciseId: 'ex-1', rpe: 9 }),
+      makeSet({ id: 'a2', sessionId: 's2', exerciseId: 'ex-1', rpe: 6 }),  // reset
+      makeSet({ id: 'a3', sessionId: 's3', exerciseId: 'ex-1', rpe: 9 }),
+    ]
+    const exMap = new Map([['ex-1', makeExercise()]])
+    expect(detectFatigue(sets, sessions, exMap)).toHaveLength(0)
+  })
+
+  it('handles null RPE treating it as 8 (below threshold)', () => {
+    const sessions = [
+      makeSessionPair('s1', 1000),
+      makeSessionPair('s2', 2000),
+    ]
+    const sets = [
+      makeSet({ id: 'a1', sessionId: 's1', exerciseId: 'ex-1', rpe: null }),
+      makeSet({ id: 'a2', sessionId: 's2', exerciseId: 'ex-1', rpe: null }),
+    ]
+    const exMap = new Map([['ex-1', makeExercise()]])
+    // RPE defaults to 8, which is < 9, so no signal
+    expect(detectFatigue(sets, sessions, exMap)).toHaveLength(0)
+  })
+
+  it('detects signal from 3 consecutive high-RPE sessions', () => {
+    const sessions = [
+      makeSessionPair('s1', 1000),
+      makeSessionPair('s2', 2000),
+      makeSessionPair('s3', 3000),
+    ]
+    const sets = [
+      makeSet({ id: 'a1', sessionId: 's1', exerciseId: 'ex-1', rpe: 9 }),
+      makeSet({ id: 'a2', sessionId: 's2', exerciseId: 'ex-1', rpe: 9 }),
+      makeSet({ id: 'a3', sessionId: 's3', exerciseId: 'ex-1', rpe: 10 }),
+    ]
+    const exMap = new Map([['ex-1', makeExercise()]])
+    const signals = detectFatigue(sets, sessions, exMap)
+    expect(signals[0].consecutiveHighRpe).toBe(3)
   })
 })
 

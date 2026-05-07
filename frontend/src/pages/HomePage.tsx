@@ -1,13 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useMemo } from 'react'
 import { db } from '../db/index.ts'
-import type { WorkoutSession } from '../db/index.ts'
-import { nextSplitDay, SPLIT_LABELS, SPLIT_FOCUS, ROUTINE_ID } from '../lib/split.ts'
+import type { WorkoutSession, Mesocycle } from '../db/index.ts'
+import { nextSplitDay, SPLIT_LABELS, SPLIT_FOCUS, ROUTINE_ID, mesocycleWeek } from '../lib/split.ts'
 import { totalVolume, uid, KG_TO_LBS } from '../lib/utils.ts'
 import { useWeightUnit } from '../lib/prefs.ts'
+import { detectFatigue } from '../lib/overload.ts'
 
 interface Props {
   onStartWorkout: (sessionId: string) => void
   onResumeWorkout: (sessionId: string) => void
+  onNavigatePlan?: () => void
 }
 
 const MUSCLE_COLORS: Record<string, string> = {
@@ -25,10 +28,24 @@ const MUSCLE_COLORS: Record<string, string> = {
 
 const DAY_NAMES = ['SUN','MON','TUE','WED','THU','FRI','SAT']
 
-export default function HomePage({ onStartWorkout, onResumeWorkout }: Props) {
+export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePlan }: Props) {
   const sessions = useLiveQuery<WorkoutSession[]>(
     () => db.sessions.orderBy('startedAt').reverse().limit(10).toArray(), []
   ) ?? []
+  const activeMeso = useLiveQuery<Mesocycle | undefined>(
+    () => db.mesocycles.filter(m => m.endedAt === null).first()
+  )
+  const allSets = useLiveQuery(() => db.sets.toArray()) ?? []
+  const completedSessions = useLiveQuery(
+    () => db.sessions.filter(s => s.completedAt !== null).toArray()
+  ) ?? []
+  const exercises = useLiveQuery(() => db.exercises.toArray()) ?? []
+  const exMap = useMemo(() => new Map(exercises.map(e => [e.id, e])), [exercises])
+
+  const fatigueSignals = useMemo(
+    () => detectFatigue(allSets, completedSessions, exMap),
+    [allSets, completedSessions, exMap]
+  )
 
   const activeSession = sessions.find(s => s.completedAt === null)
   const lastCompleted = sessions.find(s => s.completedAt !== null)
@@ -48,7 +65,10 @@ export default function HomePage({ onStartWorkout, onResumeWorkout }: Props) {
     const session: WorkoutSession = {
       id: uid(), routineId: routine.id, routineName: routine.name,
       splitDay: routine.splitDay, startedAt: Date.now(),
-      completedAt: null, notes: '', updatedAt: 0,
+      completedAt: null, notes: '',
+      mesocycleId: activeMeso?.id ?? null,
+      isDeload: activeMeso?.isDeloadWeek ?? false,
+      updatedAt: 0,
     }
     await db.sessions.add(session)
     onStartWorkout(session.id)
@@ -114,6 +134,60 @@ export default function HomePage({ onStartWorkout, onResumeWorkout }: Props) {
           })}
         </div>
       </div>
+
+      {/* ── Mesocycle status chip ────────────── */}
+      {activeMeso && (
+        <div className="mx-4 mb-4 rounded-xl px-4 py-3 overflow-hidden" style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}>
+          <div className="flex items-center justify-between mb-2">
+            <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: activeMeso.isDeloadWeek ? 'oklch(72% 0.18 55)' : 'oklch(62% 0.24 293)', textTransform: 'uppercase' }}>
+              {activeMeso.isDeloadWeek ? 'DELOAD WEEK' : `MESOCYCLE ${activeMeso.number}`}
+            </p>
+            <p style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600 }}>
+              WEEK {Math.min(mesocycleWeek(activeMeso), activeMeso.targetWeeks)} OF {activeMeso.targetWeeks}
+            </p>
+          </div>
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: 'oklch(20% 0.010 293)' }}>
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${Math.min((mesocycleWeek(activeMeso) / activeMeso.targetWeeks) * 100, 100)}%`,
+                background: activeMeso.isDeloadWeek ? 'oklch(72% 0.18 55)' : 'oklch(62% 0.24 293)',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Fatigue warning banner ────────────── */}
+      {fatigueSignals.length > 0 && (
+        <div
+          className="mx-4 mb-4 rounded-xl px-4 py-3"
+          style={{ background: 'oklch(16% 0.10 55)', border: '1px solid oklch(30% 0.16 55)' }}
+        >
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '14px', color: 'oklch(80% 0.20 55)', letterSpacing: '0.04em', marginBottom: 3 }}>
+            RPE CREEPING HIGH ON: {fatigueSignals.map(s => s.exerciseName).join(', ')}
+          </p>
+          <p style={{ fontSize: '11px', color: 'oklch(60% 0.12 55)', marginBottom: 8 }}>
+            Consider deloading before next cycle
+          </p>
+          {onNavigatePlan && (
+            <button
+              onClick={onNavigatePlan}
+              className="px-3 py-1.5 rounded-lg transition-colors active:scale-[0.97]"
+              style={{
+                background: 'oklch(24% 0.14 55)',
+                color: 'oklch(80% 0.20 55)',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: '12px',
+                letterSpacing: '0.08em',
+              }}
+            >
+              MANAGE CYCLE
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Active session banner ────────────── */}
       {activeSession && (

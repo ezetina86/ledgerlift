@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
-import type { WorkoutSession, Routine } from '../db/index.ts'
+import type { WorkoutSession, Routine, Mesocycle } from '../db/index.ts'
 import { formatElapsed } from '../lib/utils.ts'
 import { syncWithBackend, getServerUrl } from '../lib/sync.ts'
 import ExerciseBlock from '../components/ExerciseBlock.tsx'
@@ -18,6 +18,7 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
 
   const session = useLiveQuery<WorkoutSession | undefined>(() => db.sessions.get(sessionId), [sessionId])
   const routine  = useLiveQuery<Routine | undefined>(() => session ? db.routines.get(session.routineId) : undefined, [session?.routineId])
+  const activeMeso = useLiveQuery<Mesocycle | undefined>(() => db.mesocycles.filter(m => m.endedAt === null).first())
 
   // Tick every second to recompute elapsed during render
   useEffect(() => {
@@ -60,9 +61,26 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
           </button>
 
           <div className="flex-1">
-            <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', letterSpacing: '-0.01em', color: 'oklch(97% 0.005 293)', lineHeight: 1, margin: 0 }}>
-              {session.routineName.toUpperCase()}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', letterSpacing: '-0.01em', color: 'oklch(97% 0.005 293)', lineHeight: 1, margin: 0 }}>
+                {session.routineName.toUpperCase()}
+              </h1>
+              {activeMeso?.isDeloadWeek && (
+                <span
+                  className="px-2 py-0.5 rounded-md shrink-0"
+                  style={{
+                    background: 'oklch(24% 0.12 55)',
+                    color: 'oklch(72% 0.18 55)',
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700,
+                    fontSize: '10px',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  DELOAD
+                </span>
+              )}
+            </div>
             <p className="num mt-0.5" style={{ fontSize: '13px', color: 'oklch(62% 0.24 293)' }}>
               {elapsed}
             </p>
@@ -91,6 +109,7 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
               order={ex.order}
               defaultSets={ex.defaultSets}
               defaultReps={ex.defaultReps}
+              isDeload={activeMeso?.isDeloadWeek ?? false}
             />
           ))}
 
