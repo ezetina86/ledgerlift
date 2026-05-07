@@ -20,7 +20,7 @@ func testDB(t *testing.T) *sql.DB {
 func TestInitDB_TablesExist(t *testing.T) {
 	db := testDB(t)
 
-	for _, table := range []string{"routines", "sessions", "sets"} {
+	for _, table := range []string{"routines", "sessions", "sets", "mesocycles", "exercise_swaps"} {
 		var name string
 		err := db.QueryRow(
 			`SELECT name FROM sqlite_master WHERE type='table' AND name=?`, table,
@@ -34,7 +34,7 @@ func TestInitDB_TablesExist(t *testing.T) {
 func TestInitDB_IndexesExist(t *testing.T) {
 	db := testDB(t)
 
-	for _, idx := range []string{"idx_sessions_updated", "idx_sets_updated", "idx_sets_session"} {
+	for _, idx := range []string{"idx_sessions_updated", "idx_sets_updated", "idx_sets_session", "idx_mesos_updated", "idx_swaps_mesocycle"} {
 		var name string
 		err := db.QueryRow(
 			`SELECT name FROM sqlite_master WHERE type='index' AND name=?`, idx,
@@ -390,5 +390,250 @@ func TestFetchSetsSince_FiltersOlder(t *testing.T) {
 	}
 	if len(rows) != 1 || rows[0].ID != "set-2" {
 		t.Errorf("expected only set-2, got %v", rows)
+	}
+}
+
+// ── Mesocycles ─────────────────────────────────────────────────────────────────
+
+func TestUpsertMesocycle_Insert(t *testing.T) {
+	db := testDB(t)
+
+	m := Mesocycle{
+		ID: "meso-1", Number: 1, Name: "Mesocycle 1", TargetWeeks: 5,
+		StartedAt: 1_000_000, EndedAt: nil, IsDeloadWeek: false, UpdatedAt: 100,
+	}
+	if err := upsertMesocycle(db, m, 0); err != nil {
+		t.Fatalf("upsertMesocycle: %v", err)
+	}
+
+	rows, err := fetchMesocyclesSince(db, 0)
+	if err != nil {
+		t.Fatalf("fetchMesocyclesSince: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 mesocycle, got %d", len(rows))
+	}
+	if rows[0].Name != "Mesocycle 1" {
+		t.Errorf("expected name 'Mesocycle 1', got %q", rows[0].Name)
+	}
+	if rows[0].Number != 1 {
+		t.Errorf("expected number=1, got %d", rows[0].Number)
+	}
+	if rows[0].TargetWeeks != 5 {
+		t.Errorf("expected targetWeeks=5, got %d", rows[0].TargetWeeks)
+	}
+	if rows[0].EndedAt != nil {
+		t.Errorf("expected endedAt nil, got %v", rows[0].EndedAt)
+	}
+}
+
+func TestUpsertMesocycle_NewerWins(t *testing.T) {
+	db := testDB(t)
+
+	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Original", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 100}, 0)
+	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Updated", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 200}, 0)
+
+	rows, _ := fetchMesocyclesSince(db, 0)
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 mesocycle, got %d", len(rows))
+	}
+	if rows[0].Name != "Updated" {
+		t.Errorf("newer record should win; expected 'Updated', got %q", rows[0].Name)
+	}
+}
+
+func TestUpsertMesocycle_OlderNoOverwrite(t *testing.T) {
+	db := testDB(t)
+
+	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Original", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 200}, 0)
+	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Stale", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 50}, 0)
+
+	rows, _ := fetchMesocyclesSince(db, 0)
+	if rows[0].Name != "Original" {
+		t.Errorf("older record should not overwrite; expected 'Original', got %q", rows[0].Name)
+	}
+}
+
+func TestUpsertMesocycle_IsDeloadWeek_RoundTrip(t *testing.T) {
+	db := testDB(t)
+
+	// Insert with isDeloadWeek=false
+	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, IsDeloadWeek: false, UpdatedAt: 100}, 0)
+	rows, _ := fetchMesocyclesSince(db, 0)
+	if rows[0].IsDeloadWeek {
+		t.Error("expected IsDeloadWeek=false")
+	}
+
+	// Toggle deload on
+	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, IsDeloadWeek: true, UpdatedAt: 200}, 0)
+	rows, _ = fetchMesocyclesSince(db, 0)
+	if !rows[0].IsDeloadWeek {
+		t.Error("expected IsDeloadWeek=true after update")
+	}
+}
+
+func TestUpsertMesocycle_EndedAt_Nullable(t *testing.T) {
+	db := testDB(t)
+
+	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, EndedAt: nil, UpdatedAt: 100}, 0)
+	rows, _ := fetchMesocyclesSince(db, 0)
+	if rows[0].EndedAt != nil {
+		t.Errorf("expected endedAt nil, got %v", rows[0].EndedAt)
+	}
+
+	ended := int64(2_000_000)
+	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, EndedAt: &ended, UpdatedAt: 300}, 0)
+	rows, _ = fetchMesocyclesSince(db, 0)
+	if rows[0].EndedAt == nil {
+		t.Error("expected endedAt to be set after ending cycle")
+	} else if *rows[0].EndedAt != ended {
+		t.Errorf("expected endedAt=%d, got %d", ended, *rows[0].EndedAt)
+	}
+}
+
+func TestFetchMesocyclesSince_FiltersOlder(t *testing.T) {
+	db := testDB(t)
+
+	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Early", TargetWeeks: 5, StartedAt: 1000, UpdatedAt: 50}, 0)
+	upsertMesocycle(db, Mesocycle{ID: "meso-2", Number: 2, Name: "Late", TargetWeeks: 4, StartedAt: 2000, UpdatedAt: 300}, 0)
+
+	rows, err := fetchMesocyclesSince(db, 100)
+	if err != nil {
+		t.Fatalf("fetchMesocyclesSince: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 mesocycle since ts=100, got %d", len(rows))
+	}
+	if rows[0].ID != "meso-2" {
+		t.Errorf("expected meso-2, got %q", rows[0].ID)
+	}
+}
+
+func TestFetchMesocyclesSince_Empty(t *testing.T) {
+	db := testDB(t)
+	rows, err := fetchMesocyclesSince(db, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(rows) != 0 {
+		t.Errorf("expected 0 rows, got %d", len(rows))
+	}
+}
+
+// ── Exercise Swaps ─────────────────────────────────────────────────────────────
+
+func TestUpsertExerciseSwap_Insert(t *testing.T) {
+	db := testDB(t)
+
+	s := ExerciseSwap{
+		ID: "swap-1", MesocycleID: "meso-1", RoutineID: "upper-a",
+		RemovedExerciseID: "bench-press", AddedExerciseID: "incline-press", SwappedAt: 1_000_000,
+	}
+	if err := upsertExerciseSwap(db, s); err != nil {
+		t.Fatalf("upsertExerciseSwap: %v", err)
+	}
+
+	rows, err := fetchExerciseSwapsSince(db, 0)
+	if err != nil {
+		t.Fatalf("fetchExerciseSwapsSince: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 swap, got %d", len(rows))
+	}
+	if rows[0].RemovedExerciseID != "bench-press" {
+		t.Errorf("expected removedExerciseId 'bench-press', got %q", rows[0].RemovedExerciseID)
+	}
+	if rows[0].AddedExerciseID != "incline-press" {
+		t.Errorf("expected addedExerciseId 'incline-press', got %q", rows[0].AddedExerciseID)
+	}
+	if rows[0].RoutineID != "upper-a" {
+		t.Errorf("expected routineId 'upper-a', got %q", rows[0].RoutineID)
+	}
+}
+
+func TestUpsertExerciseSwap_DuplicateIgnored(t *testing.T) {
+	db := testDB(t)
+
+	s := ExerciseSwap{
+		ID: "swap-1", MesocycleID: "meso-1", RoutineID: "upper-a",
+		RemovedExerciseID: "bench-press", AddedExerciseID: "incline-press", SwappedAt: 1_000_000,
+	}
+	upsertExerciseSwap(db, s)
+	// Insert the same ID again — INSERT OR IGNORE should silently discard
+	s.AddedExerciseID = "dumbbell-press"
+	upsertExerciseSwap(db, s)
+
+	rows, _ := fetchExerciseSwapsSince(db, 0)
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 swap after duplicate insert, got %d", len(rows))
+	}
+	// First insert wins — added_exercise_id should still be incline-press
+	if rows[0].AddedExerciseID != "incline-press" {
+		t.Errorf("duplicate should be ignored; expected 'incline-press', got %q", rows[0].AddedExerciseID)
+	}
+}
+
+func TestFetchExerciseSwapsSince_FiltersOlder(t *testing.T) {
+	db := testDB(t)
+
+	upsertExerciseSwap(db, ExerciseSwap{
+		ID: "swap-1", MesocycleID: "meso-1", RoutineID: "upper-a",
+		RemovedExerciseID: "ex-old", AddedExerciseID: "ex-new", SwappedAt: 50,
+	})
+	upsertExerciseSwap(db, ExerciseSwap{
+		ID: "swap-2", MesocycleID: "meso-1", RoutineID: "lower-a",
+		RemovedExerciseID: "ex-old2", AddedExerciseID: "ex-new2", SwappedAt: 300,
+	})
+
+	rows, err := fetchExerciseSwapsSince(db, 100)
+	if err != nil {
+		t.Fatalf("fetchExerciseSwapsSince: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 swap since ts=100, got %d", len(rows))
+	}
+	if rows[0].ID != "swap-2" {
+		t.Errorf("expected swap-2, got %q", rows[0].ID)
+	}
+}
+
+func TestFetchExerciseSwapsSince_Empty(t *testing.T) {
+	db := testDB(t)
+	rows, err := fetchExerciseSwapsSince(db, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(rows) != 0 {
+		t.Errorf("expected 0 rows, got %d", len(rows))
+	}
+}
+
+// ── Session + Mesocycle fields ──────────────────────────────────────────────────
+
+func TestUpsertSession_MesocycleFields(t *testing.T) {
+	db := testDB(t)
+
+	mesoID := "meso-1"
+	s := WorkoutSession{
+		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
+		SplitDay: "upperA", StartedAt: 1_000_000,
+		MesocycleID: &mesoID, IsDeload: true, UpdatedAt: 100,
+	}
+	if err := upsertSession(db, s, 0); err != nil {
+		t.Fatalf("upsertSession: %v", err)
+	}
+
+	rows, err := fetchSessionsSince(db, 0)
+	if err != nil {
+		t.Fatalf("fetchSessionsSince: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 session, got %d", len(rows))
+	}
+	if rows[0].MesocycleID == nil || *rows[0].MesocycleID != mesoID {
+		t.Errorf("expected mesocycleId=%q, got %v", mesoID, rows[0].MesocycleID)
+	}
+	if !rows[0].IsDeload {
+		t.Error("expected isDeload=true")
 	}
 }
