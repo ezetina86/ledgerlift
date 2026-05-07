@@ -21,9 +21,10 @@ export default function ExercisePickerSheet({ open, onClose, onSelect, filterMus
   const [search, setSearch] = useState('')
   const [activeGroup, setActiveGroup] = useState(filterMuscleGroup ?? 'All')
 
-  const exercises = useLiveQuery(() => db.exercises.toArray()) ?? []
+  const exercises = useLiveQuery(() => db.exercises.toArray())
 
   const filtered = useMemo(() => {
+    if (!exercises) return []
     const q = search.toLowerCase()
     return exercises.filter(ex => {
       const matchGroup = activeGroup === 'All' || ex.primaryMuscleGroup === activeGroup

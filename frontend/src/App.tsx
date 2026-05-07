@@ -37,7 +37,7 @@ export default function App() {
         {page === 'catalog'  && <CatalogPage />}
         {page === 'progress' && <ProgressPage />}
         {page === 'history'  && <HistoryPage />}
-        {page === 'plan'     && <PlanPage onNavigate={setPage} />}
+        {page === 'plan'     && <PlanPage />}
         {page === 'settings' && <SettingsPage />}
       </main>
 

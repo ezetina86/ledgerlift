@@ -6,10 +6,6 @@ import { mesocycleWeek } from '../lib/split.ts'
 import { uid } from '../lib/utils.ts'
 import ExercisePickerSheet from '../components/ExercisePickerSheet.tsx'
 
-interface Props {
-  onNavigate?: (page: string) => void
-}
-
 const SPLIT_DAY_LABELS: Record<string, string> = {
   'upper-a': 'Upper A — Mon',
   'lower-a': 'Lower A — Tue',
@@ -17,7 +13,7 @@ const SPLIT_DAY_LABELS: Record<string, string> = {
   'lower-b': 'Lower B — Fri',
 }
 
-export default function PlanPage({ onNavigate: _onNavigate }: Props) {
+export default function PlanPage() {
   const activeMeso = useLiveQuery<Mesocycle | undefined>(
     () => db.mesocycles.filter(m => m.endedAt === null).first()
   )
@@ -35,8 +31,8 @@ export default function PlanPage({ onNavigate: _onNavigate }: Props) {
     () => db.sessions.filter(s => s.completedAt !== null).toArray()
   ) ?? []
   const allSets = useLiveQuery(() => db.sets.toArray()) ?? []
-  const exercises = useLiveQuery<Exercise[]>(() => db.exercises.toArray()) ?? []
-  const exMap = useMemo(() => new Map(exercises.map(e => [e.id, e])), [exercises])
+  const exercises = useLiveQuery<Exercise[]>(() => db.exercises.toArray())
+  const exMap = useMemo(() => new Map((exercises ?? []).map(e => [e.id, e])), [exercises])
 
   const [showNewMesoSheet, setShowNewMesoSheet] = useState(false)
   const [showEndConfirm, setShowEndConfirm] = useState(false)
