@@ -6,6 +6,11 @@ A local-first PWA workout tracker built on Jeff Nippard's science-based protocol
 
 - **4-day Upper/Lower split** — Upper A → Lower A → Upper B → Lower B, cycling automatically
 - **RPE-based progressive overload** — suggests next session's weight or reps based on how hard your last set felt
+- **Weight pre-fill** — automatically loads the last weight used for each exercise so you start from where you left off
+- **Mesocycle management** — track 4–6 week training blocks; start new cycles, toggle deload week, view full history
+- **Exercise swaps** — swap any exercise in a routine from the full 154-exercise catalog; swap history recorded per mesocycle
+- **Fatigue detection** — warns when RPE creeps ≥ 9 across consecutive sessions and suggests a deload
+- **Deload support** — deload badge in the workout header; exercise blocks show halved set targets automatically
 - **154-exercise catalog** — curated from Nippard's tier list and Muscle Ladder program, with YouTube demo links
 - **Weekly volume dashboard** — rolling 7-day volume per muscle group with sparkline progression charts
 - **Personal records** — all-time best weight per exercise, updated automatically
@@ -30,14 +35,14 @@ A local-first PWA workout tracker built on Jeff Nippard's science-based protocol
 ledgerlift/
 ├── frontend/                  # React PWA
 │   ├── src/
-│   │   ├── components/        # BottomNav, ExerciseBlock, SetSheet
-│   │   ├── db/index.ts        # Dexie schema — exercises, routines, sessions, sets
+│   │   ├── components/        # BottomNav, ExerciseBlock, ExercisePickerSheet, SetSheet
+│   │   ├── db/index.ts        # Dexie schema v3 — exercises, routines, sessions, sets, mesocycles, exerciseSwaps
 │   │   ├── lib/
-│   │   │   ├── overload.ts    # RPE overload engine + volume analytics
-│   │   │   ├── split.ts       # 4-day cycle logic
+│   │   │   ├── overload.ts    # RPE overload engine, volume analytics, fatigue detection
+│   │   │   ├── split.ts       # 4-day cycle logic, mesocycle week helper
 │   │   │   ├── sync.ts        # Delta sync client
 │   │   │   └── utils.ts       # Formatting helpers
-│   │   ├── pages/             # Home, Workout, Catalog, Progress, History, Settings
+│   │   ├── pages/             # Home, Workout, Catalog, Progress, History, Settings, Plan
 │   │   └── data/exercises.json  # 154 exercises (generated from xlsx)
 │   ├── vitest.config.ts
 │   └── vite.config.ts
@@ -49,7 +54,9 @@ ledgerlift/
 │   ├── handlers_test.go       # HTTP handler tests
 │   └── Dockerfile             # 3-stage build (bun → go → alpine)
 ├── scripts/
-│   └── parse_catalog.py       # xlsx → exercises.json
+│   ├── parse_catalog.py       # xlsx → exercises.json
+│   └── install-hooks.sh       # installs pre-push hook (blocks direct push to master/dev)
+├── .claude/commands/ship.md   # /ship slash command — branch, version, changelog, PR
 ├── docker-compose.yml
 └── Makefile
 ```
@@ -79,7 +86,7 @@ cd backend
 go run . -db ledgerlift.db
 ```
 
-API available at `http://localhost:8080`. Set the server URL in the app's **Settings** tab to enable sync.
+API available at `http://localhost:9090`. Set the server URL in the app's **Settings** tab to enable sync.
 
 ### Run both together
 
@@ -105,7 +112,7 @@ make clean        Remove build artifacts
 The backend serves the compiled frontend via `go:embed` — one binary, no separate static file server.
 
 ```bash
-make deploy       # builds image + starts container on port 8080
+make deploy       # builds image + starts container on port 9090
 ```
 
 Data persists in a Docker named volume (`ledgerlift-data`). The app connects to the backend over your local network; configure the URL in **Settings → Server URL**.
@@ -115,17 +122,39 @@ make backup       # → backups/ledgerlift_20240115_143022.db
 make restore      # restores latest backup (destructive — prompts)
 ```
 
+## Branch Workflow
+
+```
+feature/<slug>  →  dev  →  master
+```
+
+- All work goes on a `feature/*`, `fix/*`, or `chore/*` branch
+- PRs target `dev`; direct pushes to `dev` and `master` are blocked by a pre-push hook
+- `master` is promote-only — merge `dev → master` to publish a new Docker image
+
+Install the pre-push hook after a fresh clone:
+
+```bash
+bash scripts/install-hooks.sh
+```
+
+Use the `/ship` Claude Code command to automate branching, versioning, changelog, and PR creation:
+
+```
+/ship add-rest-timer
+```
+
 ## Testing
 
 ```bash
-# Frontend — 90 tests
+# Frontend — 153 tests
 cd frontend && bun run test
 
-# Backend — 33 tests
+# Backend — 50 tests
 cd backend && go test ./... -v
 ```
 
-Frontend tests use Vitest with jsdom. Backend tests use Go's stdlib `testing` package with per-test temporary SQLite files.
+Frontend tests use Vitest with jsdom. Backend tests use Go's stdlib `testing` package with per-test temporary SQLite files. Backend coverage is gated at ≥ 80% in CI.
 
 ## Overload Logic
 
@@ -142,8 +171,8 @@ RPE is optional per set; when omitted it defaults to 8 for suggestion purposes.
 The sync is intentionally simple: push all local records, pull everything updated since `lastSyncAt`. Conflict resolution is last-write-wins on `updatedAt`. No accounts, no tokens, no external services.
 
 ```
-POST /api/sync   { lastSyncAt, sessions[], sets[], routines[] }
-→                { syncedAt, sessions[], sets[], routines[] }
+POST /api/sync   { lastSyncAt, sessions[], sets[], routines[], mesocycles[], exerciseSwaps[] }
+→                { syncedAt,   sessions[], sets[], routines[], mesocycles[], exerciseSwaps[] }
 ```
 
 ## Exercise Catalog

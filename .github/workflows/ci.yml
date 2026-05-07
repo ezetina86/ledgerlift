@@ -17,6 +17,10 @@ on:
     branches:
       - dev
       - master
+    paths-ignore:
+      - '**.md'
+      - '.claude/**'
+      - 'scripts/install-hooks.sh'
 
 # Cancel in-flight runs for the same PR so pushes don't queue up.
 concurrency:

@@ -9,7 +9,7 @@ function mockSession(splitDay: WorkoutSession['splitDay']): WorkoutSession {
   return {
     id: 'sess-1', routineId: 'r-1', routineName: 'Test',
     splitDay, startedAt: 0, completedAt: 0,
-    notes: '', updatedAt: 0,
+    notes: '', mesocycleId: null, isDeload: false, updatedAt: 0,
   }
 }
 

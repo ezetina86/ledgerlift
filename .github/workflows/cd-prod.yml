@@ -1,8 +1,12 @@
 # CD Prod — build + push production image to Docker Hub
 #
-# Triggers:
-#   - Push to `master`
-#   - Version tag push (v*.*.*)
+# Trigger: PR merged from dev → master ("promote").
+#   Direct pushes to master are blocked by branch protection.
+#   The only way to land code on master is merging a PR from dev,
+#   which causes a `push` event on master — that's what fires this workflow.
+#
+# To promote dev to production:
+#   gh pr create --base master --head dev --title "chore: promote dev → master"
 #
 # Pipeline:
 #   lint-frontend ──┐
@@ -11,7 +15,7 @@
 #                   └───────────────────┘
 #
 # Image tags produced:
-#   ezetina86/ledgerlift:latest          (master push)
+#   ezetina86/ledgerlift:latest          (master push / promote)
 #   ezetina86/ledgerlift:0.6.0           (v* tag — semver)
 #   ezetina86/ledgerlift:0.6             (v* tag — major.minor)
 #   ezetina86/ledgerlift:<sha>           (always)
@@ -28,6 +32,10 @@ on:
       - master
     tags:
       - "v*.*.*"
+    paths-ignore:
+      - '**.md'
+      - '.claude/**'
+      - 'scripts/install-hooks.sh'
 
 # Never run two production publishes concurrently.
 concurrency:
