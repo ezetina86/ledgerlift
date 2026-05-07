@@ -19,6 +19,10 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - '**.md'
+      - '.claude/**'
+      - 'scripts/install-hooks.sh'
 
 concurrency:
   group: cd-dev-${{ github.ref }}

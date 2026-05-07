@@ -16,6 +16,8 @@ function makeSession(id: string, overrides: Partial<WorkoutSession> = {}): Worko
     startedAt: 1_000_000,
     completedAt: null,
     notes: '',
+    mesocycleId: null,
+    isDeload: false,
     updatedAt: 0,
     ...overrides,
   }

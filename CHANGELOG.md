@@ -9,14 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.7.0] - 2026-05-07
+
 ### Added
+- **Mesocycle management** (Phase 7)
+- `Mesocycle` + `ExerciseSwap` Dexie tables (schema v3); `mesocycleId` / `isDeload`
+  fields on `WorkoutSession`
+- Auto-seeds Mesocycle 1 on first app load
+- **PLAN tab** in bottom nav → `PlanPage`:
+  - Active mesocycle card with week progress bar, deload toggle, and end-cycle action
+  - Start new mesocycle sheet (name + 4/5/6 week target picker)
+  - 4 routine cards with per-exercise **SWAP** button backed by `ExercisePickerSheet`
+  - Completed mesocycle history (dates, session count, total volume, swap log)
+- `ExercisePickerSheet` — reusable bottom sheet with live search and muscle-group filter chips
+- **Fatigue detection** (`detectFatigue`, `rpeHistory` in `overload.ts`): surfaces a
+  warning banner on HomePage when any exercise hits RPE ≥ 9 in 2+ consecutive sessions
+- **Mesocycle status chip** on HomePage with inline week progress bar
+- `mesocycleWeek()` helper in `split.ts`
+- **Deload mode**: WorkoutPage shows DELOAD badge; ExerciseBlock shows halved set target
+  and orange "DELOAD TARGET" banner when `isDeload` is active
+- Sync: push/pull `mesocycles` + `exerciseSwaps` with backend
+- Go backend: `mesocycles` + `exercise_swaps` SQL tables; `mesocycle_id` / `is_deload`
+  columns on `sessions`; upsert/fetch helpers; updated `/api/sync` handler
+- 18 new tests (153 frontend total, 37 backend total)
+- `feature → dev → master` branch workflow documented in `CLAUDE.md`
+- `/ship` slash command (`.claude/commands/ship.md`)
+- `scripts/install-hooks.sh` — installs pre-push hook that blocks direct pushes to
+  `master` / `dev`
+
+### Fixed
+- ESLint `react-hooks/exhaustive-deps` warnings in `ExercisePickerSheet`, `HomePage`,
+  `PlanPage` — `?? []` fallbacks moved inside `useMemo` callbacks
+- Removed unused `onNavigate` prop from `PlanPage`
+
+### Changed
 - CI/CD pipeline with GitHub Actions (`.github/workflows/`):
   - `ci.yml` — PR quality gate: lint, type-check, test, frontend build, Docker verify
-  - `cd-dev.yml` — push to `dev` builds and publishes `ledgerlift:dev-<sha>` to ghcr.io
-  - `cd-prod.yml` — push to `master` or `v*.*.*` tag publishes `ledgerlift:latest` and semver tags; includes commented-out SSH home-lab deploy job ready for activation
-- Branching strategy documented: `master` (production) / `dev` (integration) / `feature/*` / `fix/*` / `hotfix/*`
-- Makefile targets: `make test`, `make test-frontend`, `make test-backend`, `make lint`, `make ci`
-- This `CHANGELOG.md` file
+  - `cd-dev.yml` — push to `dev` builds and publishes `ledgerlift:dev-<sha>` to Docker Hub
+  - `cd-prod.yml` — merge to `master` (promote) publishes `ledgerlift:latest` and semver
+    tags; direct pushes to `master` blocked by pre-push hook
+- `dev` integration branch created; `master` is promote-only
 
 ---
 
@@ -112,11 +146,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/github_username/ledgerlift/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/github_username/ledgerlift/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/github_username/ledgerlift/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/github_username/ledgerlift/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/github_username/ledgerlift/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/github_username/ledgerlift/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/github_username/ledgerlift/compare/v0.0.0...v0.1.0
-[0.0.0]: https://github.com/github_username/ledgerlift/releases/tag/v0.0.0
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/ezetina86/ledgerlift/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/ezetina86/ledgerlift/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/ezetina86/ledgerlift/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/ezetina86/ledgerlift/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/ezetina86/ledgerlift/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/ezetina86/ledgerlift/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/ezetina86/ledgerlift/compare/v0.0.0...v0.1.0
+[0.0.0]: https://github.com/ezetina86/ledgerlift/releases/tag/v0.0.0

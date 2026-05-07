@@ -35,15 +35,15 @@ export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePl
   const activeMeso = useLiveQuery<Mesocycle | undefined>(
     () => db.mesocycles.filter(m => m.endedAt === null).first()
   )
-  const allSets = useLiveQuery(() => db.sets.toArray()) ?? []
+  const allSets = useLiveQuery(() => db.sets.toArray())
   const completedSessions = useLiveQuery(
     () => db.sessions.filter(s => s.completedAt !== null).toArray()
-  ) ?? []
-  const exercises = useLiveQuery(() => db.exercises.toArray()) ?? []
-  const exMap = useMemo(() => new Map(exercises.map(e => [e.id, e])), [exercises])
+  )
+  const exercises = useLiveQuery(() => db.exercises.toArray())
+  const exMap = useMemo(() => new Map((exercises ?? []).map(e => [e.id, e])), [exercises])
 
   const fatigueSignals = useMemo(
-    () => detectFatigue(allSets, completedSessions, exMap),
+    () => detectFatigue(allSets ?? [], completedSessions ?? [], exMap),
     [allSets, completedSessions, exMap]
   )
 

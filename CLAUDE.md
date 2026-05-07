@@ -188,6 +188,28 @@ cd backend && go run main.go
 
 ---
 
+## Branch Workflow
+
+```
+feature/<name>  →  PR to dev  →  CI gate  →  merge
+dev             →  PR to master ("promote")  →  CI gate  →  merge  →  Docker :latest published
+```
+
+**Rules (enforced by branch protection):**
+- **Never commit directly to `master` or `dev`**
+- All work goes on a `feature/*`, `fix/*`, or `chore/*` branch
+- Feature branches target `dev` (never `master`)
+- Only `dev` → `master` PRs promote to production
+- Use `/ship <slug>` to create branch · commit · push · open PR to dev
+
+**To promote dev → production:**
+```bash
+gh pr create --base master --head dev --title "chore: promote dev → master"
+```
+CI must pass; then merge → CD Prod publishes `ezetina86/ledgerlift:latest`.
+
+---
+
 ## Notes for Claude
 
 - Always use `bun` for frontend package operations (never npm or yarn)
@@ -197,3 +219,4 @@ cd backend && go run main.go
 - RPE scale is **1–10** (Nippard convention, not Borg)
 - Never add auth, user accounts, or cloud services — this is a local app
 - The `.venv` is for Python scripts only (xlsx parsing), not app runtime
+- **Never commit directly to `master` or `dev`** — always use `/ship` to open a PR to `dev`
