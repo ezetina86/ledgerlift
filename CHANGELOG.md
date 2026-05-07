@@ -11,6 +11,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.0] - 2026-05-07
+
+### Added
+- **Visual Progress Dashboard** (Phase 8)
+- `ExerciseDashboardSheet` — full-screen bottom-sheet overlay with recharts charts:
+  - Stat chips: all-time PR weight, session count, best reps
+  - Weight Over Time `AreaChart` with purple gradient fill
+  - Volume Per Session `BarChart`
+  - RPE Trend `LineChart` with per-dot color coding (green ≤7 / yellow 8 / orange 9 / red ≥10); hidden when fewer than 3 data points
+  - Last 3 sessions grouped set list with RPE badges
+  - Slide-up animation with backdrop fade
+- `recharts@3.8.1` dependency for responsive chart components
+- **ProgressPage** — Weekly Volume section overhaul:
+  - `THIS WEEK · Xk kg` header in 28px Barlow Condensed ExtraBold
+  - Volume bars now 8px tall with staggered CSS entry animation (`700ms ease-out`, 75ms delay per bar)
+  - Each bar row displays actual volume (`15,700 kg`) + set count on a second line with a colour dot
+- **ProgressPage** — Personal Records redesigned as a tappable 2-column card grid:
+  - Muscle group chip with `color-mix` tint, trend indicator (↑ purple / → gray)
+  - 32px best-weight number in Barlow Condensed ExtraBold
+  - 32px mini sparkline showing weight progression history
+  - Removed the 15-row cap — all ever-logged exercises shown
+  - Tap any card → opens `ExerciseDashboardSheet` for that exercise
+- `useMemo` for `exMap`, `volByGroup`, `prs`, and `progressionMap` to avoid redundant recomputation
+
+### Removed
+- Exercise Trend dropdown section (`<select>` + static `Sparkline`) from ProgressPage — superseded by the drill-down sheet
+
+---
+
 ## [0.7.0] - 2026-05-07
 
 ### Added
@@ -146,7 +175,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/ezetina86/ledgerlift/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ezetina86/ledgerlift/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ezetina86/ledgerlift/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ezetina86/ledgerlift/compare/v0.4.0...v0.5.0
