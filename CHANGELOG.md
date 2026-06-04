@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.10.0] - 2026-06-04
+
+### Added
+- **Mid-workout extra exercise** — ADD EXERCISE button at the bottom of any active workout session
+- Tapping ADD EXERCISE opens `ExercisePickerSheet` filtered to exclude exercises already in the routine
+- Extra exercises are session-scoped: the routine is never mutated; they don't appear in future sessions
+- Extra exercises persisted to `WorkoutSession.extraExercises` (IndexedDB) — survives page refresh during active workout
+- EXTRA badge on exercise block header to distinguish session additions from routine exercises
+- `extraExercises?: RoutineExercise[]` field added to `WorkoutSession` (no migration needed)
+- `excludeIds?: string[]` prop added to `ExercisePickerSheet` for filtering already-used exercises
+
+---
+
 ## [0.9.0] - 2026-06-04
 
 ### Added
@@ -187,7 +200,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/ezetina86/ledgerlift/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/ezetina86/ledgerlift/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/ezetina86/ledgerlift/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ezetina86/ledgerlift/compare/v0.6.0...v0.7.0
