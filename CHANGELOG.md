@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.0] - 2026-06-04
+
+### Added
+- **Mid-workout exercise swap** — SWAP button on every exercise block during an active session
+- Tapping SWAP opens `ExercisePickerSheet` pre-filtered to the same muscle group (instant substitution suggestions)
+- Swap is session-scoped: the routine is never mutated; future workouts restore the original plan
+- Swaps persisted to `WorkoutSession.swaps` (IndexedDB) so resume-workout correctly restores substitutions
+- SWAPPED badge on the exercise block header after a substitution is applied
+- `swaps?: Record<string, string>` field added to `WorkoutSession` (no migration needed)
+
+---
+
 ## [0.8.0] - 2026-05-07
 
 ### Added
@@ -175,7 +187,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/ezetina86/ledgerlift/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/ezetina86/ledgerlift/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ezetina86/ledgerlift/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ezetina86/ledgerlift/compare/v0.5.0...v0.6.0
