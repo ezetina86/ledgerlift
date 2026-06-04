@@ -16,7 +16,7 @@ interface Props {
 export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
   const [, setTick] = useState(0)
   const [confirming, setConfirming] = useState(false)
-  const [localSwaps, setLocalSwaps] = useState<Record<string, string>>({})
+  const [pendingSwaps, setPendingSwaps] = useState<Record<string, string>>({})
   const [swapTarget, setSwapTarget] = useState<{ exerciseId: string; muscleGroup: string } | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
 
@@ -30,10 +30,8 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
     return () => clearInterval(id)
   }, [])
 
-  // Seed localSwaps from persisted session data (handles resume)
-  useEffect(() => {
-    if (session?.swaps) setLocalSwaps(session.swaps)
-  }, [session?.id])  // only on session identity change, not every update
+  // Merge persisted swaps (live query, handles resume) with in-flight pendingSwaps
+  const effectiveSwaps = { ...(session?.swaps ?? {}), ...pendingSwaps }
 
   const elapsed = session ? formatElapsed(session.startedAt) : ''
 
@@ -44,8 +42,9 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
 
   async function handleSwapSelect(newExercise: Exercise) {
     if (!swapTarget) return
-    const updated = { ...localSwaps, [swapTarget.exerciseId]: newExercise.id }
-    setLocalSwaps(updated)
+    const persisted = session?.swaps ?? {}
+    const updated = { ...persisted, [swapTarget.exerciseId]: newExercise.id }
+    setPendingSwaps(prev => ({ ...prev, [swapTarget.exerciseId]: newExercise.id }))
     await db.sessions.update(sessionId, { swaps: updated })
     setPickerOpen(false)
     setSwapTarget(null)
@@ -125,7 +124,7 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
           .slice()
           .sort((a, b) => a.order - b.order)
           .map(ex => {
-            const effectiveId = localSwaps[ex.exerciseId] ?? ex.exerciseId
+            const effectiveId = effectiveSwaps[ex.exerciseId] ?? ex.exerciseId
             return (
               <ExerciseBlock
                 key={ex.exerciseId}
@@ -136,7 +135,7 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
                 defaultReps={ex.defaultReps}
                 isDeload={activeMeso?.isDeloadWeek ?? false}
                 onSwap={(mg) => openSwap(ex.exerciseId, mg)}
-                isSwapped={!!localSwaps[ex.exerciseId]}
+                isSwapped={!!effectiveSwaps[ex.exerciseId]}
               />
             )
           })}
