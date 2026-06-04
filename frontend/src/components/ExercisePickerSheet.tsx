@@ -8,6 +8,7 @@ interface Props {
   onClose: () => void
   onSelect: (exercise: Exercise) => void
   filterMuscleGroup?: string
+  excludeIds?: string[]
   title?: string
 }
 
@@ -17,7 +18,7 @@ const MUSCLE_GROUPS = [
   'Adductors', 'Neck', 'Forearm',
 ]
 
-export default function ExercisePickerSheet({ open, onClose, onSelect, filterMuscleGroup, title = 'PICK EXERCISE' }: Props) {
+export default function ExercisePickerSheet({ open, onClose, onSelect, filterMuscleGroup, excludeIds, title = 'PICK EXERCISE' }: Props) {
   const [search, setSearch] = useState('')
   const [activeGroup, setActiveGroup] = useState(filterMuscleGroup ?? 'All')
 
@@ -27,11 +28,12 @@ export default function ExercisePickerSheet({ open, onClose, onSelect, filterMus
     if (!exercises) return []
     const q = search.toLowerCase()
     return exercises.filter(ex => {
+      if (excludeIds?.includes(ex.id)) return false
       const matchGroup = activeGroup === 'All' || ex.primaryMuscleGroup === activeGroup
       const matchSearch = !q || ex.name.toLowerCase().includes(q) || ex.primaryMuscleGroup.toLowerCase().includes(q)
       return matchGroup && matchSearch
     }).sort((a, b) => a.name.localeCompare(b.name))
-  }, [exercises, search, activeGroup])
+  }, [exercises, search, activeGroup, excludeIds])
 
   if (!open) return null
 

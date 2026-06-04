@@ -24,9 +24,10 @@ interface Props {
   isDeload?: boolean
   onSwap?: (muscleGroup: string) => void
   isSwapped?: boolean
+  isExtra?: boolean
 }
 
-export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defaultReps, isDeload = false, onSwap, isSwapped = false }: Props) {
+export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defaultReps, isDeload = false, onSwap, isSwapped = false, isExtra = false }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingSetId, setEditingSetId] = useState<string | null>(null)
   const { unit } = useWeightUnit()
@@ -123,6 +124,21 @@ export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defa
                     }}
                   >
                     SWAPPED
+                  </span>
+                )}
+                {isExtra && (
+                  <span
+                    className="shrink-0 px-1.5 py-0.5 rounded"
+                    style={{
+                      background: 'oklch(22% 0.12 80)',
+                      color: 'oklch(78% 0.18 80)',
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '9px',
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    EXTRA
                   </span>
                 )}
               </div>
