@@ -62,6 +62,7 @@ export interface WorkoutSession {
   notes: string
   mesocycleId: string | null  // FK to Mesocycle
   isDeload: boolean
+  swaps?: Record<string, string>  // session-scoped: originalExerciseId → replacementExerciseId
   updatedAt: number            // auto-stamped by Dexie hook
 }
 

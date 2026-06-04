@@ -22,9 +22,11 @@ interface Props {
   defaultSets: number
   defaultReps: string
   isDeload?: boolean
+  onSwap?: (muscleGroup: string) => void
+  isSwapped?: boolean
 }
 
-export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defaultReps, isDeload = false }: Props) {
+export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defaultReps, isDeload = false, onSwap, isSwapped = false }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingSetId, setEditingSetId] = useState<string | null>(null)
   const { unit } = useWeightUnit()
@@ -104,17 +106,52 @@ export default function ExerciseBlock({ sessionId, exerciseId, defaultSets, defa
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-semibold leading-tight" style={{ color: 'oklch(97% 0.005 293)' }}>
-                {name}
-              </p>
-              {demoLink && (
-                <a href={demoLink} target="_blank" rel="noopener noreferrer" className="shrink-0 mt-0.5" style={{ color: 'oklch(44% 0.008 293)' }}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </a>
-              )}
+              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                <p className="text-sm font-semibold leading-tight" style={{ color: 'oklch(97% 0.005 293)' }}>
+                  {name}
+                </p>
+                {isSwapped && (
+                  <span
+                    className="shrink-0 px-1.5 py-0.5 rounded"
+                    style={{
+                      background: 'oklch(22% 0.10 150)',
+                      color: 'oklch(65% 0.18 150)',
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '9px',
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    SWAPPED
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {onSwap && (
+                  <button
+                    onClick={() => exercise && onSwap(exercise.primaryMuscleGroup)}
+                    className="px-2 py-0.5 rounded transition-colors active:bg-[oklch(22%_0.012_293)]"
+                    style={{
+                      border: '1px solid oklch(28% 0.016 293)',
+                      color: 'oklch(50% 0.010 293)',
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '10px',
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    SWAP
+                  </button>
+                )}
+                {demoLink && (
+                  <a href={demoLink} target="_blank" rel="noopener noreferrer" className="mt-0.5" style={{ color: 'oklch(44% 0.008 293)' }}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </a>
+                )}
+              </div>
             </div>
             <p className="text-xs mt-0.5" style={{ color: 'oklch(44% 0.008 293)' }}>
               {defaultSets}×{defaultReps}{exercise?.equipment ? ` · ${exercise.equipment}` : ''}

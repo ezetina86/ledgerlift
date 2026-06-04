@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
-import type { WorkoutSession, Routine, Mesocycle } from '../db/index.ts'
+import type { WorkoutSession, Routine, Mesocycle, Exercise } from '../db/index.ts'
 import { formatElapsed } from '../lib/utils.ts'
 import { syncWithBackend, getServerUrl } from '../lib/sync.ts'
 import ExerciseBlock from '../components/ExerciseBlock.tsx'
+import ExercisePickerSheet from '../components/ExercisePickerSheet.tsx'
 
 interface Props {
   sessionId: string
@@ -15,6 +16,9 @@ interface Props {
 export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
   const [, setTick] = useState(0)
   const [confirming, setConfirming] = useState(false)
+  const [localSwaps, setLocalSwaps] = useState<Record<string, string>>({})
+  const [swapTarget, setSwapTarget] = useState<{ exerciseId: string; muscleGroup: string } | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const session = useLiveQuery<WorkoutSession | undefined>(() => db.sessions.get(sessionId), [sessionId])
   const routine  = useLiveQuery<Routine | undefined>(() => session ? db.routines.get(session.routineId) : undefined, [session?.routineId])
@@ -26,7 +30,26 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
     return () => clearInterval(id)
   }, [])
 
+  // Seed localSwaps from persisted session data (handles resume)
+  useEffect(() => {
+    if (session?.swaps) setLocalSwaps(session.swaps)
+  }, [session?.id])  // only on session identity change, not every update
+
   const elapsed = session ? formatElapsed(session.startedAt) : ''
+
+  function openSwap(exerciseId: string, muscleGroup: string) {
+    setSwapTarget({ exerciseId, muscleGroup })
+    setPickerOpen(true)
+  }
+
+  async function handleSwapSelect(newExercise: Exercise) {
+    if (!swapTarget) return
+    const updated = { ...localSwaps, [swapTarget.exerciseId]: newExercise.id }
+    setLocalSwaps(updated)
+    await db.sessions.update(sessionId, { swaps: updated })
+    setPickerOpen(false)
+    setSwapTarget(null)
+  }
 
   async function completeWorkout() {
     await db.sessions.update(sessionId, { completedAt: Date.now() })
@@ -101,17 +124,22 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
         {routine.exercises
           .slice()
           .sort((a, b) => a.order - b.order)
-          .map(ex => (
-            <ExerciseBlock
-              key={ex.exerciseId}
-              sessionId={sessionId}
-              exerciseId={ex.exerciseId}
-              order={ex.order}
-              defaultSets={ex.defaultSets}
-              defaultReps={ex.defaultReps}
-              isDeload={activeMeso?.isDeloadWeek ?? false}
-            />
-          ))}
+          .map(ex => {
+            const effectiveId = localSwaps[ex.exerciseId] ?? ex.exerciseId
+            return (
+              <ExerciseBlock
+                key={ex.exerciseId}
+                sessionId={sessionId}
+                exerciseId={effectiveId}
+                order={ex.order}
+                defaultSets={ex.defaultSets}
+                defaultReps={ex.defaultReps}
+                isDeload={activeMeso?.isDeloadWeek ?? false}
+                onSwap={(mg) => openSwap(ex.exerciseId, mg)}
+                isSwapped={!!localSwaps[ex.exerciseId]}
+              />
+            )
+          })}
 
         <button
           onClick={() => setConfirming(true)}
@@ -121,6 +149,15 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
           COMPLETE WORKOUT
         </button>
       </div>
+
+      {/* Swap exercise picker */}
+      <ExercisePickerSheet
+        open={pickerOpen}
+        onClose={() => { setPickerOpen(false); setSwapTarget(null) }}
+        onSelect={handleSwapSelect}
+        filterMuscleGroup={swapTarget?.muscleGroup}
+        title="SWAP EXERCISE"
+      />
 
       {/* Confirm sheet */}
       {confirming && (
