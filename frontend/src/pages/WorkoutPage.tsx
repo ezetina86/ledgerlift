@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import type { WorkoutSession, Routine, Mesocycle, Exercise } from '../db/index.ts'
@@ -19,6 +19,7 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
   const [pendingSwaps, setPendingSwaps] = useState<Record<string, string>>({})
   const [swapTarget, setSwapTarget] = useState<{ exerciseId: string; muscleGroup: string } | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [addExerciseOpen, setAddExerciseOpen] = useState(false)
 
   const session = useLiveQuery<WorkoutSession | undefined>(() => db.sessions.get(sessionId), [sessionId])
   const routine  = useLiveQuery<Routine | undefined>(() => session ? db.routines.get(session.routineId) : undefined, [session?.routineId])
@@ -32,6 +33,12 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
 
   // Merge persisted swaps (live query, handles resume) with in-flight pendingSwaps
   const effectiveSwaps = { ...(session?.swaps ?? {}), ...pendingSwaps }
+
+  const usedExerciseIds = useMemo(() => {
+    const fromRoutine = (routine?.exercises ?? []).map(e => effectiveSwaps[e.exerciseId] ?? e.exerciseId)
+    const fromExtras = (session?.extraExercises ?? []).map(e => e.exerciseId)
+    return [...fromRoutine, ...fromExtras]
+  }, [routine, session, effectiveSwaps])
 
   const elapsed = session ? formatElapsed(session.startedAt) : ''
 
@@ -48,6 +55,18 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
     await db.sessions.update(sessionId, { swaps: updated })
     setPickerOpen(false)
     setSwapTarget(null)
+  }
+
+  async function handleAddExtraExercise(exercise: Exercise) {
+    const current = session?.extraExercises ?? []
+    const nextOrder = (routine?.exercises.length ?? 0) + current.length + 1
+    await db.sessions.update(sessionId, {
+      extraExercises: [
+        ...current,
+        { exerciseId: exercise.id, order: nextOrder, defaultSets: 3, defaultReps: '8-12' },
+      ],
+    })
+    setAddExerciseOpen(false)
   }
 
   async function completeWorkout() {
@@ -140,6 +159,30 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
             )
           })}
 
+        {(session.extraExercises ?? []).map(ex => (
+          <ExerciseBlock
+            key={ex.exerciseId}
+            sessionId={sessionId}
+            exerciseId={ex.exerciseId}
+            order={ex.order}
+            defaultSets={ex.defaultSets}
+            defaultReps={ex.defaultReps}
+            isDeload={activeMeso?.isDeloadWeek ?? false}
+            isExtra={true}
+          />
+        ))}
+
+        <button
+          onClick={() => setAddExerciseOpen(true)}
+          className="w-full rounded-2xl py-4 mb-3 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          style={{ border: '1px dashed oklch(30% 0.016 293)', color: 'oklch(50% 0.010 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', letterSpacing: '0.08em' }}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          ADD EXERCISE
+        </button>
+
         <button
           onClick={() => setConfirming(true)}
           className="w-full h-14 rounded-2xl font-semibold mt-2 transition-all active:scale-[0.98]"
@@ -156,6 +199,15 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
         onSelect={handleSwapSelect}
         filterMuscleGroup={swapTarget?.muscleGroup}
         title="SWAP EXERCISE"
+      />
+
+      {/* Add extra exercise picker */}
+      <ExercisePickerSheet
+        open={addExerciseOpen}
+        onClose={() => setAddExerciseOpen(false)}
+        onSelect={handleAddExtraExercise}
+        excludeIds={usedExerciseIds}
+        title="ADD EXERCISE"
       />
 
       {/* Confirm sheet */}
