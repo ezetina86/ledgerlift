@@ -49,8 +49,8 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
 
   async function handleSwapSelect(newExercise: Exercise) {
     if (!swapTarget) return
-    const persisted = session?.swaps ?? {}
-    const updated = { ...persisted, [swapTarget.exerciseId]: newExercise.id }
+    // ponytail: use effectiveSwaps (persisted + pending) to avoid useLiveQuery staleness on rapid/resumed swaps
+    const updated = { ...effectiveSwaps, [swapTarget.exerciseId]: newExercise.id }
     setPendingSwaps(prev => ({ ...prev, [swapTarget.exerciseId]: newExercise.id }))
     await db.sessions.update(sessionId, { swaps: updated })
     setPickerOpen(false)
