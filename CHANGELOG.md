@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.10.1] - 2026-06-30
+
+### Fixed
+- **Swap exercise stale closure** — rapid or resumed swaps no longer lose previously applied swaps; `handleSwapSelect` now uses `effectiveSwaps` (merged persisted + pending) as the write base instead of the potentially stale `session?.swaps` from `useLiveQuery`
+
+---
+
 ## [0.10.0] - 2026-06-04
 
 ### Added
