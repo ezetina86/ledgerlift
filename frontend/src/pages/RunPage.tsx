@@ -46,14 +46,6 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
   const [rpe, setRpe] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
 
-  // Set initial secondsLeft once intervals are available
-  useEffect(() => {
-    if (intervals.length > 0 && timer.phase === 'ready') {
-      setTimer(prev => ({ ...prev, secondsLeft: intervals[0].durationSec }))
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intervals.length])
-
   useEffect(() => {
     if (timer.phase !== 'active') return
     const id = setInterval(() => {
@@ -135,7 +127,7 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
 
         <div className="px-4 mt-6">
           <button
-            onClick={() => setTimer(prev => ({ ...prev, phase: 'active' }))}
+            onClick={() => setTimer(prev => ({ ...prev, phase: 'active', secondsLeft: intervals[0]?.durationSec ?? 0 }))}
             className="w-full h-14 rounded-xl transition-all active:scale-[0.98]"
             style={{ background: 'oklch(62% 0.24 293)', color: 'oklch(7% 0.008 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '18px', letterSpacing: '0.06em' }}
           >

@@ -91,6 +91,7 @@ export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePl
     startingRun.current = true
     const session: RunSession = {
       id: uid(), week: nextPlan.week, day: nextPlan.day,
+      // eslint-disable-next-line react-hooks/purity
       startedAt: Date.now(), completedAt: null,
       durationSec: null, distanceKm: null, rpe: null, updatedAt: 0,
     }
