@@ -248,7 +248,7 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
       </div>
 
       <div className="px-4 mb-6 flex gap-1.5 flex-wrap justify-center">
-        {intervals.map((iv, i) => (
+        {intervals.map((_, i) => (
           <div
             key={i}
             className="w-2 h-2 rounded-full"
