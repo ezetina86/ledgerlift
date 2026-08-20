@@ -81,6 +81,18 @@ export interface SetLog {
   updatedAt: number         // auto-stamped by Dexie hook
 }
 
+export interface RunSession {
+  id: string
+  week: number
+  day: number
+  startedAt: number
+  completedAt: number | null
+  durationSec: number | null   // actual elapsed seconds
+  distanceKm: number | null    // user-entered, optional
+  rpe: number | null           // 1–10
+  updatedAt: number
+}
+
 // ─── Seed data — default Upper/Lower split ────────────────────────────────────
 
 export const DEFAULT_ROUTINES: Omit<Routine, 'createdAt' | 'updatedAt'>[] = [
@@ -152,6 +164,7 @@ export class LedgerLiftDB extends Dexie {
   sets!: EntityTable<SetLog, 'id'>
   mesocycles!: EntityTable<Mesocycle, 'id'>
   exerciseSwaps!: EntityTable<ExerciseSwap, 'id'>
+  runSessions!: EntityTable<RunSession, 'id'>
 
   constructor() {
     super('ledgerlift')
@@ -187,6 +200,17 @@ export class LedgerLiftDB extends Dexie {
       })
     })
 
+    // v4: add runSessions table for C25K running plan
+    this.version(4).stores({
+      exercises:     'id, primaryMuscleGroup, nippardTierList, muscleLadder',
+      routines:      'id, splitDay, createdAt, updatedAt',
+      sessions:      'id, routineId, splitDay, startedAt, completedAt, updatedAt, mesocycleId',
+      sets:          'id, sessionId, exerciseId, timestamp, updatedAt',
+      mesocycles:    'id, startedAt, endedAt, updatedAt',
+      exerciseSwaps: 'id, mesocycleId, routineId, swappedAt',
+      runSessions:   'id, startedAt, completedAt, updatedAt',
+    })
+
     // Auto-stamp updatedAt on every write — skipped during sync pull
     this.sessions.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
     this.sessions.hook('updating', (mods: Partial<WorkoutSession> & { updatedAt?: number }) => {
@@ -202,6 +226,10 @@ export class LedgerLiftDB extends Dexie {
     })
     this.mesocycles.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
     this.mesocycles.hook('updating', (mods: Partial<Mesocycle> & { updatedAt?: number }) => {
+      if (!_isSyncing) mods.updatedAt = Date.now()
+    })
+    this.runSessions.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
+    this.runSessions.hook('updating', (mods: Partial<RunSession> & { updatedAt?: number }) => {
       if (!_isSyncing) mods.updatedAt = Date.now()
     })
   }
