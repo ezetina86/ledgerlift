@@ -1,8 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { db } from '../db/index.ts'
-import type { WorkoutSession, Mesocycle } from '../db/index.ts'
+import type { WorkoutSession, Mesocycle, RunSession } from '../db/index.ts'
 import { nextSplitDay, SPLIT_LABELS, SPLIT_FOCUS, ROUTINE_ID, mesocycleWeek } from '../lib/split.ts'
+import { nextRunSession, totalDurationSec } from '../lib/runPlan.ts'
 import { totalVolume, uid, KG_TO_LBS } from '../lib/utils.ts'
 import { useWeightUnit } from '../lib/prefs.ts'
 import { detectFatigue } from '../lib/overload.ts'
@@ -11,6 +12,8 @@ interface Props {
   onStartWorkout: (sessionId: string) => void
   onResumeWorkout: (sessionId: string) => void
   onNavigatePlan?: () => void
+  onStartRun: (sessionId: string) => void
+  onResumeRun: (sessionId: string) => void
 }
 
 const MUSCLE_COLORS: Record<string, string> = {
@@ -28,7 +31,8 @@ const MUSCLE_COLORS: Record<string, string> = {
 
 const DAY_NAMES = ['SUN','MON','TUE','WED','THU','FRI','SAT']
 
-export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePlan }: Props) {
+export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePlan, onStartRun, onResumeRun }: Props) {
+  const startingRun = useRef(false)
   const sessions = useLiveQuery<WorkoutSession[]>(
     () => db.sessions.orderBy('startedAt').reverse().limit(10).toArray(), []
   ) ?? []
@@ -41,6 +45,14 @@ export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePl
   )
   const exercises = useLiveQuery(() => db.exercises.toArray())
   const exMap = useMemo(() => new Map((exercises ?? []).map(e => [e.id, e])), [exercises])
+
+  const activeRun = useLiveQuery<RunSession | undefined>(
+    () => db.runSessions.filter(s => s.completedAt === null).first()
+  )
+  const completedRunCount = useLiveQuery<number>(
+    () => db.runSessions.filter(s => s.completedAt !== null).count()
+  ) ?? 0
+  const nextPlan = nextRunSession(completedRunCount)
 
   const fatigueSignals = useMemo(
     () => detectFatigue(allSets ?? [], completedSessions ?? [], exMap),
@@ -72,6 +84,20 @@ export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePl
     }
     await db.sessions.add(session)
     onStartWorkout(session.id)
+  }
+
+  async function startRun() {
+    if (!nextPlan || startingRun.current) return
+    startingRun.current = true
+    const session: RunSession = {
+      id: uid(), week: nextPlan.week, day: nextPlan.day,
+      // eslint-disable-next-line react-hooks/purity
+      startedAt: Date.now(), completedAt: null,
+      durationSec: null, distanceKm: null, rpe: null, updatedAt: 0,
+    }
+    await db.runSessions.add(session)
+    onStartRun(session.id)
+    startingRun.current = false
   }
 
   return (
@@ -274,6 +300,57 @@ export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePl
               START WORKOUT
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── Run card ────────────────────────────────── */}
+      {activeRun ? (
+        <div className="mx-4 mb-4 rounded-2xl p-4"
+          style={{ background: 'oklch(14% 0.06 150)', border: '1px solid oklch(24% 0.10 150)' }}>
+          <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(55% 0.18 150)', textTransform: 'uppercase', marginBottom: 4 }}>
+            Run In Progress
+          </p>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: 'oklch(97% 0.005 293)', letterSpacing: '-0.01em' }}>
+            WEEK {activeRun.week} · DAY {activeRun.day}
+          </p>
+          <button onClick={() => onResumeRun(activeRun.id)}
+            className="mt-3 w-full h-12 rounded-xl font-bold transition-all active:scale-[0.98]"
+            style={{ background: 'oklch(50% 0.18 150)', color: 'oklch(97% 0.005 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '16px', letterSpacing: '0.06em' }}>
+            RESUME RUN
+          </button>
+        </div>
+      ) : nextPlan ? (
+        <div className="mx-4 mb-4 rounded-2xl overflow-hidden"
+          style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}>
+          <div className="px-4 pt-4 pb-3">
+            <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(50% 0.010 293)', textTransform: 'uppercase', marginBottom: 4 }}>
+              Up Next — Run
+            </p>
+            <div className="flex items-baseline gap-3">
+              <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '36px', lineHeight: 1, letterSpacing: '-0.01em', color: 'oklch(97% 0.005 293)', margin: 0 }}>
+                WEEK {nextPlan.week} · DAY {nextPlan.day}
+              </h2>
+              <span className="px-2.5 py-1 rounded-lg"
+                style={{ background: 'oklch(18% 0.012 293)', color: 'oklch(50% 0.18 150)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '11px', letterSpacing: '0.08em' }}>
+                ~{Math.round(totalDurationSec(nextPlan) / 60)} MIN
+              </span>
+            </div>
+          </div>
+          <div className="px-4 pb-4">
+            <button onClick={startRun}
+              className="w-full h-12 rounded-xl font-bold transition-all active:scale-[0.98]"
+              style={{ background: 'oklch(50% 0.18 150)', color: 'oklch(97% 0.005 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '16px', letterSpacing: '0.06em' }}>
+              START RUN
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mx-4 mb-4 rounded-2xl px-4 py-4"
+          style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '18px', color: 'oklch(62% 0.24 293)', letterSpacing: '0.04em' }}>
+            C25K COMPLETE
+          </p>
+          <p style={{ fontSize: '12px', color: 'oklch(44% 0.008 293)', marginTop: 2 }}>All 27 sessions finished.</p>
         </div>
       )}
 
