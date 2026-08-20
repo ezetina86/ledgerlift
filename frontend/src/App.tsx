@@ -2,6 +2,7 @@ import { useState } from 'react'
 import BottomNav from './components/BottomNav.tsx'
 import HomePage from './pages/HomePage.tsx'
 import WorkoutPage from './pages/WorkoutPage.tsx'
+import RunPage from './pages/RunPage.tsx'
 import CatalogPage from './pages/CatalogPage.tsx'
 import ProgressPage from './pages/ProgressPage.tsx'
 import HistoryPage from './pages/HistoryPage.tsx'
@@ -13,6 +14,17 @@ type Page = 'home' | 'catalog' | 'progress' | 'history' | 'settings' | 'plan'
 export default function App() {
   const [page, setPage] = useState<Page>('home')
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const [activeRunSessionId, setActiveRunSessionId] = useState<string | null>(null)
+
+  if (activeRunSessionId) {
+    return (
+      <RunPage
+        sessionId={activeRunSessionId}
+        onComplete={() => setActiveRunSessionId(null)}
+        onBack={() => setActiveRunSessionId(null)}
+      />
+    )
+  }
 
   if (activeSessionId) {
     return (
@@ -32,6 +44,8 @@ export default function App() {
             onStartWorkout={id => setActiveSessionId(id)}
             onResumeWorkout={id => setActiveSessionId(id)}
             onNavigatePlan={() => setPage('plan')}
+            onStartRun={id => setActiveRunSessionId(id)}
+            onResumeRun={id => setActiveRunSessionId(id)}
           />
         )}
         {page === 'catalog'  && <CatalogPage />}
