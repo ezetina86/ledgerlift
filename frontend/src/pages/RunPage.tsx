@@ -44,6 +44,7 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
   })
   const [distanceKm, setDistanceKm] = useState('')
   const [rpe, setRpe] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
 
   // Set initial secondsLeft once intervals are available
   useEffect(() => {
@@ -62,10 +63,12 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
   }, [timer.phase, intervals])
 
   async function save() {
+    if (saving) return
+    setSaving(true)
     await db.runSessions.update(sessionId, {
       completedAt: Date.now(),
       durationSec: timer.elapsed,
-      distanceKm: distanceKm ? parseFloat(distanceKm) : null,
+      distanceKm: distanceKm ? Math.max(0, parseFloat(distanceKm)) : null,
       rpe,
     })
     onComplete()
@@ -208,10 +211,11 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
 
         <button
           onClick={save}
-          className="w-full h-14 rounded-xl transition-all active:scale-[0.98]"
+          disabled={saving}
+          className="w-full h-14 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50"
           style={{ background: 'oklch(62% 0.24 293)', color: 'oklch(7% 0.008 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '18px', letterSpacing: '0.06em' }}
         >
-          SAVE & FINISH
+          {saving ? 'SAVING…' : 'SAVE & FINISH'}
         </button>
       </div>
     )

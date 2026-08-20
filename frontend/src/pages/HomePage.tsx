@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { db } from '../db/index.ts'
 import type { WorkoutSession, Mesocycle, RunSession } from '../db/index.ts'
 import { nextSplitDay, SPLIT_LABELS, SPLIT_FOCUS, ROUTINE_ID, mesocycleWeek } from '../lib/split.ts'
@@ -32,6 +32,7 @@ const MUSCLE_COLORS: Record<string, string> = {
 const DAY_NAMES = ['SUN','MON','TUE','WED','THU','FRI','SAT']
 
 export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePlan, onStartRun, onResumeRun }: Props) {
+  const startingRun = useRef(false)
   const sessions = useLiveQuery<WorkoutSession[]>(
     () => db.sessions.orderBy('startedAt').reverse().limit(10).toArray(), []
   ) ?? []
@@ -86,7 +87,8 @@ export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePl
   }
 
   async function startRun() {
-    if (!nextPlan) return
+    if (!nextPlan || startingRun.current) return
+    startingRun.current = true
     const session: RunSession = {
       id: uid(), week: nextPlan.week, day: nextPlan.day,
       startedAt: Date.now(), completedAt: null,
@@ -94,6 +96,7 @@ export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePl
     }
     await db.runSessions.add(session)
     onStartRun(session.id)
+    startingRun.current = false
   }
 
   return (
