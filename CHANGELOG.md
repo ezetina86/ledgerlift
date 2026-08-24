@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.0] - 2026-08-24
+
+### Added
+- **Screen wake lock** — screen stays on during active run sessions via the Web Wake Lock API; auto-releases when session ends or pauses
+- **Global session timer** — total elapsed time displayed below the interval countdown on the active run screen
+- **Interval transition warnings** — last 5 seconds of each interval: label and countdown turn red with pulse/bounce animations; last 3 seconds play an 880 Hz audio beep (created on BEGIN tap to satisfy browser autoplay policy)
+
+---
+
 ## [0.10.1] - 2026-06-30
 
 ### Fixed
@@ -207,7 +216,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/ezetina86/ledgerlift/compare/v0.10.1...v0.11.0
+[0.10.1]: https://github.com/ezetina86/ledgerlift/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/ezetina86/ledgerlift/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/ezetina86/ledgerlift/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/ezetina86/ledgerlift/compare/v0.7.0...v0.8.0
