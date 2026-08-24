@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import type { RunSession } from '../db/index.ts'
@@ -42,6 +42,8 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
     secondsLeft: 0,
     elapsed: 0,
   })
+  const audioCtxRef = useRef<AudioContext | null>(null)
+
   const [distanceKm, setDistanceKm] = useState('')
   const [rpe, setRpe] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
@@ -53,6 +55,28 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
     }, 1000)
     return () => clearInterval(id)
   }, [timer.phase, intervals])
+
+  useEffect(() => {
+    if (timer.phase !== 'active') return
+    let lock: WakeLockSentinel | null = null
+    navigator.wakeLock?.request('screen').then(l => { lock = l }).catch(() => {})
+    return () => { lock?.release() }
+  }, [timer.phase])
+
+  useEffect(() => {
+    if (timer.phase !== 'active' || timer.secondsLeft > 3 || timer.secondsLeft <= 0) return
+    const ctx = audioCtxRef.current
+    if (!ctx) return
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 880
+    gain.gain.setValueAtTime(0.4, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.12)
+  }, [timer.secondsLeft, timer.phase])
 
   async function save() {
     if (saving) return
@@ -73,6 +97,8 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
       </div>
     )
   }
+
+  const isWarning = timer.phase === 'active' && timer.secondsLeft > 0 && timer.secondsLeft <= 5
 
   const current  = intervals[timer.intervalIdx]
   const next     = intervals[timer.intervalIdx + 1]
@@ -127,7 +153,10 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
 
         <div className="px-4 mt-6">
           <button
-            onClick={() => setTimer(prev => ({ ...prev, phase: 'active', secondsLeft: intervals[0]?.durationSec ?? 0 }))}
+            onClick={() => {
+              audioCtxRef.current = new AudioContext()
+              setTimer(prev => ({ ...prev, phase: 'active', secondsLeft: intervals[0]?.durationSec ?? 0 }))
+            }}
             className="w-full h-14 rounded-xl transition-all active:scale-[0.98]"
             style={{ background: 'oklch(62% 0.24 293)', color: 'oklch(7% 0.008 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '18px', letterSpacing: '0.06em' }}
           >
@@ -220,17 +249,24 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
         <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '13px', letterSpacing: '0.10em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase' }}>
           WEEK {dbSession.week} · DAY {dbSession.day}
         </p>
-        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '12px', color: 'oklch(44% 0.008 293)' }}>
-          {fmtSecs(timer.elapsed)} elapsed
-        </p>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-8">
-        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '52px', letterSpacing: '0.04em', color: INTERVAL_COLOR[current?.type ?? 'walk'], textTransform: 'uppercase', lineHeight: 1, marginBottom: 12 }}>
+        <p
+          className={isWarning ? 'animate-bounce' : ''}
+          style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '52px', letterSpacing: '0.04em', color: isWarning ? 'oklch(65% 0.22 25)' : INTERVAL_COLOR[current?.type ?? 'walk'], textTransform: 'uppercase', lineHeight: 1, marginBottom: 12 }}
+        >
           {current?.type ?? ''}
         </p>
-        <p className="num" style={{ fontSize: '88px', color: 'oklch(97% 0.005 293)', lineHeight: 1, marginBottom: 24 }}>
+        <p
+          className={`num${isWarning ? ' animate-pulse' : ''}`}
+          style={{ fontSize: '88px', color: isWarning ? 'oklch(65% 0.22 25)' : 'oklch(97% 0.005 293)', lineHeight: 1, marginBottom: 8 }}
+        >
           {fmtSecs(timer.secondsLeft)}
+        </p>
+
+        <p className="num" style={{ fontSize: '22px', color: 'oklch(52% 0.010 293)', lineHeight: 1, marginBottom: 20 }}>
+          {fmtSecs(timer.elapsed)} total
         </p>
 
         <div className="w-full h-2 rounded-full overflow-hidden mb-6" style={{ background: 'oklch(20% 0.010 293)' }}>
