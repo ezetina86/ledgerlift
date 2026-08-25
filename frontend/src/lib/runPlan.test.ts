@@ -90,4 +90,9 @@ describe('tickTimer', () => {
     const s: TimerState = { phase: 'done', intervalIdx: 0, secondsLeft: 60, elapsed: 50 }
     expect(tickTimer(s, intervals)).toBe(s)
   })
+
+  it('is a no-op when phase is paused', () => {
+    const s: TimerState = { phase: 'paused', intervalIdx: 0, secondsLeft: 60, elapsed: 50 }
+    expect(tickTimer(s, intervals)).toBe(s)
+  })
 })

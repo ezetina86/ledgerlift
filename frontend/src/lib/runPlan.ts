@@ -12,7 +12,7 @@ export interface C25KSession {
 }
 
 export interface TimerState {
-  phase: 'ready' | 'active' | 'done'
+  phase: 'ready' | 'active' | 'paused' | 'done'
   intervalIdx: number
   secondsLeft: number
   elapsed: number
