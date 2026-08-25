@@ -254,9 +254,9 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
       <div className="flex-1 flex flex-col items-center justify-center px-8">
         <p
           className={isWarning ? 'animate-bounce' : ''}
-          style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '52px', letterSpacing: '0.04em', color: isWarning ? 'oklch(65% 0.22 25)' : INTERVAL_COLOR[current?.type ?? 'walk'], textTransform: 'uppercase', lineHeight: 1, marginBottom: 12 }}
+          style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '52px', letterSpacing: '0.04em', color: timer.phase === 'paused' ? 'oklch(44% 0.008 293)' : isWarning ? 'oklch(65% 0.22 25)' : INTERVAL_COLOR[current?.type ?? 'walk'], textTransform: 'uppercase', lineHeight: 1, marginBottom: 12 }}
         >
-          {current?.type ?? ''}
+          {timer.phase === 'paused' ? 'PAUSED' : (current?.type ?? '')}
         </p>
         <p
           className={`num${isWarning ? ' animate-pulse' : ''}`}
@@ -306,6 +306,13 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
           style={{ background: 'oklch(17% 0.010 293)', border: '1px solid oklch(28% 0.010 293)', color: 'oklch(72% 0.012 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', letterSpacing: '0.06em' }}
         >
           SKIP
+        </button>
+        <button
+          onClick={() => setTimer(prev => ({ ...prev, phase: prev.phase === 'paused' ? 'active' : 'paused' }))}
+          className="flex-1 h-12 rounded-xl transition-all active:scale-[0.98]"
+          style={{ background: 'oklch(17% 0.010 293)', border: '1px solid oklch(28% 0.010 293)', color: 'oklch(72% 0.012 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', letterSpacing: '0.06em' }}
+        >
+          {timer.phase === 'paused' ? 'RESUME' : 'PAUSE'}
         </button>
         <button
           onClick={() => setTimer(prev => ({ ...prev, phase: 'done' }))}

@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.12.0] - 2026-08-25
+
+### Added
+- **Interval pause/resume** — tap PAUSE mid-interval to freeze both the countdown and total elapsed timer; tap RESUME to continue from exactly where you stopped. Button sits between SKIP and FINISH EARLY in the active run view. The interval label shows PAUSED (dimmed) while frozen.
+
+---
+
 ## [0.11.0] - 2026-08-24
 
 ### Added
@@ -216,7 +223,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/ezetina86/ledgerlift/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/ezetina86/ledgerlift/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/ezetina86/ledgerlift/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/ezetina86/ledgerlift/compare/v0.9.0...v0.10.0
