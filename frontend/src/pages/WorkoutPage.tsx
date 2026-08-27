@@ -32,7 +32,10 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
   }, [])
 
   // Merge persisted swaps (live query, handles resume) with in-flight pendingSwaps
-  const effectiveSwaps = { ...(session?.swaps ?? {}), ...pendingSwaps }
+  const effectiveSwaps = useMemo(
+    () => ({ ...(session?.swaps ?? {}), ...pendingSwaps }),
+    [session?.swaps, pendingSwaps]
+  )
 
   const usedExerciseIds = useMemo(() => {
     const fromRoutine = (routine?.exercises ?? []).map(e => effectiveSwaps[e.exerciseId] ?? e.exerciseId)
