@@ -65,6 +65,18 @@ type SetLog struct {
 	UpdatedAt    int64    `json:"updatedAt"`
 }
 
+type RunSession struct {
+	ID          string   `json:"id"`
+	Week        int      `json:"week"`
+	Day         int      `json:"day"`
+	StartedAt   int64    `json:"startedAt"`
+	CompletedAt *int64   `json:"completedAt"`
+	DurationSec *int64   `json:"durationSec"`
+	DistanceKm  *float64 `json:"distanceKm"`
+	RPE         *float64 `json:"rpe"`
+	UpdatedAt   int64    `json:"updatedAt"`
+}
+
 // Sync request/response
 
 type SyncRequest struct {
@@ -74,6 +86,7 @@ type SyncRequest struct {
 	Routines      []Routine        `json:"routines"`
 	Mesocycles    []Mesocycle      `json:"mesocycles"`
 	ExerciseSwaps []ExerciseSwap   `json:"exerciseSwaps"`
+	RunSessions   []RunSession     `json:"runSessions"`
 }
 
 type SyncResponse struct {
@@ -83,4 +96,5 @@ type SyncResponse struct {
 	Routines      []Routine        `json:"routines"`
 	Mesocycles    []Mesocycle      `json:"mesocycles"`
 	ExerciseSwaps []ExerciseSwap   `json:"exerciseSwaps"`
+	RunSessions   []RunSession     `json:"runSessions"`
 }

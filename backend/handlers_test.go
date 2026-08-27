@@ -455,3 +455,29 @@ func TestMakeSync_StampsMissingUpdatedAt(t *testing.T) {
 		t.Errorf("expected server-stamped updatedAt > 0, got %d", resp.Routines[0].UpdatedAt)
 	}
 }
+
+func TestSync_RunSessionRoundTrip(t *testing.T) {
+	db := testDB(t)
+	body, _ := json.Marshal(SyncRequest{
+		LastSyncAt: 0,
+		RunSessions: []RunSession{
+			{ID: "rs-1", Week: 2, Day: 3, StartedAt: 5000, UpdatedAt: 5000},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/sync", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	makeSync(db)(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp SyncResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(resp.RunSessions) != 1 || resp.RunSessions[0].ID != "rs-1" {
+		t.Errorf("expected rs-1 in response, got %v", resp.RunSessions)
+	}
+}

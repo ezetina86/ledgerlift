@@ -41,22 +41,24 @@ export async function syncWithBackend(): Promise<SyncResult> {
   const lastSyncAt = getLastSyncAt()
 
   // Gather all local data to push
-  const [sessions, sets, routines, mesocycles, exerciseSwaps] = await Promise.all([
+  const [sessions, sets, routines, mesocycles, exerciseSwaps, runSessions] = await Promise.all([
     db.sessions.toArray(),
     db.sets.toArray(),
     db.routines.toArray(),
     db.mesocycles.toArray(),
     db.exerciseSwaps.toArray(),
+    db.runSessions.toArray(),
   ])
 
   // Stamp updatedAt if missing (older records before sync was added)
   const now = Date.now()
-  const stampedSessions   = sessions.map(s   => ({ ...s, updatedAt: (s.updatedAt ?? now) }))
-  const stampedSets       = sets.map(s       => ({ ...s, updatedAt: (s.updatedAt ?? now) }))
-  const stampedRoutines   = routines.map(r   => ({ ...r, updatedAt: (r.updatedAt ?? now) }))
-  const stampedMesocycles = mesocycles.map(m => ({ ...m, updatedAt: (m.updatedAt ?? now) }))
+  const stampedSessions    = sessions.map(s    => ({ ...s, updatedAt: (s.updatedAt ?? now) }))
+  const stampedSets        = sets.map(s        => ({ ...s, updatedAt: (s.updatedAt ?? now) }))
+  const stampedRoutines    = routines.map(r    => ({ ...r, updatedAt: (r.updatedAt ?? now) }))
+  const stampedMesocycles  = mesocycles.map(m  => ({ ...m, updatedAt: (m.updatedAt ?? now) }))
+  const stampedRunSessions = runSessions.map(rs => ({ ...rs, updatedAt: (rs.updatedAt ?? now) }))
 
-  const pushed = sessions.length + sets.length + routines.length + mesocycles.length + exerciseSwaps.length
+  const pushed = sessions.length + sets.length + routines.length + mesocycles.length + exerciseSwaps.length + runSessions.length
 
   let res: Response
   try {
@@ -70,6 +72,7 @@ export async function syncWithBackend(): Promise<SyncResult> {
         routines: stampedRoutines,
         mesocycles: stampedMesocycles,
         exerciseSwaps,
+        runSessions: stampedRunSessions,
       }),
       signal: AbortSignal.timeout(10_000),
     })
@@ -88,6 +91,7 @@ export async function syncWithBackend(): Promise<SyncResult> {
     routines: typeof stampedRoutines
     mesocycles?: typeof stampedMesocycles
     exerciseSwaps?: typeof exerciseSwaps
+    runSessions?: typeof stampedRunSessions
   }
 
   // Merge server response into IndexedDB — disable updatedAt hooks so
@@ -114,6 +118,10 @@ export async function syncWithBackend(): Promise<SyncResult> {
     if (data.exerciseSwaps?.length) {
       await db.exerciseSwaps.bulkPut(data.exerciseSwaps)
       pulled += data.exerciseSwaps.length
+    }
+    if (data.runSessions?.length) {
+      await db.runSessions.bulkPut(data.runSessions)
+      pulled += data.runSessions.length
     }
   } finally {
     setSyncing(false)
