@@ -20,7 +20,7 @@ func testDB(t *testing.T) *sql.DB {
 func TestInitDB_TablesExist(t *testing.T) {
 	db := testDB(t)
 
-	for _, table := range []string{"routines", "sessions", "sets", "mesocycles", "exercise_swaps"} {
+	for _, table := range []string{"routines", "sessions", "sets", "mesocycles", "exercise_swaps", "run_sessions"} {
 		var name string
 		err := db.QueryRow(
 			`SELECT name FROM sqlite_master WHERE type='table' AND name=?`, table,
@@ -34,7 +34,7 @@ func TestInitDB_TablesExist(t *testing.T) {
 func TestInitDB_IndexesExist(t *testing.T) {
 	db := testDB(t)
 
-	for _, idx := range []string{"idx_sessions_updated", "idx_sets_updated", "idx_sets_session", "idx_mesos_updated", "idx_swaps_mesocycle"} {
+	for _, idx := range []string{"idx_sessions_updated", "idx_sets_updated", "idx_sets_session", "idx_mesos_updated", "idx_swaps_mesocycle", "idx_run_sessions_updated"} {
 		var name string
 		err := db.QueryRow(
 			`SELECT name FROM sqlite_master WHERE type='index' AND name=?`, idx,
@@ -635,5 +635,51 @@ func TestUpsertSession_MesocycleFields(t *testing.T) {
 	}
 	if !rows[0].IsDeload {
 		t.Error("expected isDeload=true")
+	}
+}
+
+// ── RunSessions ───────────────────────────────────────────────────────────────
+
+func TestUpsertRunSession_Insert(t *testing.T) {
+	db := testDB(t)
+	rs := RunSession{ID: "rs-1", Week: 1, Day: 1, StartedAt: 1000, UpdatedAt: 100}
+	if err := upsertRunSession(db, rs, 0); err != nil {
+		t.Fatalf("upsert: %v", err)
+	}
+	var id string
+	if err := db.QueryRow(`SELECT id FROM run_sessions WHERE id='rs-1'`).Scan(&id); err != nil {
+		t.Fatalf("not found: %v", err)
+	}
+}
+
+func TestUpsertRunSession_LastWriteWins(t *testing.T) {
+	db := testDB(t)
+	rs := RunSession{ID: "rs-2", Week: 1, Day: 2, StartedAt: 1000, UpdatedAt: 50}
+	_ = upsertRunSession(db, rs, 0)
+
+	completed := int64(2000)
+	rs2 := RunSession{ID: "rs-2", Week: 1, Day: 2, StartedAt: 1000, CompletedAt: &completed, UpdatedAt: 200}
+	_ = upsertRunSession(db, rs2, 0)
+
+	var got *int64
+	if err := db.QueryRow(`SELECT completed_at FROM run_sessions WHERE id='rs-2'`).Scan(&got); err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if got == nil || *got != 2000 {
+		t.Errorf("expected completed_at=2000, got %v", got)
+	}
+}
+
+func TestFetchRunSessionsSince_ReturnsOnlyNewer(t *testing.T) {
+	db := testDB(t)
+	_ = upsertRunSession(db, RunSession{ID: "rs-old", Week: 1, Day: 1, StartedAt: 100, UpdatedAt: 10}, 0)
+	_ = upsertRunSession(db, RunSession{ID: "rs-new", Week: 1, Day: 2, StartedAt: 200, UpdatedAt: 500}, 0)
+
+	rows, err := fetchRunSessionsSince(db, 100)
+	if err != nil {
+		t.Fatalf("fetch: %v", err)
+	}
+	if len(rows) != 1 || rows[0].ID != "rs-new" {
+		t.Errorf("expected [rs-new], got %v", rows)
 	}
 }
