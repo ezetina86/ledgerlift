@@ -77,11 +77,24 @@ func initDB(path string) *sql.DB {
 		swapped_at          INTEGER NOT NULL
 	);
 
-	CREATE INDEX IF NOT EXISTS idx_sessions_updated  ON sessions(updated_at);
-	CREATE INDEX IF NOT EXISTS idx_sets_updated      ON sets(updated_at);
-	CREATE INDEX IF NOT EXISTS idx_sets_session      ON sets(session_id);
-	CREATE INDEX IF NOT EXISTS idx_mesos_updated     ON mesocycles(updated_at);
-	CREATE INDEX IF NOT EXISTS idx_swaps_mesocycle   ON exercise_swaps(mesocycle_id);
+	CREATE TABLE IF NOT EXISTS run_sessions (
+		id           TEXT PRIMARY KEY,
+		week         INTEGER NOT NULL,
+		day          INTEGER NOT NULL,
+		started_at   INTEGER NOT NULL,
+		completed_at INTEGER,
+		duration_sec INTEGER,
+		distance_km  REAL,
+		rpe          REAL,
+		updated_at   INTEGER NOT NULL
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_sessions_updated     ON sessions(updated_at);
+	CREATE INDEX IF NOT EXISTS idx_sets_updated         ON sets(updated_at);
+	CREATE INDEX IF NOT EXISTS idx_sets_session         ON sets(session_id);
+	CREATE INDEX IF NOT EXISTS idx_mesos_updated        ON mesocycles(updated_at);
+	CREATE INDEX IF NOT EXISTS idx_swaps_mesocycle      ON exercise_swaps(mesocycle_id);
+	CREATE INDEX IF NOT EXISTS idx_run_sessions_updated ON run_sessions(updated_at);
 	`
 	if _, err = db.Exec(schema); err != nil {
 		log.Fatalf("schema: %v", err)
@@ -267,6 +280,48 @@ func fetchExerciseSwapsSince(db *sql.DB, since int64) ([]ExerciseSwap, error) {
 			return nil, err
 		}
 		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func upsertRunSession(db *sql.DB, rs RunSession, serverNow int64) error {
+	effectiveUpdatedAt := max(rs.UpdatedAt, serverNow)
+	_, err := db.Exec(`
+		INSERT INTO run_sessions(id,week,day,started_at,completed_at,duration_sec,distance_km,rpe,updated_at)
+		VALUES(?,?,?,?,?,?,?,?,?)
+		ON CONFLICT(id) DO UPDATE SET
+			completed_at=excluded.completed_at, duration_sec=excluded.duration_sec,
+			distance_km=excluded.distance_km, rpe=excluded.rpe,
+			updated_at=excluded.updated_at
+		WHERE excluded.updated_at > run_sessions.updated_at`,
+		rs.ID, rs.Week, rs.Day, rs.StartedAt,
+		rs.CompletedAt, rs.DurationSec, rs.DistanceKm, rs.RPE,
+		effectiveUpdatedAt,
+	)
+	return err
+}
+
+func fetchRunSessionsSince(db *sql.DB, since int64) ([]RunSession, error) {
+	rows, err := db.Query(
+		`SELECT id,week,day,started_at,completed_at,duration_sec,distance_km,rpe,updated_at FROM run_sessions WHERE updated_at > ?`,
+		since,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []RunSession
+	for rows.Next() {
+		var rs RunSession
+		if err := rows.Scan(
+			&rs.ID, &rs.Week, &rs.Day, &rs.StartedAt,
+			&rs.CompletedAt, &rs.DurationSec, &rs.DistanceKm, &rs.RPE,
+			&rs.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		out = append(out, rs)
 	}
 	return out, rows.Err()
 }

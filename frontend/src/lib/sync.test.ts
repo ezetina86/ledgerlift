@@ -24,6 +24,10 @@ vi.mock('../db/index.ts', () => ({
       toArray: vi.fn().mockResolvedValue([]),
       bulkPut: vi.fn().mockResolvedValue(undefined),
     },
+    runSessions: {
+      toArray: vi.fn().mockResolvedValue([]),
+      bulkPut: vi.fn().mockResolvedValue(undefined),
+    },
   },
   setSyncing: vi.fn(),
 }))
@@ -229,6 +233,44 @@ describe('syncWithBackend', () => {
     expect(result.pulled).toBe(0)
     expect(db.sessions.bulkPut).not.toHaveBeenCalled()
     expect(db.sets.bulkPut).not.toHaveBeenCalled()
+  })
+
+  it('includes runSessions in the push payload', async () => {
+    setServerUrl('http://localhost:8080')
+    const { db } = await import('../db/index.ts')
+
+    vi.mocked(db.runSessions.toArray).mockResolvedValue([
+      { id: 'rs-1', week: 1, day: 1, startedAt: 1000, completedAt: null, durationSec: null, distanceKm: null, rpe: null, updatedAt: 1000 },
+    ])
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ syncedAt: 9999, sessions: [], sets: [], routines: [], runSessions: [] }),
+    }))
+
+    const result = await syncWithBackend()
+    expect(result.status).toBe('ok')
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string)
+    expect(body.runSessions).toHaveLength(1)
+    expect(body.runSessions[0].id).toBe('rs-1')
+  })
+
+  it('calls bulkPut on runSessions received from server', async () => {
+    setServerUrl('http://localhost:8080')
+    const { db } = await import('../db/index.ts')
+    vi.mocked(db.runSessions.bulkPut).mockClear()
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        syncedAt: 9999,
+        sessions: [], sets: [], routines: [],
+        runSessions: [{ id: 'rs-server', week: 2, day: 1, startedAt: 2000, updatedAt: 2000 }],
+      }),
+    }))
+
+    await syncWithBackend()
+    expect(db.runSessions.bulkPut).toHaveBeenCalled()
   })
 
   it('calls setSyncing(false) in finally even when bulkPut throws', async () => {
