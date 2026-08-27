@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
-import type { Mesocycle, ExerciseSwap, Routine, Exercise } from '../db/index.ts'
+import type { Mesocycle, ExerciseSwap, Routine, Exercise, RunSession } from '../db/index.ts'
 import { mesocycleWeek } from '../lib/split.ts'
 import { uid } from '../lib/utils.ts'
+import { nextRunSession, totalDurationSec, C25K_PLAN } from '../lib/runPlan.ts'
 import ExercisePickerSheet from '../components/ExercisePickerSheet.tsx'
 
 const SPLIT_DAY_LABELS: Record<string, string> = {
@@ -32,6 +33,9 @@ export default function PlanPage() {
   ) ?? []
   const allSets = useLiveQuery(() => db.sets.toArray()) ?? []
   const exercises = useLiveQuery<Exercise[]>(() => db.exercises.toArray())
+  const runSessions = useLiveQuery<RunSession[]>(
+    () => db.runSessions.filter(s => s.completedAt !== null).toArray()
+  ) ?? []
   const exMap = useMemo(() => new Map((exercises ?? []).map(e => [e.id, e])), [exercises])
 
   const [showNewMesoSheet, setShowNewMesoSheet] = useState(false)
@@ -299,6 +303,9 @@ export default function PlanPage() {
         </div>
       )}
 
+      {/* ── C25K Run Plan ────────────────────── */}
+      <C25KBlock runSessions={runSessions} />
+
       {/* ── End Cycle Confirm Sheet ───────────── */}
       {showEndConfirm && (
         <>
@@ -470,6 +477,123 @@ function RoutineCard({ routine, exMap, onSwap, mesoActive }: RoutineCardProps) {
               </div>
             )
           })}
+      </div>
+    </div>
+  )
+}
+
+// ── C25KBlock ──────────────────────────────────────────────────────────────────
+
+function C25KBlock({ runSessions }: { runSessions: RunSession[] }) {
+  const completedCount = runSessions.length
+  const next = nextRunSession(completedCount)
+  const TOTAL = C25K_PLAN.length // 27
+
+  return (
+    <div className="px-4 mb-5">
+      <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', marginBottom: 10 }}>
+        Run Plan
+      </p>
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}
+      >
+        {/* Header row */}
+        <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+          <div>
+            <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(62% 0.18 150)', textTransform: 'uppercase' }}>
+              C25K PLAN
+            </p>
+            <p className="num" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '26px', color: 'oklch(97% 0.005 293)', letterSpacing: '-0.01em', lineHeight: 1, marginTop: 2 }}>
+              {completedCount} / {TOTAL}
+            </p>
+            <p style={{ fontSize: '12px', color: 'oklch(50% 0.010 293)', marginTop: 2 }}>
+              Completed sessions
+            </p>
+          </div>
+          <div
+            className="px-3 py-2 rounded-xl text-right"
+            style={{ background: 'oklch(18% 0.012 293)' }}
+          >
+            <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.1em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', marginBottom: 2 }}>
+              Completion
+            </p>
+            <p className="num" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: 'oklch(62% 0.18 150)', lineHeight: 1 }}>
+              {Math.round((completedCount / TOTAL) * 100)}%
+            </p>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mx-4 mb-4 h-1.5 rounded-full overflow-hidden" style={{ background: 'oklch(20% 0.010 293)' }}>
+          <div
+            className="h-full rounded-full transition-all"
+            style={{ width: `${Math.min((completedCount / TOTAL) * 100, 100)}%`, background: 'oklch(62% 0.18 150)' }}
+          />
+        </div>
+
+        {/* Week grid — 9 weeks × 3 sessions */}
+        <div
+          className="mx-4 mb-4 grid gap-1.5"
+          style={{ gridTemplateColumns: 'repeat(9, 1fr)' }}
+        >
+          {Array.from({ length: 9 }, (_, wi) => {
+            const weekNum = wi + 1
+            const weekSessions = C25K_PLAN.filter(s => s.week === weekNum)
+            return (
+              <div key={weekNum} className="flex flex-col items-center gap-1">
+                <p style={{ fontSize: '8px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.08em', color: 'oklch(34% 0.008 293)' }}>
+                  W{weekNum}
+                </p>
+                {weekSessions.map(planSess => {
+                  const idx = C25K_PLAN.indexOf(planSess)
+                  const done = idx < completedCount
+                  const isCurrent = idx === completedCount
+                  return (
+                    <div
+                      key={planSess.day}
+                      className="w-full aspect-square rounded-full"
+                      style={{
+                        background: done
+                          ? 'oklch(62% 0.18 150)'
+                          : isCurrent
+                            ? 'oklch(40% 0.12 150)'
+                            : 'oklch(20% 0.010 293)',
+                        border: isCurrent ? '1px solid oklch(62% 0.18 150)' : '1px solid transparent',
+                      }}
+                    />
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Next up callout */}
+        {next && (
+          <div
+            className="mx-4 mb-4 px-4 py-3 rounded-xl"
+            style={{ background: 'oklch(16% 0.010 293)', border: '1px solid oklch(22% 0.010 293)' }}
+          >
+            <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.12em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', marginBottom: 4 }}>
+              Next Up
+            </p>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '18px', color: 'oklch(97% 0.005 293)', lineHeight: 1 }}>
+              Week {next.week} · Day {next.day}
+            </p>
+            <p style={{ fontSize: '12px', color: 'oklch(50% 0.010 293)', marginTop: 3 }}>
+              ~{Math.round(totalDurationSec(next) / 60)} min
+            </p>
+          </div>
+        )}
+
+        {completedCount >= TOTAL && (
+          <div className="mx-4 mb-4 px-4 py-3 rounded-xl text-center" style={{ background: 'oklch(16% 0.010 293)' }}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '16px', letterSpacing: '0.06em', color: 'oklch(62% 0.18 150)' }}>
+              C25K COMPLETE
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
