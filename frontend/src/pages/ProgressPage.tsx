@@ -7,6 +7,7 @@ import type { ProgressPoint } from '../lib/overload.ts'
 import { formatWeight, kgToLbs, KG_TO_LBS } from '../lib/utils.ts'
 import { useWeightUnit } from '../lib/prefs.ts'
 import ExerciseDashboardSheet from '../components/ExerciseDashboardSheet.tsx'
+import RunProgressPanel from '../components/RunProgressPanel.tsx'
 
 const GROUP_COLORS: Record<string, string> = {
   Back:      'oklch(55% 0.18 265)',
@@ -63,12 +64,15 @@ function Sparkline({ points, height = 60 }: { points: number[]; height?: number 
 }
 
 export default function ProgressPage() {
+  const [mode, setMode] = useState<'lift' | 'run'>('lift')
   const [selectedPrId, setSelectedPrId] = useState<string | null>(null)
   const [barsVisible, setBarsVisible] = useState(false)
   const { unit } = useWeightUnit()
 
-  const allSets      = useLiveQuery<SetLog[]>(() => db.sets.toArray(), []) ?? []
-  const allExercises = useLiveQuery<Exercise[]>(() => db.exercises.toArray(), []) ?? []
+  const rawSets = useLiveQuery<SetLog[]>(() => db.sets.toArray(), [])
+  const rawExercises = useLiveQuery<Exercise[]>(() => db.exercises.toArray(), [])
+  const allSets = useMemo(() => rawSets ?? [], [rawSets])
+  const allExercises = useMemo(() => rawExercises ?? [], [rawExercises])
 
   const exMap         = useMemo(() => new Map(allExercises.map(e => [e.id, e])), [allExercises])
   const volByGroup    = useMemo(() => weeklyVolumeByGroup(allSets, exMap), [allSets, exMap])
@@ -100,140 +104,174 @@ export default function ProgressPage() {
         <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '36px', letterSpacing: '-0.01em', color: 'oklch(97% 0.005 293)', lineHeight: 1, margin: 0 }}>
           PROGRESS
         </h1>
+        <div
+          className="mt-4 inline-flex rounded-2xl p-1"
+          style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}
+        >
+          {(['lift', 'run'] as const).map(tab => {
+            const active = mode === tab
+            return (
+              <button
+                key={tab}
+                onClick={() => {
+                  setMode(tab)
+                  if (tab === 'run') setSelectedPrId(null)
+                }}
+                className="min-w-24 rounded-xl px-4 py-2.5 transition-all active:scale-[0.98]"
+                style={{
+                  background: active ? 'oklch(62% 0.24 293)' : 'transparent',
+                  color: active ? 'oklch(7% 0.008 293)' : 'oklch(72% 0.012 293)',
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  fontSize: '14px',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                {tab.toUpperCase()}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Section A: Weekly Volume */}
-      <section className="px-4 mb-6">
-        {volByGroup.length > 0 && (
-          <div className="flex items-baseline gap-2 mb-3">
-            <span style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase' }}>
-              THIS WEEK ·
-            </span>
-            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '28px', color: 'oklch(97% 0.005 293)', letterSpacing: '-0.01em', lineHeight: 1 }}>
-              {displayTotalVol}k
-            </span>
-            <span style={{ fontSize: '13px', color: 'oklch(44% 0.008 293)' }}>{unit}</span>
-          </div>
-        )}
-        <Label>Weekly Volume</Label>
-        {volByGroup.length === 0 ? <Empty text="Log workouts to see weekly volume" /> : (
-          <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}>
-            {volByGroup.map((row, i) => {
-              const vol = unit === 'lb' ? row.volume * KG_TO_LBS : row.volume
-              const color = GROUP_COLORS[row.group] ?? 'oklch(62% 0.24 293)'
-              return (
-                <div key={row.group}>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ background: color, marginTop: 2 }}
-                      />
-                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '13px', letterSpacing: '0.06em', color: 'oklch(72% 0.012 293)', textTransform: 'uppercase' }}>
-                        {row.group}
-                      </span>
+      {mode === 'lift' ? (
+        <>
+          {/* Section A: Weekly Volume */}
+          <section className="px-4 mb-6">
+            {volByGroup.length > 0 && (
+              <div className="flex items-baseline gap-2 mb-3">
+                <span style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase' }}>
+                  THIS WEEK ·
+                </span>
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '28px', color: 'oklch(97% 0.005 293)', letterSpacing: '-0.01em', lineHeight: 1 }}>
+                  {displayTotalVol}k
+                </span>
+                <span style={{ fontSize: '13px', color: 'oklch(44% 0.008 293)' }}>{unit}</span>
+              </div>
+            )}
+            <Label>Weekly Volume</Label>
+            {volByGroup.length === 0 ? <Empty text="Log workouts to see weekly volume" /> : (
+              <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}>
+                {volByGroup.map((row, i) => {
+                  const vol = unit === 'lb' ? row.volume * KG_TO_LBS : row.volume
+                  const color = GROUP_COLORS[row.group] ?? 'oklch(62% 0.24 293)'
+                  return (
+                    <div key={row.group}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ background: color, marginTop: 2 }}
+                          />
+                          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '13px', letterSpacing: '0.06em', color: 'oklch(72% 0.012 293)', textTransform: 'uppercase' }}>
+                            {row.group}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <p style={{ fontSize: '14px', fontWeight: 700, fontFamily: "'Barlow Condensed', sans-serif", color: 'oklch(90% 0.008 293)' }}>
+                            {Math.round(vol).toLocaleString()}{' '}
+                            <span style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)', fontFamily: "'Barlow', sans-serif", fontWeight: 400 }}>{unit}</span>
+                          </p>
+                          <p style={{ fontSize: '11px', color: 'oklch(40% 0.008 293)' }}>{row.sets} sets</p>
+                        </div>
+                      </div>
+                      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'oklch(18% 0.012 293)' }}>
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: barsVisible ? `${row.pct}%` : '0%',
+                            background: color,
+                            transition: `width 700ms ease-out ${i * 75}ms`,
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p style={{ fontSize: '14px', fontWeight: 700, fontFamily: "'Barlow Condensed', sans-serif", color: 'oklch(90% 0.008 293)' }}>
-                        {Math.round(vol).toLocaleString()}{' '}
-                        <span style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)', fontFamily: "'Barlow', sans-serif", fontWeight: 400 }}>{unit}</span>
-                      </p>
-                      <p style={{ fontSize: '11px', color: 'oklch(40% 0.008 293)' }}>{row.sets} sets</p>
-                    </div>
-                  </div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'oklch(18% 0.012 293)' }}>
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: barsVisible ? `${row.pct}%` : '0%',
-                        background: color,
-                        transition: `width 700ms ease-out ${i * 75}ms`,
-                      }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </section>
+                  )
+                })}
+              </div>
+            )}
+          </section>
 
-      {/* Section C: Personal Records — tappable card grid */}
-      <section className="px-4">
-        <Label>Personal Records</Label>
-        {prs.length === 0 ? <Empty text="Complete workouts to build PRs" /> : (
-          <div className="grid grid-cols-2 gap-3">
-            {prs.map(pr => {
-              const ex = exMap.get(pr.exerciseId)
-              const prog = progressionMap.get(pr.exerciseId) ?? []
-              const trend = prog.length >= 2
-                ? (prog[prog.length - 1].maxWeightKg > prog[0].maxWeightKg ? '↑' : '→')
-                : null
-              const groupColor = GROUP_COLORS[ex?.primaryMuscleGroup ?? 'Other'] ?? 'oklch(44% 0.008 293)'
-              const displayBest = formatWeight(unit === 'lb' ? kgToLbs(pr.bestWeightKg) : pr.bestWeightKg)
+          {/* Section C: Personal Records — tappable card grid */}
+          <section className="px-4">
+            <Label>Personal Records</Label>
+            {prs.length === 0 ? <Empty text="Complete workouts to build PRs" /> : (
+              <div className="grid grid-cols-2 gap-3">
+                {prs.map(pr => {
+                  const ex = exMap.get(pr.exerciseId)
+                  const prog = progressionMap.get(pr.exerciseId) ?? []
+                  const trend = prog.length >= 2
+                    ? (prog[prog.length - 1].maxWeightKg > prog[0].maxWeightKg ? '↑' : '→')
+                    : null
+                  const groupColor = GROUP_COLORS[ex?.primaryMuscleGroup ?? 'Other'] ?? 'oklch(44% 0.008 293)'
+                  const displayBest = formatWeight(unit === 'lb' ? kgToLbs(pr.bestWeightKg) : pr.bestWeightKg)
 
-              return (
-                <button
-                  key={pr.exerciseId}
-                  onClick={() => setSelectedPrId(pr.exerciseId)}
-                  className="rounded-2xl p-4 text-left flex flex-col gap-2 active:scale-[0.97] transition-transform"
-                  style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}
-                >
-                  {/* Muscle chip + trend */}
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="rounded px-1.5 py-0.5 font-bold uppercase"
-                      style={{
-                        fontSize: '9px',
-                        fontFamily: "'Barlow Condensed', sans-serif",
-                        letterSpacing: '0.08em',
-                        background: `color-mix(in oklch, ${groupColor} 18%, transparent)`,
-                        color: groupColor,
-                      }}
+                  return (
+                    <button
+                      key={pr.exerciseId}
+                      onClick={() => setSelectedPrId(pr.exerciseId)}
+                      className="rounded-2xl p-4 text-left flex flex-col gap-2 active:scale-[0.97] transition-transform"
+                      style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}
                     >
-                      {ex?.primaryMuscleGroup ?? '—'}
-                    </span>
-                    {trend && (
-                      <span style={{ fontSize: '16px', color: trend === '↑' ? 'oklch(62% 0.24 293)' : 'oklch(35% 0.008 293)' }}>
-                        {trend}
-                      </span>
-                    )}
-                  </div>
+                      {/* Muscle chip + trend */}
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="rounded px-1.5 py-0.5 font-bold uppercase"
+                          style={{
+                            fontSize: '9px',
+                            fontFamily: "'Barlow Condensed', sans-serif",
+                            letterSpacing: '0.08em',
+                            background: `color-mix(in oklch, ${groupColor} 18%, transparent)`,
+                            color: groupColor,
+                          }}
+                        >
+                          {ex?.primaryMuscleGroup ?? '—'}
+                        </span>
+                        {trend && (
+                          <span style={{ fontSize: '16px', color: trend === '↑' ? 'oklch(62% 0.24 293)' : 'oklch(35% 0.008 293)' }}>
+                            {trend}
+                          </span>
+                        )}
+                      </div>
 
-                  {/* Exercise name */}
-                  <p
-                    className="line-clamp-2 leading-tight"
-                    style={{ fontSize: '12px', color: 'oklch(72% 0.012 293)' }}
-                  >
-                    {pr.exerciseName}
-                  </p>
+                      {/* Exercise name */}
+                      <p
+                        className="line-clamp-2 leading-tight"
+                        style={{ fontSize: '12px', color: 'oklch(72% 0.012 293)' }}
+                      >
+                        {pr.exerciseName}
+                      </p>
 
-                  {/* Best weight */}
-                  <div className="flex items-baseline gap-1">
-                    <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '32px', color: 'oklch(97% 0.005 293)', lineHeight: 1 }}>
-                      {displayBest}
-                    </span>
-                    <span style={{ fontSize: '12px', color: 'oklch(44% 0.008 293)' }}>{unit}</span>
-                  </div>
+                      {/* Best weight */}
+                      <div className="flex items-baseline gap-1">
+                        <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '32px', color: 'oklch(97% 0.005 293)', lineHeight: 1 }}>
+                          {displayBest}
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'oklch(44% 0.008 293)' }}>{unit}</span>
+                      </div>
 
-                  {/* Mini sparkline */}
-                  {prog.length >= 2 && (
-                    <Sparkline points={prog.map(p => p.maxWeightKg)} height={32} />
-                  )}
+                      {/* Mini sparkline */}
+                      {prog.length >= 2 && (
+                        <Sparkline points={prog.map(p => p.maxWeightKg)} height={32} />
+                      )}
 
-                  {/* Metadata */}
-                  <p style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)' }}>
-                    {pr.bestReps} reps · {pr.sessionCount} sessions
-                  </p>
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </section>
+                      {/* Metadata */}
+                      <p style={{ fontSize: '11px', color: 'oklch(44% 0.008 293)' }}>
+                        {pr.bestReps} reps · {pr.sessionCount} sessions
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <RunProgressPanel />
+      )}
 
       {/* Exercise drill-down overlay */}
-      {selectedPrId != null && selectedPr != null && (
+      {mode === 'lift' && selectedPrId != null && selectedPr != null && (
         <ExerciseDashboardSheet
           exerciseId={selectedPrId}
           exerciseName={selectedPr.exerciseName}

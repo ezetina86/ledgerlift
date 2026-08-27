@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import type { RunSession } from '../db/index.ts'
@@ -34,7 +34,7 @@ export default function RunPage({ sessionId, onComplete, onBack }: Props) {
   const planSession = dbSession
     ? C25K_PLAN.find(s => s.week === dbSession.week && s.day === dbSession.day)
     : undefined
-  const intervals = planSession?.intervals ?? []
+  const intervals = useMemo(() => planSession?.intervals ?? [], [planSession])
 
   const [timer, setTimer] = useState<TimerState>({
     phase: 'ready',
