@@ -1,3 +1,4 @@
+declare const __APP_VERSION__: string
 import { useState, useEffect } from 'react'
 import {
   getServerUrl, setServerUrl,
@@ -22,6 +23,7 @@ export default function SettingsPage() {
   const [healthy, setHealthy] = useState<boolean | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [result, setResult] = useState<SyncResult | null>(null)
+  const [updating, setUpdating] = useState(false)
   const lastSyncAt = getLastSyncAt()
 
   useEffect(() => {
@@ -35,6 +37,15 @@ export default function SettingsPage() {
     setHealthy(null)
     checkHealth().then(setHealthy)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function forceUpdate() {
+    setUpdating(true)
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready
+      await reg.update()
+    }
+    window.location.reload()
   }
 
   async function doSync() {
@@ -212,6 +223,35 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* App update */}
+      <section className="px-4 mb-6">
+        <Label>App Update</Label>
+        <div
+          className="rounded-2xl p-4"
+          style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}
+        >
+          <p style={{ fontSize: '12px', color: 'oklch(44% 0.008 293)', fontFamily: "'Barlow', sans-serif", marginBottom: 12 }}>
+            Forces the service worker to fetch the latest version and reload.
+          </p>
+          <button
+            onClick={forceUpdate}
+            disabled={updating}
+            className="w-full h-11 rounded-xl transition-all active:scale-[0.98]"
+            style={{
+              background: updating ? 'oklch(15% 0.008 293)' : 'oklch(18% 0.012 293)',
+              color: updating ? 'oklch(34% 0.008 293)' : 'oklch(72% 0.012 293)',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: '14px',
+              letterSpacing: '0.06em',
+              border: '1px solid oklch(26% 0.012 293)',
+            }}
+          >
+            {updating ? 'RELOADING…' : 'CHECK FOR UPDATES'}
+          </button>
+        </div>
+      </section>
+
       {/* About */}
       <section className="px-4">
         <Label>About</Label>
@@ -221,6 +261,7 @@ export default function SettingsPage() {
         >
           {[
             ['App', 'LedgerLift'],
+            ['Version', `v${__APP_VERSION__}`],
             ['Protocol', 'Jeff Nippard Upper/Lower'],
             ['Storage', 'IndexedDB (local-first)'],
             ['Weights', unit === 'kg' ? 'Kilograms (kg)' : 'Pounds (lb)'],
