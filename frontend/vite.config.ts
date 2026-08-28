@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'fs'
 
-const APP_VERSION = readFileSync('../VERSION', 'utf-8').trim()
+const { version: APP_VERSION } = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
 export default defineConfig({
   define: {
