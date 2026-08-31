@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.13.2] - 2026-08-31
+
+### Fixed
+- **Missing sessions after v0.7.0 deploy** — production SQLite was created before `mesocycle_id` and `is_deload` columns were added; `CREATE TABLE IF NOT EXISTS` silently skipped adding them, causing every post-v0.7.0 session upsert to fail. Backend now runs additive migrations on startup using `PRAGMA table_info` to add missing columns idempotently.
+
+---
+
 ## [0.13.1] - 2026-08-31
 
 ### Fixed
@@ -238,7 +245,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.13.2...HEAD
+[0.13.2]: https://github.com/ezetina86/ledgerlift/compare/v0.13.1...v0.13.2
+[0.13.1]: https://github.com/ezetina86/ledgerlift/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/ezetina86/ledgerlift/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/ezetina86/ledgerlift/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/ezetina86/ledgerlift/compare/v0.10.1...v0.11.0
