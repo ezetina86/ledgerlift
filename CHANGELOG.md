@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.13.3] - 2026-08-31
+
+### Fixed
+- **Force full sync** — added FORCE FULL SYNC button in Settings that resets the sync watermark to zero before syncing, re-pushing all local records. Needed when a device's `lastSyncAt` is ahead of the server (e.g. recovering missing data after a schema migration).
+
+---
+
 ## [0.13.2] - 2026-08-31
 
 ### Fixed
@@ -245,7 +252,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.13.2...HEAD
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.13.3...HEAD
+[0.13.3]: https://github.com/ezetina86/ledgerlift/compare/v0.13.2...v0.13.3
 [0.13.2]: https://github.com/ezetina86/ledgerlift/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/ezetina86/ledgerlift/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/ezetina86/ledgerlift/compare/v0.12.0...v0.13.0
