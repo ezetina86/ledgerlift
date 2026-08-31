@@ -2,35 +2,29 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import type { WorkoutSession, Routine, SetLog } from '../db/index.ts'
 
 // Mock Dexie before importing sync.ts so we don't try to open IndexedDB
-vi.mock('../db/index.ts', () => ({
-  db: {
-    sessions: {
-      toArray: vi.fn().mockResolvedValue([]),
+vi.mock('../db/index.ts', () => {
+  // ponytail: share the same toArray vi.fn() on both the table and the where chain
+  // so tests can override via vi.mocked(db.sessions.toArray) as before.
+  function makeTable() {
+    const toArray = vi.fn().mockResolvedValue([])
+    return {
+      where: vi.fn().mockReturnValue({ above: vi.fn().mockReturnValue({ toArray }) }),
+      toArray,
       bulkPut: vi.fn().mockResolvedValue(undefined),
+    }
+  }
+  return {
+    db: {
+      sessions:     makeTable(),
+      sets:         makeTable(),
+      routines:     makeTable(),
+      mesocycles:   makeTable(),
+      exerciseSwaps: makeTable(),
+      runSessions:  makeTable(),
     },
-    sets: {
-      toArray: vi.fn().mockResolvedValue([]),
-      bulkPut: vi.fn().mockResolvedValue(undefined),
-    },
-    routines: {
-      toArray: vi.fn().mockResolvedValue([]),
-      bulkPut: vi.fn().mockResolvedValue(undefined),
-    },
-    mesocycles: {
-      toArray: vi.fn().mockResolvedValue([]),
-      bulkPut: vi.fn().mockResolvedValue(undefined),
-    },
-    exerciseSwaps: {
-      toArray: vi.fn().mockResolvedValue([]),
-      bulkPut: vi.fn().mockResolvedValue(undefined),
-    },
-    runSessions: {
-      toArray: vi.fn().mockResolvedValue([]),
-      bulkPut: vi.fn().mockResolvedValue(undefined),
-    },
-  },
-  setSyncing: vi.fn(),
-}))
+    setSyncing: vi.fn(),
+  }
+})
 
 import {
   getServerUrl, setServerUrl, getLastSyncAt,
