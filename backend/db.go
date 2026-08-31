@@ -99,7 +99,46 @@ func initDB(path string) *sql.DB {
 	if _, err = db.Exec(schema); err != nil {
 		log.Fatalf("schema: %v", err)
 	}
+	runMigrations(db)
 	return db
+}
+
+// runMigrations applies additive schema changes that CREATE TABLE IF NOT EXISTS can't handle.
+// Each migration is idempotent: it checks column existence before ALTER TABLE.
+func runMigrations(db *sql.DB) {
+	// v0.7.0: mesocycle_id + is_deload added to sessions
+	if !columnExists(db, "sessions", "mesocycle_id") {
+		if _, err := db.Exec(`ALTER TABLE sessions ADD COLUMN mesocycle_id TEXT`); err != nil {
+			log.Fatalf("migrate sessions.mesocycle_id: %v", err)
+		}
+		log.Println("migration: added sessions.mesocycle_id")
+	}
+	if !columnExists(db, "sessions", "is_deload") {
+		if _, err := db.Exec(`ALTER TABLE sessions ADD COLUMN is_deload INTEGER NOT NULL DEFAULT 0`); err != nil {
+			log.Fatalf("migrate sessions.is_deload: %v", err)
+		}
+		log.Println("migration: added sessions.is_deload")
+	}
+}
+
+func columnExists(db *sql.DB, table, column string) bool {
+	rows, err := db.Query(`PRAGMA table_info(` + table + `)`)
+	if err != nil {
+		return false
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var cid, notnull, pk int
+		var name, typ string
+		var dflt interface{}
+		if err := rows.Scan(&cid, &name, &typ, &notnull, &dflt, &pk); err != nil {
+			continue
+		}
+		if name == column {
+			return true
+		}
+	}
+	return false
 }
 
 // ── Upsert helpers ────────────────────────────────────────────────────────────
