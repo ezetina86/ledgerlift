@@ -2,7 +2,7 @@ declare const __APP_VERSION__: string
 import { useState, useEffect } from 'react'
 import {
   getServerUrl, setServerUrl,
-  getLastSyncAt, syncWithBackend, checkHealth,
+  getLastSyncAt, setLastSyncAt, syncWithBackend, checkHealth,
   type SyncResult,
 } from '../lib/sync.ts'
 import { formatDate, formatTime } from '../lib/utils.ts'
@@ -48,7 +48,8 @@ export default function SettingsPage() {
     window.location.reload()
   }
 
-  async function doSync() {
+  async function doSync(full = false) {
+    if (full) setLastSyncAt(0)
     setSyncing(true)
     setResult(null)
     const r = await syncWithBackend()
@@ -141,7 +142,7 @@ export default function SettingsPage() {
 
           {/* Sync button */}
           <button
-            onClick={doSync}
+            onClick={() => doSync(false)}
             disabled={!url || syncing}
             className="w-full h-12 rounded-xl transition-all active:scale-[0.98]"
             style={{
@@ -160,6 +161,23 @@ export default function SettingsPage() {
             }}
           >
             {syncing ? 'SYNCING…' : 'SYNC NOW'}
+          </button>
+
+          <button
+            onClick={() => doSync(true)}
+            disabled={!url || syncing}
+            className="w-full h-9 rounded-xl transition-all active:scale-[0.98]"
+            style={{
+              background: 'oklch(14% 0.008 293)',
+              color: !url || syncing ? 'oklch(28% 0.008 293)' : 'oklch(44% 0.008 293)',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: '13px',
+              letterSpacing: '0.06em',
+              border: '1px solid oklch(20% 0.008 293)',
+            }}
+          >
+            FORCE FULL SYNC
           </button>
 
           {/* Result */}

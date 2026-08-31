@@ -15,7 +15,7 @@ export function getLastSyncAt(): number {
   return parseInt(localStorage.getItem(LAST_SYNC_KEY) ?? '0', 10)
 }
 
-function setLastSyncAt(ts: number) {
+export function setLastSyncAt(ts: number) {
   localStorage.setItem(LAST_SYNC_KEY, String(ts))
 }
 
