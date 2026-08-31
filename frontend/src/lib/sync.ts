@@ -40,15 +40,19 @@ export async function syncWithBackend(): Promise<SyncResult> {
 
   const lastSyncAt = getLastSyncAt()
 
-  // Gather all local data to push
-  const [sessions, sets, routines, mesocycles, exerciseSwaps, runSessions] = await Promise.all([
-    db.sessions.toArray(),
-    db.sets.toArray(),
-    db.routines.toArray(),
-    db.mesocycles.toArray(),
-    db.exerciseSwaps.toArray(),
-    db.runSessions.toArray(),
+  // Only push records changed since last sync (delta push).
+  // Pushing all records lets the most-recently-syncing device overwrite newer data
+  // from another device, because the backend stamps every received record with serverNow.
+  // lastSyncAt=0 on first sync pushes everything (all updatedAt > 0).
+  const [sessions, sets, routines, mesocycles, runSessions] = await Promise.all([
+    db.sessions.where('updatedAt').above(lastSyncAt).toArray(),
+    db.sets.where('updatedAt').above(lastSyncAt).toArray(),
+    db.routines.where('updatedAt').above(lastSyncAt).toArray(),
+    db.mesocycles.where('updatedAt').above(lastSyncAt).toArray(),
+    db.runSessions.where('updatedAt').above(lastSyncAt).toArray(),
   ])
+  // exerciseSwaps has no updatedAt — push all (INSERT OR IGNORE is idempotent)
+  const exerciseSwaps = await db.exerciseSwaps.toArray()
 
   // Stamp updatedAt if missing (older records before sync was added)
   const now = Date.now()

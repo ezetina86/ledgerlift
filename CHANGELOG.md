@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.13.1] - 2026-08-31
+
+### Fixed
+- **Sync data corruption** — client now pushes only records modified since `lastSyncAt` (delta push). Previously, every sync pushed all local records; the backend stamped them with the current server time, causing the last device to sync to silently overwrite newer data from another device. Last-write-wins now resolves correctly across phone and laptop.
+
+---
+
 ## [0.13.0] - 2026-08-28
 
 ### Added
