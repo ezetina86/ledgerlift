@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatWeight, kgToLbs, lbsToKg } from '../lib/utils.ts'
+import { formatWeight, kgToLbs, lbsToKg, RPE_COLORS } from '../lib/utils.ts'
 import { useWeightUnit } from '../lib/prefs.ts'
 
 export interface SetInput {
@@ -19,13 +19,6 @@ interface Props {
 
 const RPE_OPTIONS = [6, 7, 8, 9, 10]
 const RPE_LABELS: Record<number, string> = { 6: 'Easy', 7: 'Moderate', 8: 'Hard', 9: 'Very Hard', 10: 'Max' }
-const RPE_COLORS: Record<number, string> = {
-  6:  'oklch(68% 0.18 150)',
-  7:  'oklch(76% 0.16 115)',
-  8:  'oklch(76% 0.16 85)',
-  9:  'oklch(65% 0.20 42)',
-  10: 'oklch(60% 0.22 25)',
-}
 
 // Wrapper mounts/unmounts the inner sheet so state always initialises fresh
 export default function SetSheet({ open, ...props }: Props) {

@@ -3,17 +3,10 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getLastSetsForExercise } from '../db/index.ts'
 import type { SetLog, Exercise } from '../db/index.ts'
 import { suggestNext } from '../lib/overload.ts'
-import { formatWeight, uid, kgToLbs } from '../lib/utils.ts'
+import { formatWeight, uid, kgToLbs, RPE_COLORS } from '../lib/utils.ts'
 import { useWeightUnit } from '../lib/prefs.ts'
 import SetSheet, { type SetInput } from './SetSheet.tsx'
 
-const RPE_COLORS: Record<number, string> = {
-  6:  'oklch(68% 0.18 150)',
-  7:  'oklch(76% 0.16 115)',
-  8:  'oklch(76% 0.16 85)',
-  9:  'oklch(65% 0.20 42)',
-  10: 'oklch(60% 0.22 25)',
-}
 
 interface Props {
   sessionId: string
