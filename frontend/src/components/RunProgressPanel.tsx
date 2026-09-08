@@ -8,7 +8,7 @@ import {
   longestCompletedRunIntervalSec,
   rpeTrend,
   runSummary,
-  totalLoggedDistanceKm,
+  totalRunDistanceKm,
   totalRunDurationSec,
 } from '../lib/runProgress.ts'
 import Sparkline from './Sparkline.tsx'
@@ -231,7 +231,7 @@ export default function RunProgressPanel() {
       rpePoints,
       longestRunSec: longestCompletedRunIntervalSec(runSessions),
       totalDurationSec: totalRunDurationSec(runSessions),
-      totalDistanceKm: totalLoggedDistanceKm(runSessions),
+      totalDistanceKm: totalRunDistanceKm(runSessions),
     }
   }, [runSessions])
 
