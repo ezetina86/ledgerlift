@@ -105,8 +105,6 @@ export function totalRunDistanceKm(sessions: RunSession[]): number {
   }, 0)
 }
 
-export const totalLoggedDistanceKm = totalRunDistanceKm
-
 export function longestCompletedRunIntervalSec(sessions: RunSession[]): number {
   return completedRunSessions(sessions).reduce((max, session) => {
     return Math.max(max, longestPlannedRunIntervalSec(session.week, session.day))

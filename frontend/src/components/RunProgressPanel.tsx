@@ -8,9 +8,11 @@ import {
   longestCompletedRunIntervalSec,
   rpeTrend,
   runSummary,
-  totalLoggedDistanceKm,
+  totalRunDistanceKm,
   totalRunDurationSec,
 } from '../lib/runProgress.ts'
+import Sparkline from './Sparkline.tsx'
+import Label from './Label.tsx'
 
 function fmtDurationCompact(totalSec: number): string {
   if (totalSec <= 0) return '0 min'
@@ -36,24 +38,6 @@ function fmtDistanceKm(distanceKm: number): string {
 function fmtRpe(rpe: number): string {
   const rounded = Math.round(rpe * 10) / 10
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
-}
-
-function Label({ children }: { children: string }) {
-  return (
-    <p
-      style={{
-        fontSize: '10px',
-        fontFamily: "'Barlow Condensed', sans-serif",
-        fontWeight: 700,
-        letterSpacing: '0.15em',
-        color: 'oklch(44% 0.008 293)',
-        textTransform: 'uppercase',
-        marginBottom: 10,
-      }}
-    >
-      {children}
-    </p>
-  )
 }
 
 function EmptyState() {
@@ -87,46 +71,6 @@ function EmptyState() {
         Start with Week 1 · Day 1 and this panel will begin tracking your plan, duration, distance, and effort trends.
       </p>
     </div>
-  )
-}
-
-function Sparkline({
-  points,
-  color = 'oklch(55% 0.22 155)',
-  gradientId,
-  height = 68,
-}: {
-  points: number[]
-  color?: string
-  gradientId: string
-  height?: number
-}) {
-  if (points.length < 2) return null
-
-  const width = 320
-  const pad = Math.max(4, Math.round(height * 0.1))
-  const min = Math.min(...points)
-  const max = Math.max(...points)
-  const range = max - min || 1
-  const xs = points.map((_, i) => pad + (i / (points.length - 1)) * (width - pad * 2))
-  const ys = points.map(v => height - pad - ((v - min) / range) * (height - pad * 2))
-  const line = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${ys[i].toFixed(1)}`).join(' ')
-  const area = `${line} L${xs[xs.length - 1].toFixed(1)} ${height} L${xs[0].toFixed(1)} ${height}Z`
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" height={height}>
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.32" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#${gradientId})`} />
-      <path d={line} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      {xs.map((x, i) => (
-        <circle key={`${gradientId}-${i}`} cx={x} cy={ys[i]} r="2.5" fill={color} />
-      ))}
-    </svg>
   )
 }
 
@@ -287,7 +231,7 @@ export default function RunProgressPanel() {
       rpePoints,
       longestRunSec: longestCompletedRunIntervalSec(runSessions),
       totalDurationSec: totalRunDurationSec(runSessions),
-      totalDistanceKm: totalLoggedDistanceKm(runSessions),
+      totalDistanceKm: totalRunDistanceKm(runSessions),
     }
   }, [runSessions])
 
