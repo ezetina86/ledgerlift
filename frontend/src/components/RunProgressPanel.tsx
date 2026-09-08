@@ -12,6 +12,7 @@ import {
   totalRunDurationSec,
 } from '../lib/runProgress.ts'
 import Sparkline from './Sparkline.tsx'
+import Label from './Label.tsx'
 
 function fmtDurationCompact(totalSec: number): string {
   if (totalSec <= 0) return '0 min'
@@ -37,24 +38,6 @@ function fmtDistanceKm(distanceKm: number): string {
 function fmtRpe(rpe: number): string {
   const rounded = Math.round(rpe * 10) / 10
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
-}
-
-function Label({ children }: { children: string }) {
-  return (
-    <p
-      style={{
-        fontSize: '10px',
-        fontFamily: "'Barlow Condensed', sans-serif",
-        fontWeight: 700,
-        letterSpacing: '0.15em',
-        color: 'oklch(44% 0.008 293)',
-        textTransform: 'uppercase',
-        marginBottom: 10,
-      }}
-    >
-      {children}
-    </p>
-  )
 }
 
 function EmptyState() {
