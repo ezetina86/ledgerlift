@@ -1,5 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, waitFor } from '@testing-library/react'
+
+expect.extend({
+  toBeInTheDocument(received: unknown) {
+    const pass = received != null
+    return {
+      pass,
+      message: () => `expected element ${pass ? 'not ' : ''}to be in document`,
+    }
+  },
+})
+
+declare module 'vitest' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  interface Assertion<T = any> {
+    toBeInTheDocument(): T
+  }
+}
 
 const _store = new Map<string, string>()
 const mockStorage: Storage = {
@@ -79,4 +96,27 @@ describe('RunProgressPanel', () => {
     expect(screen.getByText('Distance Trend')).toBeTruthy()
     expect(screen.getByText('Effort Trend')).toBeTruthy()
   })
+
+  it('shows C25K plan progress for active attempt while preserving cumulative totals', async () => {
+    const p1Time = 1000
+    const p2Time = 5000
+    await db.runPrograms.bulkAdd([
+      { id: 'p1', number: 1, startedAt: p1Time, endedAt: p2Time - 1, updatedAt: p2Time - 1 },
+      { id: 'p2', number: 2, startedAt: p2Time, endedAt: null, updatedAt: p2Time },
+    ])
+    await db.runSessions.bulkAdd([
+      { id: 'r1', week: 1, day: 1, startedAt: p1Time + 10, completedAt: p1Time + 20, durationSec: 1800, distanceKm: 3.0, rpe: 6, updatedAt: p1Time + 20 },
+      { id: 'r2', week: 1, day: 2, startedAt: p1Time + 30, completedAt: p1Time + 40, durationSec: 1800, distanceKm: 3.0, rpe: 7, updatedAt: p1Time + 40 },
+    ])
+
+    render(<RunProgressPanel />)
+
+    // In Attempt 2, completed runs in attempt 2 is 0 / 27
+    await waitFor(() => {
+      expect(screen.getByText(/0 \/ 27/i)).toBeInTheDocument()
+      // Cumulative distance preserves 6.0 km from Attempt 1
+      expect(screen.getByText(/6\.0 km/i)).toBeInTheDocument()
+    })
+  })
 })
+
