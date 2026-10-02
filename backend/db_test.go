@@ -20,7 +20,7 @@ func testDB(t *testing.T) *sql.DB {
 func TestInitDB_TablesExist(t *testing.T) {
 	db := testDB(t)
 
-	for _, table := range []string{"routines", "sessions", "sets", "mesocycles", "exercise_swaps", "run_sessions"} {
+	for _, table := range []string{"routines", "sessions", "sets", "mesocycles", "exercise_swaps", "run_sessions", "run_programs"} {
 		var name string
 		err := db.QueryRow(
 			`SELECT name FROM sqlite_master WHERE type='table' AND name=?`, table,
@@ -34,7 +34,7 @@ func TestInitDB_TablesExist(t *testing.T) {
 func TestInitDB_IndexesExist(t *testing.T) {
 	db := testDB(t)
 
-	for _, idx := range []string{"idx_sessions_updated", "idx_sets_updated", "idx_sets_session", "idx_mesos_updated", "idx_swaps_mesocycle", "idx_run_sessions_updated"} {
+	for _, idx := range []string{"idx_sessions_updated", "idx_sets_updated", "idx_sets_session", "idx_mesos_updated", "idx_swaps_mesocycle", "idx_run_sessions_updated", "idx_run_programs_updated"} {
 		var name string
 		err := db.QueryRow(
 			`SELECT name FROM sqlite_master WHERE type='index' AND name=?`, idx,
@@ -683,3 +683,75 @@ func TestFetchRunSessionsSince_ReturnsOnlyNewer(t *testing.T) {
 		t.Errorf("expected [rs-new], got %v", rows)
 	}
 }
+
+// ── RunPrograms ───────────────────────────────────────────────────────────────
+
+func TestSyncRunPrograms(t *testing.T) {
+	db, err := InitDB(":memory:")
+	if err != nil {
+		t.Fatalf("InitDB: %v", err)
+	}
+	defer db.Close()
+
+	payload := SyncPayload{
+		RunPrograms: []RunProgram{
+			{ID: "rp-1", Number: 1, StartedAt: 1000, EndedAt: nil, UpdatedAt: 1000},
+		},
+	}
+	res, err := UpsertSync(db, payload)
+	if err != nil {
+		t.Fatalf("UpsertSync: %v", err)
+	}
+	if len(res.RunPrograms) != 1 {
+		t.Fatalf("expected 1 run_program, got %d", len(res.RunPrograms))
+	}
+	if res.RunPrograms[0].ID != "rp-1" {
+		t.Errorf("expected id rp-1, got %s", res.RunPrograms[0].ID)
+	}
+}
+
+func TestUpsertRunProgram_Insert(t *testing.T) {
+	db := testDB(t)
+	rp := RunProgram{ID: "rp-1", Number: 1, StartedAt: 1000, UpdatedAt: 100}
+	if err := upsertRunProgram(db, rp, 0); err != nil {
+		t.Fatalf("upsert: %v", err)
+	}
+	var id string
+	if err := db.QueryRow(`SELECT id FROM run_programs WHERE id='rp-1'`).Scan(&id); err != nil {
+		t.Fatalf("not found: %v", err)
+	}
+}
+
+func TestUpsertRunProgram_LastWriteWins(t *testing.T) {
+	db := testDB(t)
+	rp := RunProgram{ID: "rp-2", Number: 1, StartedAt: 1000, UpdatedAt: 50}
+	_ = upsertRunProgram(db, rp, 0)
+
+	ended := int64(2000)
+	rp2 := RunProgram{ID: "rp-2", Number: 1, StartedAt: 1000, EndedAt: &ended, UpdatedAt: 200}
+	_ = upsertRunProgram(db, rp2, 0)
+
+	var got *int64
+	if err := db.QueryRow(`SELECT ended_at FROM run_programs WHERE id='rp-2'`).Scan(&got); err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if got == nil || *got != 2000 {
+		t.Errorf("expected ended_at=2000, got %v", got)
+	}
+}
+
+func TestFetchRunProgramsSince_ReturnsOnlyNewer(t *testing.T) {
+	db := testDB(t)
+	_ = upsertRunProgram(db, RunProgram{ID: "rp-old", Number: 1, StartedAt: 100, UpdatedAt: 10}, 0)
+	_ = upsertRunProgram(db, RunProgram{ID: "rp-new", Number: 2, StartedAt: 200, UpdatedAt: 500}, 0)
+
+	rows, err := fetchRunProgramsSince(db, 100)
+	if err != nil {
+		t.Fatalf("fetch: %v", err)
+	}
+	if len(rows) != 1 || rows[0].ID != "rp-new" {
+		t.Errorf("expected [rp-new], got %v", rows)
+	}
+}
+
+

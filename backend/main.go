@@ -90,79 +90,14 @@ func makeSync(db *sql.DB, nowFn ...func() int64) http.HandlerFunc {
 		}
 
 		now := clock()
-
-		for _, routine := range req.Routines {
-			if err := upsertRoutine(db, routine, now); err != nil {
-				log.Printf("upsert routine %s: %v", routine.ID, err)
-			}
-		}
-		for _, s := range req.Sessions {
-			if err := upsertSession(db, s, now); err != nil {
-				log.Printf("upsert session %s: %v", s.ID, err)
-			}
-		}
-		for _, s := range req.Sets {
-			if err := upsertSet(db, s, now); err != nil {
-				log.Printf("upsert set %s: %v", s.ID, err)
-			}
-		}
-		for _, m := range req.Mesocycles {
-			if err := upsertMesocycle(db, m, now); err != nil {
-				log.Printf("upsert mesocycle %s: %v", m.ID, err)
-			}
-		}
-		for _, sw := range req.ExerciseSwaps {
-			if err := upsertExerciseSwap(db, sw); err != nil {
-				log.Printf("upsert exercise_swap %s: %v", sw.ID, err)
-			}
-		}
-		for _, rs := range req.RunSessions {
-			if err := upsertRunSession(db, rs, now); err != nil {
-				log.Printf("upsert run_session %s: %v", rs.ID, err)
-			}
+		resp, err := UpsertSync(db, req, now)
+		if err != nil {
+			log.Printf("sync: %v", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
 		}
 
-		routines, err := fetchRoutinesSince(db, req.LastSyncAt)
-		if err != nil {
-			log.Printf("fetch routines: %v", err)
-		}
-		sessions, err := fetchSessionsSince(db, req.LastSyncAt)
-		if err != nil {
-			log.Printf("fetch sessions: %v", err)
-		}
-		sets, err := fetchSetsSince(db, req.LastSyncAt)
-		if err != nil {
-			log.Printf("fetch sets: %v", err)
-		}
-		mesocycles, err := fetchMesocyclesSince(db, req.LastSyncAt)
-		if err != nil {
-			log.Printf("fetch mesocycles: %v", err)
-		}
-		exerciseSwaps, err := fetchExerciseSwapsSince(db, req.LastSyncAt)
-		if err != nil {
-			log.Printf("fetch exercise_swaps: %v", err)
-		}
-		runSessions, err := fetchRunSessionsSince(db, req.LastSyncAt)
-		if err != nil {
-			log.Printf("fetch run_sessions: %v", err)
-		}
-
-		if routines == nil      { routines = []Routine{} }
-		if sessions == nil      { sessions = []WorkoutSession{} }
-		if sets == nil          { sets = []SetLog{} }
-		if mesocycles == nil    { mesocycles = []Mesocycle{} }
-		if exerciseSwaps == nil { exerciseSwaps = []ExerciseSwap{} }
-		if runSessions == nil   { runSessions = []RunSession{} }
-
-		writeJSON(w, http.StatusOK, SyncResponse{
-			SyncedAt:      now,
-			Routines:      routines,
-			Sessions:      sessions,
-			Sets:          sets,
-			Mesocycles:    mesocycles,
-			ExerciseSwaps: exerciseSwaps,
-			RunSessions:   runSessions,
-		})
+		writeJSON(w, http.StatusOK, resp)
 	}
 }
 

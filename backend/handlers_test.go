@@ -481,3 +481,30 @@ func TestSync_RunSessionRoundTrip(t *testing.T) {
 		t.Errorf("expected rs-1 in response, got %v", resp.RunSessions)
 	}
 }
+
+func TestSync_RunProgramRoundTrip(t *testing.T) {
+	db := testDB(t)
+	body, _ := json.Marshal(SyncRequest{
+		LastSyncAt: 0,
+		RunPrograms: []RunProgram{
+			{ID: "rp-1", Number: 1, StartedAt: 5000, UpdatedAt: 5000},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/sync", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	makeSync(db)(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp SyncResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(resp.RunPrograms) != 1 || resp.RunPrograms[0].ID != "rp-1" {
+		t.Errorf("expected rp-1 in response, got %v", resp.RunPrograms)
+	}
+}
+
