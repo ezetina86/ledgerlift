@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useRef } from 'react'
-import { db, getActiveRunProgram } from '../db/index.ts'
-import type { WorkoutSession, Mesocycle, RunSession, RunProgram } from '../db/index.ts'
+import { db } from '../db/index.ts'
+import type { WorkoutSession, Mesocycle, RunSession } from '../db/index.ts'
 import { nextSplitDay, SPLIT_LABELS, SPLIT_FOCUS, ROUTINE_ID, mesocycleWeek } from '../lib/split.ts'
 import { nextRunSession, totalDurationSec } from '../lib/runPlan.ts'
 import { activeRunSessions } from '../lib/runProgress.ts'
@@ -50,14 +50,11 @@ export default function HomePage({ onStartWorkout, onResumeWorkout, onNavigatePl
   const activeRun = useLiveQuery<RunSession | undefined>(
     () => db.runSessions.filter(s => s.completedAt === null).first()
   )
-  const activeProgram = useLiveQuery<RunProgram | undefined>(
-    () => db.runPrograms.filter(p => p.endedAt === null).first()
-  )
   const completedRunCount = useLiveQuery<number>(async () => {
-    const program = activeProgram ?? await getActiveRunProgram()
+    const program = await db.runPrograms.filter(p => p.endedAt === null).first()
     const sessions = await db.runSessions.filter(s => s.completedAt !== null).toArray()
     return activeRunSessions(sessions, program).length
-  }, [activeProgram]) ?? 0
+  }) ?? 0
   const nextPlan = nextRunSession(completedRunCount)
 
   const fatigueSignals = useMemo(

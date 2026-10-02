@@ -336,6 +336,20 @@ export async function seedDatabase() {
     }
     await db.mesocycles.add(meso)
   }
+
+  const existingRunPrograms = await db.runPrograms.count()
+  if (existingRunPrograms === 0) {
+    const firstRun = await db.runSessions.orderBy('startedAt').first()
+    const now = Date.now()
+    const rp: RunProgram = {
+      id: _seedUid(),
+      number: 1,
+      startedAt: firstRun?.startedAt ?? now,
+      endedAt: null,
+      updatedAt: now,
+    }
+    await db.runPrograms.add(rp)
+  }
 }
 
 export async function getActiveRunProgram(database: LedgerLiftDB = db): Promise<RunProgram> {

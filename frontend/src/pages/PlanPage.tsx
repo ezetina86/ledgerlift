@@ -126,18 +126,20 @@ export default function PlanPage() {
   async function handleResetProgram() {
     const program = await getActiveRunProgram()
     const now = Date.now()
-    await db.runPrograms.update(program.id, { endedAt: now })
-    await db.runPrograms.add({
-      id: uid(),
-      number: program.number + 1,
-      startedAt: now,
-      endedAt: null,
-      updatedAt: now,
+    await db.transaction('rw', [db.runPrograms, db.runSessions], async () => {
+      await db.runPrograms.update(program.id, { endedAt: now })
+      await db.runPrograms.add({
+        id: uid(),
+        number: program.number + 1,
+        startedAt: now,
+        endedAt: null,
+        updatedAt: now,
+      })
+      const inProgressList = await db.runSessions.filter(s => s.completedAt === null).toArray()
+      for (const inProgress of inProgressList) {
+        await db.runSessions.delete(inProgress.id)
+      }
     })
-    const inProgressList = await db.runSessions.filter(s => s.completedAt === null).toArray()
-    for (const inProgress of inProgressList) {
-      await db.runSessions.delete(inProgress.id)
-    }
   }
 
   return (
@@ -531,21 +533,6 @@ function C25KBlock({
   async function handleConfirmReset() {
     if (onResetProgram) {
       await onResetProgram()
-    } else {
-      const program = await getActiveRunProgram()
-      const now = Date.now()
-      await db.runPrograms.update(program.id, { endedAt: now })
-      await db.runPrograms.add({
-        id: uid(),
-        number: program.number + 1,
-        startedAt: now,
-        endedAt: null,
-        updatedAt: now,
-      })
-      const inProgress = await db.runSessions.filter(s => s.completedAt === null).first()
-      if (inProgress) {
-        await db.runSessions.delete(inProgress.id)
-      }
     }
     setShowResetConfirm(false)
   }
@@ -672,9 +659,14 @@ function C25KBlock({
 
         {/* Confirmation Modal */}
         {showResetConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-c25k-title"
+          >
             <div className="w-full max-w-sm rounded-2xl p-5" style={{ background: 'oklch(14% 0.010 293)', border: '1px solid oklch(24% 0.010 293)' }}>
-              <h3 className="text-lg font-bold text-white mb-2 font-display">Reset C25K Program?</h3>
+              <h3 id="reset-c25k-title" className="text-lg font-bold text-white mb-2 font-display">Reset C25K Program?</h3>
               <p className="text-sm mb-5" style={{ color: 'oklch(65% 0.010 293)' }}>
                 This will restart your C25K plan from Week 1 · Day 1 as Attempt {(activeProgram?.number ?? 1) + 1}. All previously logged runs remain intact in your History.
               </p>

@@ -463,7 +463,7 @@ func UpsertSync(db *sql.DB, p SyncPayload, now ...int64) (SyncResponse, error) {
 	}
 	for _, rp := range p.RunPrograms {
 		if err := upsertRunProgram(db, rp, serverNow); err != nil {
-			return SyncResponse{}, fmt.Errorf("upsert run_programs %s: %w", rp.ID, err)
+			log.Printf("upsert run_program %s: %v", rp.ID, err)
 		}
 	}
 
