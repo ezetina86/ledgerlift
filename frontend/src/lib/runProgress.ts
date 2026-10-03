@@ -1,4 +1,4 @@
-import type { RunSession } from '../db/index.ts'
+import type { RunSession, RunProgram } from '../db/index.ts'
 import { C25K_PLAN, nextRunSession } from './runPlan.ts'
 
 export interface CompletedRunSession extends RunSession {
@@ -79,8 +79,14 @@ export function completedRunSessions(sessions: RunSession[]): CompletedRunSessio
     })
 }
 
-export function runSummary(sessions: RunSession[]): RunProgressSummary {
-  const completedCount = completedRunSessions(sessions).length
+export function activeRunSessions(sessions: RunSession[], activeProgram?: RunProgram | null): RunSession[] {
+  if (!activeProgram) return sessions
+  return sessions.filter(session => session.startedAt >= activeProgram.startedAt)
+}
+
+export function runSummary(sessions: RunSession[], activeProgram?: RunProgram | null): RunProgressSummary {
+  const activeSessions = activeRunSessions(sessions, activeProgram)
+  const completedCount = completedRunSessions(activeSessions).length
   const nextSession = nextRunSession(completedCount)
 
   return {

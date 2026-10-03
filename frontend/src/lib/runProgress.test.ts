@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import type { RunSession } from '../db/index.ts'
+import type { RunSession, RunProgram } from '../db/index.ts'
 import {
+  activeRunSessions,
   completedRunSessions,
   runSummary,
   totalRunDurationSec,
@@ -204,3 +205,41 @@ describe('trend helpers', () => {
     ])
   })
 })
+
+describe('activeRunSessions and runSummary with RunProgram', () => {
+  const p1: RunProgram = { id: 'p1', number: 1, startedAt: 1000, endedAt: 5000, updatedAt: 5000 }
+  const p2: RunProgram = { id: 'p2', number: 2, startedAt: 5001, endedAt: null, updatedAt: 5001 }
+
+  const run1: RunSession = { id: 'r1', week: 1, day: 1, startedAt: 1100, completedAt: 1200, durationSec: 1800, distanceKm: 3, rpe: 6, updatedAt: 1200 }
+  const run2: RunSession = { id: 'r2', week: 1, day: 2, startedAt: 1300, completedAt: 1400, durationSec: 1800, distanceKm: 3.2, rpe: 7, updatedAt: 1400 }
+  const run3: RunSession = { id: 'r3', week: 1, day: 1, startedAt: 5100, completedAt: 5200, durationSec: 1800, distanceKm: 3.1, rpe: 5, updatedAt: 5200 }
+
+  it('filters runs by active program startedAt', () => {
+    const activeRuns = activeRunSessions([run1, run2, run3], p2)
+    expect(activeRuns).toHaveLength(1)
+    expect(activeRuns[0].id).toBe('r3')
+  })
+
+  it('returns all runs when active program is undefined or null', () => {
+    expect(activeRunSessions([run1, run2], undefined)).toEqual([run1, run2])
+    expect(activeRunSessions([run1, run2], null)).toEqual([run1, run2])
+  })
+
+  it('calculates plan progress using only active program runs', () => {
+    // Before reset (all runs in p1)
+    const summaryP1 = runSummary([run1, run2], p1)
+    expect(summaryP1.completedCount).toBe(2)
+    expect(summaryP1.nextSessionLabel).toBe('Week 1 · Day 3')
+
+    // After reset to p2 with no runs yet
+    const summaryP2Empty = runSummary([run1, run2], p2)
+    expect(summaryP2Empty.completedCount).toBe(0)
+    expect(summaryP2Empty.nextSessionLabel).toBe('Week 1 · Day 1')
+
+    // After completing 1 run in p2
+    const summaryP2One = runSummary([run1, run2, run3], p2)
+    expect(summaryP2One.completedCount).toBe(1)
+    expect(summaryP2One.nextSessionLabel).toBe('Week 1 · Day 2')
+  })
+})
+

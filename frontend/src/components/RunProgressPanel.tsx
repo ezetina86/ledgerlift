@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
-import type { RunSession } from '../db/index.ts'
+import type { RunSession, RunProgram } from '../db/index.ts'
 import {
   durationTrend,
   distanceTrend,
@@ -215,11 +215,14 @@ function TrendCard({
 }
 
 export default function RunProgressPanel() {
+  const activeProgram = useLiveQuery<RunProgram | undefined>(
+    () => db.runPrograms.filter(p => p.endedAt === null).first()
+  )
   const rawRunSessions = useLiveQuery<RunSession[]>(() => db.runSessions.toArray(), [])
   const runSessions = useMemo(() => rawRunSessions ?? [], [rawRunSessions])
 
   const model = useMemo(() => {
-    const summary = runSummary(runSessions)
+    const summary = runSummary(runSessions, activeProgram)
     const durationPoints = durationTrend(runSessions)
     const distancePoints = distanceTrend(runSessions)
     const rpePoints = rpeTrend(runSessions)
@@ -233,7 +236,7 @@ export default function RunProgressPanel() {
       totalDurationSec: totalRunDurationSec(runSessions),
       totalDistanceKm: totalRunDistanceKm(runSessions),
     }
-  }, [runSessions])
+  }, [runSessions, activeProgram])
 
   const {
     summary,

@@ -77,7 +77,17 @@ type RunSession struct {
 	UpdatedAt   int64    `json:"updatedAt"`
 }
 
+type RunProgram struct {
+	ID        string `json:"id"`
+	Number    int    `json:"number"`
+	StartedAt int64  `json:"startedAt"`
+	EndedAt   *int64 `json:"endedAt"`
+	UpdatedAt int64  `json:"updatedAt"`
+}
+
 // Sync request/response
+
+type SyncPayload = SyncRequest
 
 type SyncRequest struct {
 	LastSyncAt    int64            `json:"lastSyncAt"`
@@ -87,6 +97,7 @@ type SyncRequest struct {
 	Mesocycles    []Mesocycle      `json:"mesocycles"`
 	ExerciseSwaps []ExerciseSwap   `json:"exerciseSwaps"`
 	RunSessions   []RunSession     `json:"runSessions"`
+	RunPrograms   []RunProgram     `json:"runPrograms"`
 }
 
 type SyncResponse struct {
@@ -97,4 +108,6 @@ type SyncResponse struct {
 	Mesocycles    []Mesocycle      `json:"mesocycles"`
 	ExerciseSwaps []ExerciseSwap   `json:"exerciseSwaps"`
 	RunSessions   []RunSession     `json:"runSessions"`
+	RunPrograms   []RunProgram     `json:"runPrograms"`
 }
+

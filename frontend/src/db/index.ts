@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { uid } from '../lib/utils'
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
 
@@ -93,6 +94,14 @@ export interface RunSession {
   updatedAt: number
 }
 
+export interface RunProgram {
+  id: string
+  number: number           // 1-based increment (1, 2, ...)
+  startedAt: number
+  endedAt: number | null   // null = currently active attempt
+  updatedAt: number        // sync timestamp
+}
+
 // ─── Seed data — default Upper/Lower split ────────────────────────────────────
 
 export const DEFAULT_ROUTINES: Omit<Routine, 'createdAt' | 'updatedAt'>[] = [
@@ -165,6 +174,7 @@ export class LedgerLiftDB extends Dexie {
   mesocycles!: EntityTable<Mesocycle, 'id'>
   exerciseSwaps!: EntityTable<ExerciseSwap, 'id'>
   runSessions!: EntityTable<RunSession, 'id'>
+  runPrograms!: EntityTable<RunProgram, 'id'>
 
   constructor() {
     super('ledgerlift')
@@ -211,6 +221,18 @@ export class LedgerLiftDB extends Dexie {
       runSessions:   'id, startedAt, completedAt, updatedAt',
     })
 
+    // v5: add runPrograms table for C25K running program attempts
+    this.version(5).stores({
+      exercises:     'id, primaryMuscleGroup, nippardTierList, muscleLadder',
+      routines:      'id, splitDay, createdAt, updatedAt',
+      sessions:      'id, routineId, splitDay, startedAt, completedAt, mesocycleId, isDeload, updatedAt',
+      sets:          'id, sessionId, exerciseId, timestamp, updatedAt',
+      mesocycles:    'id, number, startedAt, endedAt, updatedAt',
+      exerciseSwaps: 'id, mesocycleId, routineId, swappedAt',
+      runSessions:   'id, startedAt, completedAt, updatedAt',
+      runPrograms:   'id, number, startedAt, endedAt, updatedAt',
+    })
+
     // Auto-stamp updatedAt on every write — skipped during sync pull
     this.sessions.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
     this.sessions.hook('updating', (mods: Partial<WorkoutSession> & { updatedAt?: number }) => {
@@ -232,10 +254,15 @@ export class LedgerLiftDB extends Dexie {
     this.runSessions.hook('updating', (mods: Partial<RunSession> & { updatedAt?: number }) => {
       if (!_isSyncing) mods.updatedAt = Date.now()
     })
+    this.runPrograms.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
+    this.runPrograms.hook('updating', (mods: Partial<RunProgram> & { updatedAt?: number }) => {
+      if (!_isSyncing) mods.updatedAt = Date.now()
+    })
   }
 }
 
 export const db = new LedgerLiftDB()
+export type AppDatabase = LedgerLiftDB
 
 // ─── Query helpers ────────────────────────────────────────────────────────────
 
@@ -309,4 +336,37 @@ export async function seedDatabase() {
     }
     await db.mesocycles.add(meso)
   }
+
+  const existingRunPrograms = await db.runPrograms.count()
+  if (existingRunPrograms === 0) {
+    const firstRun = await db.runSessions.orderBy('startedAt').first()
+    const now = Date.now()
+    const rp: RunProgram = {
+      id: _seedUid(),
+      number: 1,
+      startedAt: firstRun?.startedAt ?? now,
+      endedAt: null,
+      updatedAt: now,
+    }
+    await db.runPrograms.add(rp)
+  }
 }
+
+export async function getActiveRunProgram(database: LedgerLiftDB = db): Promise<RunProgram> {
+  const active = await database.runPrograms.filter(p => p.endedAt === null).first()
+  if (active) return active
+
+  // Check if there are completed or existing run sessions to determine startedAt
+  const firstSession = await database.runSessions.orderBy('startedAt').first()
+  const startedAt = firstSession?.startedAt ?? Date.now()
+  const initialProgram: RunProgram = {
+    id: uid(),
+    number: 1,
+    startedAt,
+    endedAt: null,
+    updatedAt: Date.now(),
+  }
+  await database.runPrograms.add(initialProgram)
+  return initialProgram
+}
+

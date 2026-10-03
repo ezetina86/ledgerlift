@@ -44,12 +44,13 @@ export async function syncWithBackend(): Promise<SyncResult> {
   // Pushing all records lets the most-recently-syncing device overwrite newer data
   // from another device, because the backend stamps every received record with serverNow.
   // lastSyncAt=0 on first sync pushes everything (all updatedAt > 0).
-  const [sessions, sets, routines, mesocycles, runSessions] = await Promise.all([
+  const [sessions, sets, routines, mesocycles, runSessions, runPrograms] = await Promise.all([
     db.sessions.where('updatedAt').above(lastSyncAt).toArray(),
     db.sets.where('updatedAt').above(lastSyncAt).toArray(),
     db.routines.where('updatedAt').above(lastSyncAt).toArray(),
     db.mesocycles.where('updatedAt').above(lastSyncAt).toArray(),
     db.runSessions.where('updatedAt').above(lastSyncAt).toArray(),
+    db.runPrograms.where('updatedAt').above(lastSyncAt).toArray(),
   ])
   // exerciseSwaps has no updatedAt — push all (INSERT OR IGNORE is idempotent)
   const exerciseSwaps = await db.exerciseSwaps.toArray()
@@ -61,8 +62,9 @@ export async function syncWithBackend(): Promise<SyncResult> {
   const stampedRoutines    = routines.map(r    => ({ ...r, updatedAt: (r.updatedAt ?? now) }))
   const stampedMesocycles  = mesocycles.map(m  => ({ ...m, updatedAt: (m.updatedAt ?? now) }))
   const stampedRunSessions = runSessions.map(rs => ({ ...rs, updatedAt: (rs.updatedAt ?? now) }))
+  const stampedRunPrograms = runPrograms.map(rp => ({ ...rp, updatedAt: (rp.updatedAt ?? now) }))
 
-  const pushed = sessions.length + sets.length + routines.length + mesocycles.length + exerciseSwaps.length + runSessions.length
+  const pushed = sessions.length + sets.length + routines.length + mesocycles.length + exerciseSwaps.length + runSessions.length + runPrograms.length
 
   let res: Response
   try {
@@ -77,6 +79,7 @@ export async function syncWithBackend(): Promise<SyncResult> {
         mesocycles: stampedMesocycles,
         exerciseSwaps,
         runSessions: stampedRunSessions,
+        runPrograms: stampedRunPrograms,
       }),
       signal: AbortSignal.timeout(10_000),
     })
@@ -96,6 +99,7 @@ export async function syncWithBackend(): Promise<SyncResult> {
     mesocycles?: typeof stampedMesocycles
     exerciseSwaps?: typeof exerciseSwaps
     runSessions?: typeof stampedRunSessions
+    runPrograms?: typeof stampedRunPrograms
   }
 
   // Merge server response into IndexedDB — disable updatedAt hooks so
@@ -126,6 +130,10 @@ export async function syncWithBackend(): Promise<SyncResult> {
     if (data.runSessions?.length) {
       await db.runSessions.bulkPut(data.runSessions)
       pulled += data.runSessions.length
+    }
+    if (data.runPrograms?.length) {
+      await db.runPrograms.bulkPut(data.runPrograms)
+      pulled += data.runPrograms.length
     }
   } finally {
     setSyncing(false)
