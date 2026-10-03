@@ -3,21 +3,23 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
 	_ "modernc.org/sqlite"
 )
 
-func initDB(path string) *sql.DB {
+func InitDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		return nil, fmt.Errorf("open db: %w", err)
 	}
 	db.SetMaxOpenConns(1) // SQLite single-writer
 
 	if _, err = db.Exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;`); err != nil {
-		log.Fatalf("pragma: %v", err)
+		db.Close()
+		return nil, fmt.Errorf("pragma: %w", err)
 	}
 
 	schema := `
@@ -89,19 +91,38 @@ func initDB(path string) *sql.DB {
 		updated_at   INTEGER NOT NULL
 	);
 
+	CREATE TABLE IF NOT EXISTS run_programs (
+		id         TEXT PRIMARY KEY,
+		number     INTEGER NOT NULL,
+		started_at INTEGER NOT NULL,
+		ended_at   INTEGER,
+		updated_at INTEGER NOT NULL
+	);
+
 	CREATE INDEX IF NOT EXISTS idx_sessions_updated     ON sessions(updated_at);
 	CREATE INDEX IF NOT EXISTS idx_sets_updated         ON sets(updated_at);
 	CREATE INDEX IF NOT EXISTS idx_sets_session         ON sets(session_id);
 	CREATE INDEX IF NOT EXISTS idx_mesos_updated        ON mesocycles(updated_at);
 	CREATE INDEX IF NOT EXISTS idx_swaps_mesocycle      ON exercise_swaps(mesocycle_id);
 	CREATE INDEX IF NOT EXISTS idx_run_sessions_updated ON run_sessions(updated_at);
+	CREATE INDEX IF NOT EXISTS idx_run_programs_updated ON run_programs(updated_at);
 	`
 	if _, err = db.Exec(schema); err != nil {
-		log.Fatalf("schema: %v", err)
+		db.Close()
+		return nil, fmt.Errorf("schema: %w", err)
 	}
 	runMigrations(db)
+	return db, nil
+}
+
+func initDB(path string) *sql.DB {
+	db, err := InitDB(path)
+	if err != nil {
+		log.Fatalf("init db: %v", err)
+	}
 	return db
 }
+
 
 // runMigrations applies additive schema changes that CREATE TABLE IF NOT EXISTS can't handle.
 // Each migration is idempotent: it checks column existence before ALTER TABLE.
@@ -365,4 +386,135 @@ func fetchRunSessionsSince(db *sql.DB, since int64) ([]RunSession, error) {
 	return out, rows.Err()
 }
 
+func upsertRunProgram(db *sql.DB, rp RunProgram, serverNow int64) error {
+	effectiveUpdatedAt := max(rp.UpdatedAt, serverNow)
+	_, err := db.Exec(`
+		INSERT INTO run_programs(id,number,started_at,ended_at,updated_at)
+		VALUES(?,?,?,?,?)
+		ON CONFLICT(id) DO UPDATE SET
+			number=excluded.number,
+			started_at=excluded.started_at,
+			ended_at=excluded.ended_at,
+			updated_at=excluded.updated_at
+		WHERE excluded.updated_at > run_programs.updated_at`,
+		rp.ID, rp.Number, rp.StartedAt, rp.EndedAt, effectiveUpdatedAt,
+	)
+	return err
+}
+
+func fetchRunProgramsSince(db *sql.DB, since int64) ([]RunProgram, error) {
+	rows, err := db.Query(
+		`SELECT id,number,started_at,ended_at,updated_at FROM run_programs WHERE updated_at > ?`,
+		since,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []RunProgram
+	for rows.Next() {
+		var rp RunProgram
+		if err := rows.Scan(
+			&rp.ID, &rp.Number, &rp.StartedAt, &rp.EndedAt, &rp.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		out = append(out, rp)
+	}
+	return out, rows.Err()
+}
+
+func UpsertSync(db *sql.DB, p SyncPayload, now ...int64) (SyncResponse, error) {
+	serverNow := nowMs()
+	if len(now) > 0 {
+		serverNow = now[0]
+	}
+
+	for _, routine := range p.Routines {
+		if err := upsertRoutine(db, routine, serverNow); err != nil {
+			log.Printf("upsert routine %s: %v", routine.ID, err)
+		}
+	}
+	for _, s := range p.Sessions {
+		if err := upsertSession(db, s, serverNow); err != nil {
+			log.Printf("upsert session %s: %v", s.ID, err)
+		}
+	}
+	for _, s := range p.Sets {
+		if err := upsertSet(db, s, serverNow); err != nil {
+			log.Printf("upsert set %s: %v", s.ID, err)
+		}
+	}
+	for _, m := range p.Mesocycles {
+		if err := upsertMesocycle(db, m, serverNow); err != nil {
+			log.Printf("upsert mesocycle %s: %v", m.ID, err)
+		}
+	}
+	for _, sw := range p.ExerciseSwaps {
+		if err := upsertExerciseSwap(db, sw); err != nil {
+			log.Printf("upsert exercise_swap %s: %v", sw.ID, err)
+		}
+	}
+	for _, rs := range p.RunSessions {
+		if err := upsertRunSession(db, rs, serverNow); err != nil {
+			log.Printf("upsert run_session %s: %v", rs.ID, err)
+		}
+	}
+	for _, rp := range p.RunPrograms {
+		if err := upsertRunProgram(db, rp, serverNow); err != nil {
+			log.Printf("upsert run_program %s: %v", rp.ID, err)
+		}
+	}
+
+	routines, err := fetchRoutinesSince(db, p.LastSyncAt)
+	if err != nil {
+		log.Printf("fetch routines: %v", err)
+	}
+	sessions, err := fetchSessionsSince(db, p.LastSyncAt)
+	if err != nil {
+		log.Printf("fetch sessions: %v", err)
+	}
+	sets, err := fetchSetsSince(db, p.LastSyncAt)
+	if err != nil {
+		log.Printf("fetch sets: %v", err)
+	}
+	mesocycles, err := fetchMesocyclesSince(db, p.LastSyncAt)
+	if err != nil {
+		log.Printf("fetch mesocycles: %v", err)
+	}
+	exerciseSwaps, err := fetchExerciseSwapsSince(db, p.LastSyncAt)
+	if err != nil {
+		log.Printf("fetch exercise_swaps: %v", err)
+	}
+	runSessions, err := fetchRunSessionsSince(db, p.LastSyncAt)
+	if err != nil {
+		log.Printf("fetch run_sessions: %v", err)
+	}
+	runPrograms, err := fetchRunProgramsSince(db, p.LastSyncAt)
+	if err != nil {
+		log.Printf("fetch run_programs: %v", err)
+	}
+
+	if routines == nil      { routines = []Routine{} }
+	if sessions == nil      { sessions = []WorkoutSession{} }
+	if sets == nil          { sets = []SetLog{} }
+	if mesocycles == nil    { mesocycles = []Mesocycle{} }
+	if exerciseSwaps == nil { exerciseSwaps = []ExerciseSwap{} }
+	if runSessions == nil   { runSessions = []RunSession{} }
+	if runPrograms == nil   { runPrograms = []RunProgram{} }
+
+	return SyncResponse{
+		SyncedAt:      serverNow,
+		Routines:      routines,
+		Sessions:      sessions,
+		Sets:          sets,
+		Mesocycles:    mesocycles,
+		ExerciseSwaps: exerciseSwaps,
+		RunSessions:   runSessions,
+		RunPrograms:   runPrograms,
+	}, nil
+}
+
 func nowMs() int64 { return time.Now().UnixMilli() }
+

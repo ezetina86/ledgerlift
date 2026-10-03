@@ -39,3 +39,17 @@ export function kgToLbs(kg: number): number {
 export function lbsToKg(lbs: number): number {
   return lbs / KG_TO_LBS
 }
+
+export const MUSCLE_GROUPS = [
+  'All', 'Back', 'Shoulder', 'Chest', 'Biceps', 'Glute',
+  'Triceps', 'Quad', 'Hamstring', 'Core', 'Calves',
+  'Adductors', 'Neck', 'Forearm',
+]
+
+export const RPE_COLORS: Record<number, string> = {
+  6:  'oklch(68% 0.18 150)',
+  7:  'oklch(76% 0.16 115)',
+  8:  'oklch(76% 0.16 85)',
+  9:  'oklch(65% 0.20 42)',
+  10: 'oklch(60% 0.22 25)',
+}

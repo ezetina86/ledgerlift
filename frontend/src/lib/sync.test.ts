@@ -15,12 +15,13 @@ vi.mock('../db/index.ts', () => {
   }
   return {
     db: {
-      sessions:     makeTable(),
-      sets:         makeTable(),
-      routines:     makeTable(),
-      mesocycles:   makeTable(),
+      sessions:      makeTable(),
+      sets:          makeTable(),
+      routines:      makeTable(),
+      mesocycles:    makeTable(),
       exerciseSwaps: makeTable(),
-      runSessions:  makeTable(),
+      runSessions:   makeTable(),
+      runPrograms:   makeTable(),
     },
     setSyncing: vi.fn(),
   }
@@ -296,4 +297,43 @@ describe('syncWithBackend', () => {
     // setSyncing(false) must have been the last call despite the throw
     expect(vi.mocked(setSyncing)).toHaveBeenLastCalledWith(false)
   })
+
+  it('includes runPrograms in the push payload', async () => {
+    setServerUrl('http://localhost:8080')
+    const { db } = await import('../db/index.ts')
+
+    vi.mocked(db.runPrograms.toArray).mockResolvedValue([
+      { id: 'rp-1', number: 1, startedAt: 1000, endedAt: null, updatedAt: 1000 },
+    ])
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ syncedAt: 9999, sessions: [], sets: [], routines: [], runPrograms: [] }),
+    }))
+
+    const result = await syncWithBackend()
+    expect(result.status).toBe('ok')
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string)
+    expect(body.runPrograms).toHaveLength(1)
+    expect(body.runPrograms[0].id).toBe('rp-1')
+  })
+
+  it('calls bulkPut on runPrograms received from server', async () => {
+    setServerUrl('http://localhost:8080')
+    const { db } = await import('../db/index.ts')
+    vi.mocked(db.runPrograms.bulkPut).mockClear()
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        syncedAt: 9999,
+        sessions: [], sets: [], routines: [],
+        runPrograms: [{ id: 'rp-server', number: 2, startedAt: 2000, endedAt: null, updatedAt: 2000 }],
+      }),
+    }))
+
+    await syncWithBackend()
+    expect(db.runPrograms.bulkPut).toHaveBeenCalled()
+  })
 })
+

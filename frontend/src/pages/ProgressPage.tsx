@@ -8,6 +8,8 @@ import { formatWeight, kgToLbs, KG_TO_LBS } from '../lib/utils.ts'
 import { useWeightUnit } from '../lib/prefs.ts'
 import ExerciseDashboardSheet from '../components/ExerciseDashboardSheet.tsx'
 import RunProgressPanel from '../components/RunProgressPanel.tsx'
+import Sparkline from '../components/Sparkline.tsx'
+import Label from '../components/Label.tsx'
 
 const GROUP_COLORS: Record<string, string> = {
   Back:      'oklch(55% 0.18 265)',
@@ -23,43 +25,11 @@ const GROUP_COLORS: Record<string, string> = {
   Other:     'oklch(44% 0.008 293)',
 }
 
-function Label({ children }: { children: string }) {
-  return (
-    <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', marginBottom: 10 }}>
-      {children}
-    </p>
-  )
-}
-
 function Empty({ text }: { text: string }) {
   return (
     <div className="rounded-2xl p-6 text-center" style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}>
       <p style={{ fontSize: '13px', color: 'oklch(44% 0.008 293)' }}>{text}</p>
     </div>
-  )
-}
-
-function Sparkline({ points, height = 60 }: { points: number[]; height?: number }) {
-  if (points.length < 2) return null
-  const W = 320, H = height, PAD = Math.max(3, Math.round(height * 0.1))
-  const min = Math.min(...points), max = Math.max(...points), range = max - min || 1
-  const xs = points.map((_, i) => PAD + (i / (points.length - 1)) * (W - PAD * 2))
-  const ys = points.map(v => H - PAD - ((v - min) / range) * (H - PAD * 2))
-  const pathD = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${ys[i].toFixed(1)}`).join(' ')
-  const areaD = pathD + ` L${xs[xs.length - 1].toFixed(1)} ${H} L${xs[0].toFixed(1)} ${H}Z`
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" height={H}>
-      <defs>
-        <linearGradient id="spkGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="oklch(62% 0.24 293)" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="oklch(62% 0.24 293)" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaD} fill="url(#spkGrad)" />
-      <path d={pathD} fill="none" stroke="oklch(62% 0.24 293)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      {xs.map((x, i) => <circle key={i} cx={x} cy={ys[i]} r="2.5" fill="oklch(62% 0.24 293)" />)}
-    </svg>
   )
 }
 
@@ -252,7 +222,7 @@ export default function ProgressPage() {
 
                       {/* Mini sparkline */}
                       {prog.length >= 2 && (
-                        <Sparkline points={prog.map(p => p.maxWeightKg)} height={32} />
+                        <Sparkline points={prog.map(p => p.maxWeightKg)} height={32} gradientId="spkGrad" />
                       )}
 
                       {/* Metadata */}

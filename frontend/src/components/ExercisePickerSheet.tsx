@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
+import { MUSCLE_GROUPS } from '../lib/utils.ts'
 import type { Exercise } from '../db/index.ts'
 
 interface Props {
@@ -11,12 +12,6 @@ interface Props {
   excludeIds?: string[]
   title?: string
 }
-
-const MUSCLE_GROUPS = [
-  'All', 'Back', 'Shoulder', 'Chest', 'Biceps', 'Glute',
-  'Triceps', 'Quad', 'Hamstring', 'Core', 'Calves',
-  'Adductors', 'Neck', 'Forearm',
-]
 
 export default function ExercisePickerSheet({ open, onClose, onSelect, filterMuscleGroup, excludeIds, title = 'PICK EXERCISE' }: Props) {
   const [search, setSearch] = useState('')

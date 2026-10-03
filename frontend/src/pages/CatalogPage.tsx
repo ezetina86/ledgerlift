@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
+import { MUSCLE_GROUPS } from '../lib/utils.ts'
 import type { Exercise } from '../db/index.ts'
-
-const GROUPS = ['All','Back','Chest','Shoulder','Biceps','Triceps','Quad','Hamstring','Glute','Calves','Core','Neck','Adductors','Forarm']
 
 const TIER_STYLES: Record<string, { bg: string; color: string }> = {
   '5 - S+': { bg: 'oklch(30% 0.12 85)',  color: 'oklch(78% 0.18 85)'  },
@@ -58,7 +57,7 @@ export default function CatalogPage() {
       {/* Group filter */}
       <div className="px-4 pb-3">
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {GROUPS.map(g => (
+          {MUSCLE_GROUPS.map(g => (
             <button
               key={g}
               onClick={() => setGroup(g)}

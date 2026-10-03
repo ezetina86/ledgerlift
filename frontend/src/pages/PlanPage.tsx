@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/index.ts'
-import type { Mesocycle, ExerciseSwap, Routine, Exercise, RunSession } from '../db/index.ts'
+import { db, getActiveRunProgram } from '../db/index.ts'
+import type { Mesocycle, ExerciseSwap, Routine, Exercise, RunSession, RunProgram } from '../db/index.ts'
 import { mesocycleWeek } from '../lib/split.ts'
 import { uid } from '../lib/utils.ts'
 import { nextRunSession, totalDurationSec, C25K_PLAN } from '../lib/runPlan.ts'
+import { activeRunSessions } from '../lib/runProgress.ts'
 import ExercisePickerSheet from '../components/ExercisePickerSheet.tsx'
 
 const SPLIT_DAY_LABELS: Record<string, string> = {
@@ -36,6 +37,13 @@ export default function PlanPage() {
   const runSessions = useLiveQuery<RunSession[]>(
     () => db.runSessions.filter(s => s.completedAt !== null).toArray()
   ) ?? []
+  const activeProgram = useLiveQuery<RunProgram | undefined>(
+    () => db.runPrograms.filter(p => p.endedAt === null).first()
+  )
+
+  useEffect(() => {
+    void getActiveRunProgram()
+  }, [])
   const exMap = useMemo(() => new Map((exercises ?? []).map(e => [e.id, e])), [exercises])
 
   const [showNewMesoSheet, setShowNewMesoSheet] = useState(false)
@@ -113,6 +121,25 @@ export default function PlanPage() {
 
     setSwapRoutineId(null)
     setSwapExerciseId(null)
+  }
+
+  async function handleResetProgram() {
+    const program = await getActiveRunProgram()
+    const now = Date.now()
+    await db.transaction('rw', [db.runPrograms, db.runSessions], async () => {
+      await db.runPrograms.update(program.id, { endedAt: now })
+      await db.runPrograms.add({
+        id: uid(),
+        number: program.number + 1,
+        startedAt: now,
+        endedAt: null,
+        updatedAt: now,
+      })
+      const inProgressList = await db.runSessions.filter(s => s.completedAt === null).toArray()
+      for (const inProgress of inProgressList) {
+        await db.runSessions.delete(inProgress.id)
+      }
+    })
   }
 
   return (
@@ -304,7 +331,11 @@ export default function PlanPage() {
       )}
 
       {/* ── C25K Run Plan ────────────────────── */}
-      <C25KBlock runSessions={runSessions} />
+      <C25KBlock
+        runSessions={runSessions}
+        activeProgram={activeProgram}
+        onResetProgram={handleResetProgram}
+      />
 
       {/* ── End Cycle Confirm Sheet ───────────── */}
       {showEndConfirm && (
@@ -484,10 +515,27 @@ function RoutineCard({ routine, exMap, onSwap, mesoActive }: RoutineCardProps) {
 
 // ── C25KBlock ──────────────────────────────────────────────────────────────────
 
-function C25KBlock({ runSessions }: { runSessions: RunSession[] }) {
-  const completedCount = runSessions.length
+function C25KBlock({
+  runSessions,
+  activeProgram,
+  onResetProgram,
+}: {
+  runSessions: RunSession[]
+  activeProgram?: RunProgram | null
+  onResetProgram?: () => Promise<void>
+}) {
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const activeRuns = activeRunSessions(runSessions, activeProgram)
+  const completedCount = activeRuns.length
   const next = nextRunSession(completedCount)
   const TOTAL = C25K_PLAN.length // 27
+
+  async function handleConfirmReset() {
+    if (onResetProgram) {
+      await onResetProgram()
+    }
+    setShowResetConfirm(false)
+  }
 
   return (
     <div className="px-4 mb-5">
@@ -501,9 +549,14 @@ function C25KBlock({ runSessions }: { runSessions: RunSession[] }) {
         {/* Header row */}
         <div className="px-4 pt-4 pb-3 flex items-center justify-between">
           <div>
-            <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(62% 0.18 150)', textTransform: 'uppercase' }}>
-              C25K PLAN
-            </p>
+            <div className="flex items-center gap-2">
+              <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(62% 0.18 150)', textTransform: 'uppercase' }}>
+                C25K PLAN
+              </p>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider" style={{ background: 'oklch(20% 0.010 293)', color: 'oklch(70% 0.010 293)' }}>
+                ATTEMPT {activeProgram?.number ?? 1}
+              </span>
+            </div>
             <p className="num" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '26px', color: 'oklch(97% 0.005 293)', letterSpacing: '-0.01em', lineHeight: 1, marginTop: 2 }}>
               {completedCount} / {TOTAL}
             </p>
@@ -511,16 +564,25 @@ function C25KBlock({ runSessions }: { runSessions: RunSession[] }) {
               Completed sessions
             </p>
           </div>
-          <div
-            className="px-3 py-2 rounded-xl text-right"
-            style={{ background: 'oklch(18% 0.012 293)' }}
-          >
-            <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.1em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', marginBottom: 2 }}>
-              Completion
-            </p>
-            <p className="num" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: 'oklch(62% 0.18 150)', lineHeight: 1 }}>
-              {Math.round((completedCount / TOTAL) * 100)}%
-            </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="px-2 py-1 rounded-lg text-xs font-semibold"
+              style={{ background: 'oklch(18% 0.012 293)', color: 'oklch(70% 0.010 293)', border: '1px solid oklch(25% 0.010 293)' }}
+            >
+              RESET
+            </button>
+            <div
+              className="px-3 py-2 rounded-xl text-right"
+              style={{ background: 'oklch(18% 0.012 293)' }}
+            >
+              <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.1em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', marginBottom: 2 }}>
+                Completion
+              </p>
+              <p className="num" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: 'oklch(62% 0.18 150)', lineHeight: 1 }}>
+                {Math.round((completedCount / TOTAL) * 100)}%
+              </p>
+            </div>
           </div>
         </div>
 
@@ -592,6 +654,39 @@ function C25KBlock({ runSessions }: { runSessions: RunSession[] }) {
             <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '16px', letterSpacing: '0.06em', color: 'oklch(62% 0.18 150)' }}>
               C25K COMPLETE
             </p>
+          </div>
+        )}
+
+        {/* Confirmation Modal */}
+        {showResetConfirm && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-c25k-title"
+          >
+            <div className="w-full max-w-sm rounded-2xl p-5" style={{ background: 'oklch(14% 0.010 293)', border: '1px solid oklch(24% 0.010 293)' }}>
+              <h3 id="reset-c25k-title" className="text-lg font-bold text-white mb-2 font-display">Reset C25K Program?</h3>
+              <p className="text-sm mb-5" style={{ color: 'oklch(65% 0.010 293)' }}>
+                This will restart your C25K plan from Week 1 · Day 1 as Attempt {(activeProgram?.number ?? 1) + 1}. All previously logged runs remain intact in your History.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold"
+                  style={{ background: 'oklch(20% 0.010 293)', color: 'oklch(80% 0.010 293)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmReset}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold"
+                  style={{ background: 'oklch(62% 0.18 150)', color: 'oklch(12% 0.010 293)' }}
+                >
+                  Reset to Week 1
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

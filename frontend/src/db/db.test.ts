@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { db, setSyncing, seedDatabase, DEFAULT_ROUTINES, getLastSetsForExercise } from './index'
+import { db, setSyncing, seedDatabase, DEFAULT_ROUTINES, getLastSetsForExercise, getActiveRunProgram } from './index'
 import type { WorkoutSession, SetLog, Routine } from './index'
 
 // fake-indexeddb/auto is loaded via setupFiles in vitest.config.ts,
@@ -322,3 +322,88 @@ describe('seedDatabase', () => {
     }
   })
 })
+
+// ── RunProgram and Dexie v5 schema ────────────────────────────────────────────
+
+describe('RunProgram and Dexie v5 schema', () => {
+  beforeEach(async () => {
+    await db.runPrograms.clear()
+    await db.runSessions.clear()
+  })
+
+  it('auto-seeds Attempt 1 if no runPrograms exist', async () => {
+    const active = await getActiveRunProgram()
+    expect(active).toBeDefined()
+    expect(active.number).toBe(1)
+    expect(active.endedAt).toBeNull()
+    expect(active.startedAt).toBeGreaterThan(0)
+
+    // Second call returns the existing one
+    const activeAgain = await getActiveRunProgram()
+    expect(activeAgain.id).toBe(active.id)
+  })
+
+  it('auto-seeds Attempt 1 with startedAt from earliest runSession if one exists', async () => {
+    await db.runSessions.add({
+      id: 'rs-old',
+      week: 1,
+      day: 1,
+      startedAt: 50000,
+      completedAt: 51800,
+      durationSec: 1800,
+      distanceKm: 3.0,
+      rpe: 7,
+      updatedAt: 51800,
+    })
+    const active = await getActiveRunProgram()
+    expect(active.startedAt).toBe(50000)
+  })
+
+  it('returns the active program with endedAt === null', async () => {
+    await db.runPrograms.add({
+      id: 'p1',
+      number: 1,
+      startedAt: 1000,
+      endedAt: 2000,
+      updatedAt: 2000,
+    })
+    await db.runPrograms.add({
+      id: 'p2',
+      number: 2,
+      startedAt: 2001,
+      endedAt: null,
+      updatedAt: 2001,
+    })
+
+    const active = await getActiveRunProgram()
+    expect(active.id).toBe('p2')
+    expect(active.number).toBe(2)
+  })
+
+  it('stamps updatedAt on creating when not syncing', async () => {
+    const before = Date.now()
+    await db.runPrograms.add({
+      id: 'p-hook-1',
+      number: 1,
+      startedAt: 1000,
+      endedAt: null,
+      updatedAt: 0,
+    })
+    const p = await db.runPrograms.get('p-hook-1')
+    expect(p?.updatedAt).toBeGreaterThanOrEqual(before)
+  })
+
+  it('preserves updatedAt on creating when syncing', async () => {
+    setSyncing(true)
+    await db.runPrograms.add({
+      id: 'p-hook-sync',
+      number: 1,
+      startedAt: 1000,
+      endedAt: null,
+      updatedAt: 4242,
+    })
+    const p = await db.runPrograms.get('p-hook-sync')
+    expect(p?.updatedAt).toBe(4242)
+  })
+})
+
