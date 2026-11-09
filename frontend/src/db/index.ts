@@ -1,7 +1,37 @@
-import Dexie, { type EntityTable } from 'dexie'
+import Dexie, { type EntityTable, type Transaction } from 'dexie'
 import { uid } from '../lib/utils'
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
+
+export type MovementFamily =
+  | 'adductor-abductor'
+  | 'calf'
+  | 'core'
+  | 'forearm'
+  | 'shrug-neck'
+  | 'chest-fly'
+  | 'incline-press'
+  | 'horizontal-press'
+  | 'face-pull'
+  | 'pullover'
+  | 'vertical-pull'
+  | 'horizontal-row'
+  | 'vertical-press'
+  | 'lateral-raise'
+  | 'curl-lengthened'
+  | 'curl-shortened'
+  | 'triceps-overhead'
+  | 'triceps-pressdown'
+  | 'leg-extension'
+  | 'leg-press'
+  | 'lunge'
+  | 'squat'
+  | 'leg-curl'
+  | 'hip-hinge'
+  | 'hip-thrust'
+  | 'other'
+
+export type SetType = 'work' | 'warmup' | 'drop' | 'fail'
 
 export interface Exercise {
   id: string
@@ -13,6 +43,11 @@ export interface Exercise {
   muscleLadder: boolean
   jeffSubgroupFav: boolean
   demonstrationLink: string | null
+  subgroups?: string[]
+  movementFamily?: MovementFamily
+  imageUrl?: string | null
+  videoUrl?: string | null
+  instructions?: string[]
 }
 
 export type SplitDay = 'upperA' | 'lowerA' | 'upperB' | 'lowerB'
@@ -22,6 +57,7 @@ export interface RoutineExercise {
   order: number
   defaultSets: number
   defaultReps: string  // e.g. "8-12"
+  backupExerciseIds?: string[]
 }
 
 export interface Routine {
@@ -80,6 +116,7 @@ export interface SetLog {
   volume: number            // reps * weightKg (computed on write)
   timestamp: number
   updatedAt: number         // auto-stamped by Dexie hook
+  setType?: SetType
 }
 
 export interface RunSession {
@@ -104,18 +141,26 @@ export interface RunProgram {
 
 // ─── Seed data — default Upper/Lower split ────────────────────────────────────
 
+export const LEGACY_EXERCISE_ID_MAP: Record<string, string> = {
+  'cable-row-neutral-grip': 'neutral-grip-cable-row',
+  'weighted-pull-up': 'wide-grip-pull-up',
+  'dumbbell-shoulder-press': 'seated-dumbbell-overhead-press',
+  'hip-thrust': 'barbell-hip-thrust',
+  'leg-press': 'machine-leg-press-45-degree',
+}
+
 export const DEFAULT_ROUTINES: Omit<Routine, 'createdAt' | 'updatedAt'>[] = [
   {
     id: 'upper-a',
     name: 'Upper A',
     splitDay: 'upperA',
     exercises: [
-      { exerciseId: 'bench-press',                        order: 1, defaultSets: 3, defaultReps: '6-8' },
-      { exerciseId: 'chest-supported-t-bar-row',          order: 2, defaultSets: 3, defaultReps: '8-12' },
-      { exerciseId: 'incline-dumbbell-press',             order: 3, defaultSets: 3, defaultReps: '8-12' },
-      { exerciseId: 'cable-row-neutral-grip',             order: 4, defaultSets: 3, defaultReps: '10-12' },
-      { exerciseId: 'overhead-cable-triceps-extension-bar', order: 5, defaultSets: 3, defaultReps: '10-15' },
-      { exerciseId: 'face-away-bayesian-curl',            order: 6, defaultSets: 3, defaultReps: '10-15' },
+      { exerciseId: 'bench-press',                          order: 1, defaultSets: 3, defaultReps: '6-8',   backupExerciseIds: ['dumbbell-bench-press', 'machine-chest-press'] },
+      { exerciseId: 'chest-supported-t-bar-row',            order: 2, defaultSets: 3, defaultReps: '8-12',  backupExerciseIds: ['neutral-grip-cable-row', 'barbell-row'] },
+      { exerciseId: 'incline-dumbbell-press',               order: 3, defaultSets: 3, defaultReps: '8-12',  backupExerciseIds: ['incline-bench-press', 'incline-smith-machine-bench-press'] },
+      { exerciseId: 'neutral-grip-cable-row',               order: 4, defaultSets: 3, defaultReps: '10-12', backupExerciseIds: ['chest-supported-t-bar-row', '1-arm-dumbbell-row'] },
+      { exerciseId: 'overhead-cable-triceps-extension-bar',  order: 5, defaultSets: 3, defaultReps: '10-15', backupExerciseIds: ['overhead-cable-triceps-extension-rope', 'katana-cable-triceps-extension'] },
+      { exerciseId: 'face-away-bayesian-curl',              order: 6, defaultSets: 3, defaultReps: '10-15', backupExerciseIds: ['incline-curl', 'standing-cable-curl'] },
     ],
   },
   {
@@ -123,12 +168,12 @@ export const DEFAULT_ROUTINES: Omit<Routine, 'createdAt' | 'updatedAt'>[] = [
     name: 'Lower A',
     splitDay: 'lowerA',
     exercises: [
-      { exerciseId: 'barbell-back-squat',                 order: 1, defaultSets: 3, defaultReps: '6-8' },
-      { exerciseId: 'romanian-deadlift',                  order: 2, defaultSets: 3, defaultReps: '8-12' },
-      { exerciseId: 'hack-squat',                         order: 3, defaultSets: 3, defaultReps: '10-12' },
-      { exerciseId: 'lying-leg-curl',                     order: 4, defaultSets: 3, defaultReps: '10-15' },
-      { exerciseId: 'seated-calf-raise',                  order: 5, defaultSets: 4, defaultReps: '10-15' },
-      { exerciseId: 'cable-crunch',                       order: 6, defaultSets: 3, defaultReps: '12-15' },
+      { exerciseId: 'barbell-back-squat',                   order: 1, defaultSets: 3, defaultReps: '6-8',   backupExerciseIds: ['smith-machine-squat', 'hack-squat'] },
+      { exerciseId: 'romanian-deadlift',                    order: 2, defaultSets: 3, defaultReps: '8-12',  backupExerciseIds: ['good-morning', 'glut-ham-raise'] },
+      { exerciseId: 'hack-squat',                           order: 3, defaultSets: 3, defaultReps: '10-12', backupExerciseIds: ['machine-leg-press-45-degree', 'pendulum-squate'] },
+      { exerciseId: 'lying-leg-curl',                       order: 4, defaultSets: 3, defaultReps: '10-15', backupExerciseIds: ['seated-leg-curl', 'nordic-ham-curl'] },
+      { exerciseId: 'seated-calf-raise',                    order: 5, defaultSets: 4, defaultReps: '10-15', backupExerciseIds: ['standing-calf-raise', 'machine-leg-press-45-degree'] },
+      { exerciseId: 'cable-crunch',                         order: 6, defaultSets: 3, defaultReps: '12-15', backupExerciseIds: ['hanging-leg-raise', 'plank'] },
     ],
   },
   {
@@ -136,12 +181,12 @@ export const DEFAULT_ROUTINES: Omit<Routine, 'createdAt' | 'updatedAt'>[] = [
     name: 'Upper B',
     splitDay: 'upperB',
     exercises: [
-      { exerciseId: 'weighted-pull-up',                   order: 1, defaultSets: 3, defaultReps: '6-8' },
-      { exerciseId: 'dumbbell-shoulder-press',            order: 2, defaultSets: 3, defaultReps: '8-12' },
-      { exerciseId: 'chest-supported-t-bar-row',          order: 3, defaultSets: 3, defaultReps: '8-12' },
-      { exerciseId: 'cable-lateral-raise',                order: 4, defaultSets: 4, defaultReps: '12-15' },
-      { exerciseId: 'barbell-skullcrusher',               order: 5, defaultSets: 3, defaultReps: '8-12' },
-      { exerciseId: 'dumbbell-preacher-curl',             order: 6, defaultSets: 3, defaultReps: '10-15' },
+      { exerciseId: 'wide-grip-pull-up',                    order: 1, defaultSets: 3, defaultReps: '6-8',   backupExerciseIds: ['wide-grip-pull-down', 'neutral-grip-pull-up'] },
+      { exerciseId: 'seated-dumbbell-overhead-press',       order: 2, defaultSets: 3, defaultReps: '8-12',  backupExerciseIds: ['overhead-press', 'machine-shoulder-press'] },
+      { exerciseId: 'chest-supported-t-bar-row',            order: 3, defaultSets: 3, defaultReps: '8-12',  backupExerciseIds: ['neutral-grip-cable-row', 'barbell-row'] },
+      { exerciseId: 'cable-lateral-raise',                  order: 4, defaultSets: 4, defaultReps: '12-15', backupExerciseIds: ['standing-dumbbell-lateral-raise', 'seated-machine-lateral-raise'] },
+      { exerciseId: 'barbell-skullcrusher',                 order: 5, defaultSets: 3, defaultReps: '8-12',  backupExerciseIds: ['triceps-pressdown-bar', 'triceps-pressdown-rope'] },
+      { exerciseId: 'dumbbell-preacher-curl',               order: 6, defaultSets: 3, defaultReps: '10-15', backupExerciseIds: ['machine-preacher-curl', 'ez-bar-curl'] },
     ],
   },
   {
@@ -149,12 +194,12 @@ export const DEFAULT_ROUTINES: Omit<Routine, 'createdAt' | 'updatedAt'>[] = [
     name: 'Lower B',
     splitDay: 'lowerB',
     exercises: [
-      { exerciseId: 'bulgarian-split-squat',              order: 1, defaultSets: 3, defaultReps: '8-10' },
-      { exerciseId: 'hip-thrust',                         order: 2, defaultSets: 3, defaultReps: '10-12' },
-      { exerciseId: 'leg-press',                          order: 3, defaultSets: 3, defaultReps: '10-15' },
-      { exerciseId: 'romanian-deadlift',                  order: 4, defaultSets: 3, defaultReps: '10-12' },
-      { exerciseId: 'standing-calf-raise',                order: 5, defaultSets: 4, defaultReps: '10-15' },
-      { exerciseId: 'hanging-leg-raise',                  order: 6, defaultSets: 3, defaultReps: '10-15' },
+      { exerciseId: 'bulgarian-split-squat',                order: 1, defaultSets: 3, defaultReps: '8-10',  backupExerciseIds: ['walking-dumbbell-lunges', 'barbell-lunge'] },
+      { exerciseId: 'barbell-hip-thrust',                   order: 2, defaultSets: 3, defaultReps: '10-12', backupExerciseIds: ['machine-hip-thrust', 'glute-bridge'] },
+      { exerciseId: 'machine-leg-press-45-degree',          order: 3, defaultSets: 3, defaultReps: '10-15', backupExerciseIds: ['hack-squat', 'pendulum-squate'] },
+      { exerciseId: 'romanian-deadlift',                    order: 4, defaultSets: 3, defaultReps: '10-12', backupExerciseIds: ['good-morning', 'glut-ham-raise'] },
+      { exerciseId: 'standing-calf-raise',                  order: 5, defaultSets: 4, defaultReps: '10-15', backupExerciseIds: ['seated-calf-raise', 'machine-leg-press-45-degree'] },
+      { exerciseId: 'hanging-leg-raise',                    order: 6, defaultSets: 3, defaultReps: '10-15', backupExerciseIds: ['cable-crunch', 'plate-loaded-decline-sit-up'] },
     ],
   },
 ]
@@ -163,6 +208,77 @@ export const DEFAULT_ROUTINES: Omit<Routine, 'createdAt' | 'updatedAt'>[] = [
 
 let _isSyncing = false
 export function setSyncing(v: boolean) { _isSyncing = v }
+
+// ─── v6 migration helper ──────────────────────────────────────────────────────
+
+export async function upgradeV6(tx: Transaction) {
+  const defaultBackupMap = new Map<string, string[]>()
+  for (const r of DEFAULT_ROUTINES) {
+    for (const ex of r.exercises) {
+      if (ex.backupExerciseIds && ex.backupExerciseIds.length > 0) {
+        defaultBackupMap.set(ex.exerciseId, ex.backupExerciseIds)
+      }
+    }
+  }
+
+  await tx.table('routines').toCollection().modify((routine: Routine) => {
+    const defRoutine = DEFAULT_ROUTINES.find(r => r.id === routine.id)
+    for (const slot of routine.exercises) {
+      if (LEGACY_EXERCISE_ID_MAP[slot.exerciseId]) {
+        slot.exerciseId = LEGACY_EXERCISE_ID_MAP[slot.exerciseId]
+      }
+      if (!slot.backupExerciseIds || slot.backupExerciseIds.length === 0) {
+        const defSlot = defRoutine?.exercises.find(e => e.exerciseId === slot.exerciseId)
+          ?? defRoutine?.exercises.find(e => e.order === slot.order)
+        slot.backupExerciseIds = defSlot?.backupExerciseIds ?? defaultBackupMap.get(slot.exerciseId) ?? []
+      } else {
+        slot.backupExerciseIds = slot.backupExerciseIds.map(id => LEGACY_EXERCISE_ID_MAP[id] ?? id)
+      }
+    }
+  })
+
+  await tx.table('sets').toCollection().modify((set: SetLog) => {
+    if (LEGACY_EXERCISE_ID_MAP[set.exerciseId]) {
+      set.exerciseId = LEGACY_EXERCISE_ID_MAP[set.exerciseId]
+    }
+    if (set.setType === undefined) {
+      set.setType = 'work'
+    }
+  })
+
+  await tx.table('exerciseSwaps').toCollection().modify((swap: ExerciseSwap) => {
+    if (LEGACY_EXERCISE_ID_MAP[swap.removedExerciseId]) {
+      swap.removedExerciseId = LEGACY_EXERCISE_ID_MAP[swap.removedExerciseId]
+    }
+    if (LEGACY_EXERCISE_ID_MAP[swap.addedExerciseId]) {
+      swap.addedExerciseId = LEGACY_EXERCISE_ID_MAP[swap.addedExerciseId]
+    }
+  })
+
+  await tx.table('sessions').toCollection().modify((session: WorkoutSession) => {
+    if (session.swaps) {
+      const updatedSwaps: Record<string, string> = {}
+      for (const [origId, repId] of Object.entries(session.swaps)) {
+        const newOrig = LEGACY_EXERCISE_ID_MAP[origId] ?? origId
+        const newRep = LEGACY_EXERCISE_ID_MAP[repId] ?? repId
+        updatedSwaps[newOrig] = newRep
+      }
+      session.swaps = updatedSwaps
+    }
+    if (session.extraExercises) {
+      for (const slot of session.extraExercises) {
+        if (LEGACY_EXERCISE_ID_MAP[slot.exerciseId]) {
+          slot.exerciseId = LEGACY_EXERCISE_ID_MAP[slot.exerciseId]
+        }
+        if (!slot.backupExerciseIds || slot.backupExerciseIds.length === 0) {
+          slot.backupExerciseIds = defaultBackupMap.get(slot.exerciseId) ?? []
+        } else {
+          slot.backupExerciseIds = slot.backupExerciseIds.map(id => LEGACY_EXERCISE_ID_MAP[id] ?? id)
+        }
+      }
+    }
+  })
+}
 
 // ─── Database class ───────────────────────────────────────────────────────────
 
@@ -232,6 +348,19 @@ export class LedgerLiftDB extends Dexie {
       runSessions:   'id, startedAt, completedAt, updatedAt',
       runPrograms:   'id, number, startedAt, endedAt, updatedAt',
     })
+
+    // v6: exercise metadata (subgroups, movementFamily, imageUrl, videoUrl, instructions),
+    // setType on sets, backupExerciseIds on routines, legacy exercise ID migration
+    this.version(6).stores({
+      exercises:     'id, primaryMuscleGroup, nippardTierList, muscleLadder, movementFamily',
+      routines:      'id, splitDay, createdAt, updatedAt',
+      sessions:      'id, routineId, splitDay, startedAt, completedAt, mesocycleId, isDeload, updatedAt',
+      sets:          'id, sessionId, exerciseId, timestamp, updatedAt, setType',
+      mesocycles:    'id, number, startedAt, endedAt, updatedAt',
+      exerciseSwaps: 'id, mesocycleId, routineId, swappedAt',
+      runSessions:   'id, startedAt, completedAt, updatedAt',
+      runPrograms:   'id, number, startedAt, endedAt, updatedAt',
+    }).upgrade(upgradeV6)
 
     // Auto-stamp updatedAt on every write — skipped during sync pull
     this.sessions.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })
@@ -308,10 +437,7 @@ function _seedUid(): string {
 export async function seedDatabase() {
   const { default: exercises } = await import('../data/exercises.json')
 
-  const existingEx = await db.exercises.count()
-  if (existingEx === 0) {
-    await db.exercises.bulkAdd(exercises as Exercise[])
-  }
+  await db.exercises.bulkPut(exercises as Exercise[])
 
   const existingRoutines = await db.routines.count()
   if (existingRoutines === 0) {

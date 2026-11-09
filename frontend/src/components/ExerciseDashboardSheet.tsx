@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import type { SetLog, WorkoutSession } from '../db/index.ts'
-import { exerciseProgression, rpeHistory } from '../lib/overload.ts'
+import { exerciseProgression, rpeHistory, estimate1RM, workingSetsOnly } from '../lib/overload.ts'
 import { formatWeight, kgToLbs, KG_TO_LBS } from '../lib/utils.ts'
 import type { WeightUnit } from '../lib/prefs.ts'
 import {
@@ -73,11 +73,15 @@ export default function ExerciseDashboardSheet({ exerciseId, exerciseName, muscl
   const progression = exerciseProgression(exerciseSets, exerciseId)
   const rpeData = rpeHistory(exerciseSets, allSessions, exerciseId)
 
-  const sessionCount = new Set(exerciseSets.map(s => s.sessionId)).size
-  const bestSet = exerciseSets.length > 0
-    ? exerciseSets.reduce((b, s) => (s.weightKg > b.weightKg ? s : b))
+  const workSets = workingSetsOnly(exerciseSets)
+  const sessionCount = new Set(workSets.map(s => s.sessionId)).size
+  const bestSet = workSets.length > 0
+    ? workSets.reduce((b, s) => (s.weightKg > b.weightKg ? s : b))
     : null
-  const bestReps = exerciseSets.length > 0 ? Math.max(...exerciseSets.map(s => s.reps)) : 0
+  const bestReps = workSets.length > 0 ? Math.max(...workSets.map(s => s.reps)) : 0
+  const bestEst1RM = workSets.length > 0
+    ? Math.max(...workSets.map(s => estimate1RM(s.weightKg, s.reps, s.rpe)))
+    : 0
 
   function dw(kg: number): number {
     return unit === 'lb' ? Math.round(kgToLbs(kg) * 10) / 10 : kg
@@ -113,6 +117,7 @@ export default function ExerciseDashboardSheet({ exerciseId, exerciseName, muscl
 
   const statChips = [
     { value: bestSet ? `${formatWeight(dw(bestSet.weightKg))} ${unit}` : '—', label: 'ALL-TIME' },
+    { value: bestEst1RM > 0 ? `${formatWeight(dw(bestEst1RM))} ${unit}` : '—', label: 'EST 1RM' },
     { value: String(sessionCount), label: 'SESSIONS' },
     { value: String(bestReps), label: 'BEST REPS' },
   ]
@@ -187,7 +192,7 @@ export default function ExerciseDashboardSheet({ exerciseId, exerciseName, muscl
           ) : (
             <>
               {/* Stat chips */}
-              <div className="grid grid-cols-3 gap-2 mb-6">
+              <div className="grid grid-cols-2 gap-2 mb-6">
                 {statChips.map(chip => (
                   <div
                     key={chip.label}
@@ -199,7 +204,7 @@ export default function ExerciseDashboardSheet({ exerciseId, exerciseName, muscl
                       style={{
                         fontFamily: "'Barlow Condensed', sans-serif",
                         fontWeight: 800,
-                        fontSize: chip.label === 'ALL-TIME' ? '16px' : '24px',
+                        fontSize: chip.label === 'ALL-TIME' || chip.label === 'EST 1RM' ? '18px' : '24px',
                         color: 'oklch(97% 0.005 293)',
                       }}
                     >

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import { MUSCLE_GROUPS } from '../lib/utils.ts'
+import { recentExerciseIdsFromSets } from '../lib/rotation.ts'
 import type { Exercise } from '../db/index.ts'
 
 const TIER_STYLES: Record<string, { bg: string; color: string }> = {
@@ -18,6 +19,12 @@ export default function CatalogPage() {
   const [selected, setSelected] = useState<Exercise | null>(null)
 
   const exercises = useLiveQuery<Exercise[]>(() => db.exercises.toArray(), []) ?? []
+  const allSets = useLiveQuery(() => db.sets.toArray(), [])
+
+  const recentExerciseIds = useMemo(
+    () => recentExerciseIdsFromSets(allSets ?? []),
+    [allSets]
+  )
 
   const filtered = exercises.filter(e => {
     const matchGroup  = group === 'All' || e.primaryMuscleGroup === group
@@ -89,6 +96,7 @@ export default function CatalogPage() {
       <div className="px-4 flex flex-col gap-1">
         {filtered.map(ex => {
           const tier = ex.tierListGrade ? TIER_STYLES[ex.tierListGrade] : null
+          const isFresh = !recentExerciseIds.has(ex.id)
           return (
             <button
               key={ex.id}
@@ -96,11 +104,31 @@ export default function CatalogPage() {
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors active:bg-[oklch(15%_0.010_293)]"
               style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}
             >
+              {ex.imageUrl && (
+                <img
+                  src={ex.imageUrl}
+                  alt={ex.name}
+                  loading="lazy"
+                  className="w-9 h-9 rounded-lg object-cover shrink-0"
+                  style={{ background: 'oklch(18% 0.012 293)' }}
+                />
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate" style={{ color: 'oklch(97% 0.005 293)' }}>{ex.name}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'oklch(44% 0.008 293)' }}>{ex.equipment}</p>
+                <p className="text-xs mt-0.5 truncate" style={{ color: 'oklch(44% 0.008 293)' }}>
+                  {ex.equipment}
+                  {ex.subgroups && ex.subgroups.length > 0 ? ` · ${ex.subgroups.slice(0, 2).join(', ')}` : ''}
+                </p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
+                {isFresh && (
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[9px]"
+                    style={{ background: 'oklch(22% 0.10 150)', color: 'oklch(72% 0.18 150)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.06em' }}
+                  >
+                    FRESH
+                  </span>
+                )}
                 {ex.muscleLadder && (
                   <span
                     className="px-1.5 py-0.5 rounded text-[9px]"
@@ -128,7 +156,7 @@ export default function CatalogPage() {
         <>
           <div className="fixed inset-0 z-50 animate-fade-in" style={{ background: 'rgba(0,0,0,0.72)' }} onClick={() => setSelected(null)} />
           <div
-            className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up px-5 pt-5 pb-10 max-h-[80svh] overflow-y-auto"
+            className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up px-5 pt-5 pb-10 max-h-[85svh] overflow-y-auto"
             style={{ background: 'oklch(12% 0.010 293)', borderTop: '1px solid oklch(28% 0.016 293)', borderRadius: '20px 20px 0 0' }}
           >
             <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: 'oklch(30% 0.010 293)' }} />
@@ -144,6 +172,12 @@ export default function CatalogPage() {
               </button>
             </div>
 
+            {selected.videoUrl && (
+              <div className="rounded-xl overflow-hidden mb-4" style={{ background: 'oklch(8% 0.008 293)', border: '1px solid oklch(22% 0.010 293)' }}>
+                <video src={selected.videoUrl} autoPlay loop muted playsInline className="w-full max-h-60 object-contain" />
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2 mb-4">
               {[['Muscle', selected.primaryMuscleGroup], ['Equipment', selected.equipment]].map(([l, v]) => (
                 <div key={l} className="p-3 rounded-xl" style={{ background: 'oklch(18% 0.012 293)' }}>
@@ -154,6 +188,16 @@ export default function CatalogPage() {
             </div>
 
             <div className="flex gap-2 flex-wrap mb-4">
+              {selected.movementFamily && (
+                <span className="px-3 py-1.5 rounded-lg text-sm" style={{ background: 'oklch(18% 0.012 293)', color: 'oklch(75% 0.012 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.06em' }}>
+                  {selected.movementFamily.toUpperCase()}
+                </span>
+              )}
+              {!recentExerciseIds.has(selected.id) && (
+                <span className="px-3 py-1.5 rounded-lg text-sm" style={{ background: 'oklch(22% 0.10 150)', color: 'oklch(72% 0.18 150)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.06em' }}>
+                  FRESH (30D)
+                </span>
+              )}
               {selected.tierListGrade && (() => {
                 const t = TIER_STYLES[selected.tierListGrade]
                 return (
@@ -173,6 +217,45 @@ export default function CatalogPage() {
                 </span>
               )}
             </div>
+
+            {selected.subgroups && selected.subgroups.length > 0 && (
+              <div className="mb-4">
+                <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.12em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Target Subgroups
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {selected.subgroups.map(sg => (
+                    <span
+                      key={sg}
+                      className="px-2.5 py-1 rounded-lg text-xs"
+                      style={{
+                        background: 'oklch(18% 0.04 293)',
+                        color: 'oklch(75% 0.14 293)',
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {sg}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selected.instructions && selected.instructions.length > 0 && (
+              <div className="mb-4">
+                <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.12em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Instructions
+                </p>
+                <ol className="flex flex-col gap-1.5 pl-4 list-decimal">
+                  {selected.instructions.map((step, i) => (
+                    <li key={i} className="text-xs leading-relaxed" style={{ color: 'oklch(78% 0.010 293)' }}>
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
 
             {selected.demonstrationLink && (
               <a
