@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { db, setSyncing, seedDatabase, DEFAULT_ROUTINES, getLastSetsForExercise, getActiveRunProgram } from './index'
-import type { WorkoutSession, SetLog, Routine } from './index'
+import { db, setSyncing, seedDatabase, DEFAULT_ROUTINES, getLastSetsForExercise, getActiveRunProgram, LEGACY_EXERCISE_ID_MAP } from './index'
+import type { WorkoutSession, SetLog, Routine, SetType, MovementFamily } from './index'
 
 // fake-indexeddb/auto is loaded via setupFiles in vitest.config.ts,
 // which polyfills global.indexedDB before any module is imported.
@@ -406,4 +406,42 @@ describe('RunProgram and Dexie v5 schema', () => {
     expect(p?.updatedAt).toBe(4242)
   })
 })
+
+describe('Dexie v6 schema & migration', () => {
+  it('database version is 6', () => {
+    expect(db.verno).toBe(6)
+    const testFamily: MovementFamily = 'horizontal-row'
+    expect(testFamily).toBe('horizontal-row')
+    expect(Object.keys(LEGACY_EXERCISE_ID_MAP)).toHaveLength(5)
+  })
+
+  it('persists setType on sets and backupExerciseIds on routines', async () => {
+    const setTypes: SetType[] = ['work', 'warmup', 'drop', 'fail']
+    for (const [idx, st] of setTypes.entries()) {
+      await db.sets.add(makeSet(`s-type-${idx}`, 'sess-1', { setType: st }))
+      const saved = await db.sets.get(`s-type-${idx}`)
+      expect(saved?.setType).toBe(st)
+    }
+
+    await db.routines.add({
+      id: 'custom-r',
+      name: 'Custom',
+      splitDay: 'upperA',
+      exercises: [
+        {
+          exerciseId: 'bench-press',
+          order: 1,
+          defaultSets: 3,
+          defaultReps: '8-12',
+          backupExerciseIds: ['dumbbell-bench-press', 'machine-chest-press'],
+        },
+      ],
+      createdAt: 1000,
+      updatedAt: 1000,
+    })
+    const r = await db.routines.get('custom-r')
+    expect(r?.exercises[0].backupExerciseIds).toEqual(['dumbbell-bench-press', 'machine-chest-press'])
+  })
+})
+
 

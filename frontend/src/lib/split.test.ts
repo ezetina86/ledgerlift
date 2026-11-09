@@ -3,7 +3,9 @@ import {
   nextSplitDay, upcomingSchedule, mesocycleWeek,
   SPLIT_LABELS, SPLIT_FOCUS, ROUTINE_ID,
 } from './split.ts'
-import type { WorkoutSession, Mesocycle } from '../db/index.ts'
+import type { WorkoutSession, Mesocycle, Exercise } from '../db/index.ts'
+import { DEFAULT_ROUTINES, LEGACY_EXERCISE_ID_MAP } from '../db/index.ts'
+import exercisesData from '../data/exercises.json'
 
 function mockSession(splitDay: WorkoutSession['splitDay']): WorkoutSession {
   return {
@@ -156,3 +158,42 @@ describe('mesocycleWeek', () => {
     expect(mesocycleWeek(makeMesocycle(eightWeeksMs))).toBeGreaterThan(5)
   })
 })
+
+describe('Catalog & DEFAULT_ROUTINES integrity', () => {
+  const catalogMap = new Map((exercisesData as Exercise[]).map(e => [e.id, e]))
+
+  it('every exercise in exercises.json has subgroups array and movementFamily', () => {
+    expect(exercisesData.length).toBe(154)
+    for (const ex of exercisesData as Exercise[]) {
+      expect(Array.isArray(ex.subgroups)).toBe(true)
+      expect(typeof ex.movementFamily).toBe('string')
+      expect(ex.movementFamily?.length).toBeGreaterThan(0)
+    }
+    const tbar = catalogMap.get('chest-supported-t-bar-row')
+    expect(tbar?.subgroups).toContain('Back: Lats')
+    expect(tbar?.movementFamily).toBe('horizontal-row')
+    expect(tbar?.imageUrl).toBe('/exercises/still/chest-supported-t-bar-row.webp')
+    expect(tbar?.videoUrl).toBe('/exercises/clip/chest-supported-t-bar-row.mp4')
+    expect(Array.isArray(tbar?.instructions)).toBe(true)
+  })
+
+  it('every exerciseId and backupExerciseId in DEFAULT_ROUTINES exists in exercises.json', () => {
+    for (const routine of DEFAULT_ROUTINES) {
+      for (const slot of routine.exercises) {
+        expect(catalogMap.has(slot.exerciseId), `Missing slot exerciseId: ${slot.exerciseId}`).toBe(true)
+        expect(slot.backupExerciseIds?.length).toBeGreaterThanOrEqual(1)
+        for (const backupId of slot.backupExerciseIds ?? []) {
+          expect(catalogMap.has(backupId), `Missing backupExerciseId: ${backupId}`).toBe(true)
+        }
+      }
+    }
+  })
+
+  it('maps all 5 legacy broken exercise IDs to valid catalog IDs', () => {
+    expect(Object.keys(LEGACY_EXERCISE_ID_MAP)).toHaveLength(5)
+    for (const targetId of Object.values(LEGACY_EXERCISE_ID_MAP)) {
+      expect(catalogMap.has(targetId)).toBe(true)
+    }
+  })
+})
+
