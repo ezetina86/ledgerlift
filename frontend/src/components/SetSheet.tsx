@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { formatWeight, kgToLbs, lbsToKg, RPE_COLORS } from '../lib/utils.ts'
 import { useWeightUnit } from '../lib/prefs.ts'
+import type { SetType } from '../db/index.ts'
 
 export interface SetInput {
   weightKg: number
   reps: number
   rpe: number | null
+  setType?: SetType
 }
 
 interface Props {
@@ -19,6 +21,12 @@ interface Props {
 
 const RPE_OPTIONS = [6, 7, 8, 9, 10]
 const RPE_LABELS: Record<number, string> = { 6: 'Easy', 7: 'Moderate', 8: 'Hard', 9: 'Very Hard', 10: 'Max' }
+const SET_TYPES: { id: SetType; label: string }[] = [
+  { id: 'work', label: 'WORK' },
+  { id: 'warmup', label: 'WARMUP' },
+  { id: 'drop', label: 'DROP' },
+  { id: 'fail', label: 'FAIL' },
+]
 
 // Wrapper mounts/unmounts the inner sheet so state always initialises fresh
 export default function SetSheet({ open, ...props }: Props) {
@@ -31,6 +39,7 @@ function SetSheetInner({ initial, setNumber, exerciseName, onConfirm, onClose }:
   const [weight, setWeight] = useState(unit === 'lb' ? kgToLbs(initial.weightKg) : initial.weightKg)
   const [reps, setReps] = useState(initial.reps)
   const [rpe, setRpe] = useState<number | null>(initial.rpe)
+  const [setType, setSetType] = useState<SetType>(initial.setType ?? 'work')
 
   const MAIN_STEP = unit === 'lb' ? 5 : 2.5
 
@@ -65,7 +74,7 @@ function SetSheetInner({ initial, setNumber, exerciseName, onConfirm, onClose }:
           {exerciseName}
         </p>
         <p
-          className="mb-6"
+          className="mb-3"
           style={{
             fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 700,
@@ -77,6 +86,30 @@ function SetSheetInner({ initial, setNumber, exerciseName, onConfirm, onClose }:
         >
           Set {setNumber}
         </p>
+
+        {/* Set Type 4-pill selector */}
+        <div className="grid grid-cols-4 gap-1.5 mb-4">
+          {SET_TYPES.map(st => {
+            const active = setType === st.id
+            return (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() => setSetType(st.id)}
+                className="h-8 rounded-lg text-xs transition-all active:scale-95"
+                style={{
+                  background: active ? 'oklch(62% 0.24 293)' : 'oklch(18% 0.012 293)',
+                  color: active ? 'oklch(8% 0.008 293)' : 'oklch(60% 0.010 293)',
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                }}
+              >
+                {st.label}
+              </button>
+            )
+          })}
+        </div>
 
         {/* Weight + Reps in 2-col grid */}
         <div className="grid grid-cols-2 gap-3 mb-5">
@@ -217,7 +250,7 @@ function SetSheetInner({ initial, setNumber, exerciseName, onConfirm, onClose }:
 
         {/* CTA */}
         <button
-          onClick={() => onConfirm({ weightKg: unit === 'lb' ? lbsToKg(weight) : weight, reps, rpe })}
+          onClick={() => onConfirm({ weightKg: unit === 'lb' ? lbsToKg(weight) : weight, reps, rpe, setType })}
           className="w-full h-14 rounded-2xl font-bold text-base transition-all active:scale-[0.98]"
           style={{
             background: 'oklch(62% 0.24 293)',

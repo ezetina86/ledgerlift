@@ -4,6 +4,7 @@ import { db, getActiveRunProgram } from '../db/index.ts'
 import type { Mesocycle, ExerciseSwap, Routine, Exercise, RunSession, RunProgram } from '../db/index.ts'
 import { mesocycleWeek } from '../lib/split.ts'
 import { uid } from '../lib/utils.ts'
+import { buildRoutineRotationProposal, type RotationProposalItem } from '../lib/rotation.ts'
 import { nextRunSession, totalDurationSec, C25K_PLAN } from '../lib/runPlan.ts'
 import { activeRunSessions } from '../lib/runProgress.ts'
 import ExercisePickerSheet from '../components/ExercisePickerSheet.tsx'
@@ -15,6 +16,17 @@ const SPLIT_DAY_LABELS: Record<string, string> = {
   'lower-b': 'Lower B — Fri',
 }
 
+const TRIGGER_BADGE: Record<RotationProposalItem['trigger'], { label: string; bg: string; color: string }> = {
+  duplicate: { label: 'DUPLICATE', bg: 'oklch(24% 0.12 55)',  color: 'oklch(76% 0.18 55)'  },
+  fatigued:  { label: 'HIGH RPE',  bg: 'oklch(24% 0.12 25)',  color: 'oklch(75% 0.20 25)'  },
+  stale:     { label: 'STALE',     bg: 'oklch(22% 0.08 265)', color: 'oklch(72% 0.16 265)' },
+  optional:  { label: 'FRESH',     bg: 'oklch(22% 0.08 150)', color: 'oklch(72% 0.18 150)' },
+}
+
+function proposalKey(p: RotationProposalItem): string {
+  return `${p.routineId}:${p.order}:${p.currentExerciseId}`
+}
+
 export default function PlanPage() {
   const activeMeso = useLiveQuery<Mesocycle | undefined>(
     () => db.mesocycles.filter(m => m.endedAt === null).first()
@@ -22,17 +34,20 @@ export default function PlanPage() {
   const allMesos = useLiveQuery<Mesocycle[]>(
     () => db.mesocycles.orderBy('startedAt').reverse().toArray()
   ) ?? []
-  const routines = useLiveQuery<Routine[]>(() => db.routines.toArray()) ?? []
+  const rawRoutines = useLiveQuery<Routine[]>(() => db.routines.toArray())
+  const routines = useMemo(() => rawRoutines ?? [], [rawRoutines])
   const swaps = useLiveQuery<ExerciseSwap[]>(
     () => activeMeso
       ? db.exerciseSwaps.where('mesocycleId').equals(activeMeso.id).toArray()
       : Promise.resolve([]),
     [activeMeso?.id]
   ) ?? []
-  const sessions = useLiveQuery(
+  const rawSessions = useLiveQuery(
     () => db.sessions.filter(s => s.completedAt !== null).toArray()
-  ) ?? []
-  const allSets = useLiveQuery(() => db.sets.toArray()) ?? []
+  )
+  const sessions = useMemo(() => rawSessions ?? [], [rawSessions])
+  const rawSets = useLiveQuery(() => db.sets.toArray())
+  const allSets = useMemo(() => rawSets ?? [], [rawSets])
   const exercises = useLiveQuery<Exercise[]>(() => db.exercises.toArray())
   const runSessions = useLiveQuery<RunSession[]>(
     () => db.runSessions.filter(s => s.completedAt !== null).toArray()
@@ -46,10 +61,19 @@ export default function PlanPage() {
   }, [])
   const exMap = useMemo(() => new Map((exercises ?? []).map(e => [e.id, e])), [exercises])
 
+  const rotationProposals = useMemo(
+    () => buildRoutineRotationProposal(routines, exMap, allSets, sessions),
+    [routines, exMap, allSets, sessions]
+  )
+
   const [showNewMesoSheet, setShowNewMesoSheet] = useState(false)
   const [showEndConfirm, setShowEndConfirm] = useState(false)
   const [newMesoName, setNewMesoName] = useState('')
   const [newMesoWeeks, setNewMesoWeeks] = useState<4 | 5 | 6>(5)
+
+  // Rotation Wizard state
+  const [showRotateSheet, setShowRotateSheet] = useState(false)
+  const [selectedRotations, setSelectedRotations] = useState<Set<string>>(new Set())
 
   // Swap state
   const [swapRoutineId, setSwapRoutineId] = useState<string | null>(null)
@@ -57,6 +81,73 @@ export default function PlanPage() {
   const [pickerOpen, setPickerOpen] = useState(false)
 
   const week = activeMeso ? mesocycleWeek(activeMeso) : 1
+
+  function openRotateSheet() {
+    const initial = new Set<string>(
+      rotationProposals.filter(p => p.recommended).map(proposalKey)
+    )
+    setSelectedRotations(initial)
+    setShowRotateSheet(true)
+  }
+
+  function toggleProposal(key: string) {
+    setSelectedRotations(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  async function applySelectedRotations() {
+    const chosen = rotationProposals.filter(p => selectedRotations.has(proposalKey(p)))
+    if (chosen.length === 0) {
+      setShowRotateSheet(false)
+      return
+    }
+
+    const byRoutine = new Map<string, RotationProposalItem[]>()
+    for (const item of chosen) {
+      const list = byRoutine.get(item.routineId) ?? []
+      list.push(item)
+      byRoutine.set(item.routineId, list)
+    }
+
+    const now = Date.now()
+    for (const [routineId, items] of byRoutine.entries()) {
+      const routine = routines.find(r => r.id === routineId)
+      if (!routine) continue
+      const updatedExercises = routine.exercises.map(slot => {
+        const match = items.find(i => i.order === slot.order && i.currentExerciseId === slot.exerciseId)
+        if (!match) return slot
+        const updatedBackups = [
+          slot.exerciseId,
+          ...(slot.backupExerciseIds ?? []),
+        ].filter((id, idx, arr) => id !== match.suggestedExercise.id && arr.indexOf(id) === idx).slice(0, 2)
+        return {
+          ...slot,
+          exerciseId: match.suggestedExercise.id,
+          backupExerciseIds: updatedBackups,
+        }
+      })
+      await db.routines.update(routineId, { exercises: updatedExercises })
+
+      if (activeMeso) {
+        for (const item of items) {
+          await db.exerciseSwaps.add({
+            id: uid(),
+            mesocycleId: activeMeso.id,
+            routineId,
+            removedExerciseId: item.currentExerciseId,
+            addedExerciseId: item.suggestedExercise.id,
+            swappedAt: now,
+          })
+        }
+      }
+    }
+
+    setShowRotateSheet(false)
+  }
 
   async function toggleDeload() {
     if (!activeMeso) return
@@ -103,11 +194,14 @@ export default function PlanPage() {
     if (!routine) return
 
     await db.routines.update(swapRoutineId, {
-      exercises: routine.exercises.map(e =>
-        e.exerciseId === swapExerciseId
-          ? { ...e, exerciseId: newExercise.id }
-          : e
-      ),
+      exercises: routine.exercises.map(e => {
+        if (e.exerciseId !== swapExerciseId) return e
+        const updatedBackups = [
+          swapExerciseId,
+          ...(e.backupExerciseIds ?? []),
+        ].filter((id, idx, arr) => id !== newExercise.id && arr.indexOf(id) === idx).slice(0, 2)
+        return { ...e, exerciseId: newExercise.id, backupExerciseIds: updatedBackups }
+      }),
     })
 
     await db.exerciseSwaps.add({
@@ -254,9 +348,27 @@ export default function PlanPage() {
 
       {/* ── Routine Editor ────────────────────── */}
       <div className="px-4 mb-5">
-        <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', marginBottom: 10 }}>
-          Routines
-        </p>
+        <div className="flex items-center justify-between mb-2.5">
+          <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', color: 'oklch(44% 0.008 293)', textTransform: 'uppercase', margin: 0 }}>
+            Routines
+          </p>
+          <button
+            type="button"
+            onClick={openRotateSheet}
+            className="px-3 py-1 rounded-lg transition-all active:scale-95"
+            style={{
+              background: 'oklch(18% 0.06 293)',
+              border: '1px solid oklch(28% 0.12 293)',
+              color: 'oklch(72% 0.20 293)',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: '11px',
+              letterSpacing: '0.08em',
+            }}
+          >
+            ROTATE EXERCISES
+          </button>
+        </div>
         <div className="flex flex-col gap-3">
           {routines.sort((a, b) => a.id.localeCompare(b.id)).map(routine => (
             <RoutineCard
@@ -337,6 +449,122 @@ export default function PlanPage() {
         onResetProgram={handleResetProgram}
       />
 
+      {/* ── Rotate Exercises Wizard Sheet ─────── */}
+      {showRotateSheet && (
+        <>
+          <div className="fixed inset-0 z-50 animate-fade-in" style={{ background: 'rgba(0,0,0,0.72)' }} onClick={() => setShowRotateSheet(false)} />
+          <div
+            className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up pb-8 px-5 pt-5 flex flex-col"
+            style={{ background: 'oklch(12% 0.010 293)', borderTop: '1px solid oklch(28% 0.016 293)', borderRadius: '20px 20px 0 0', maxHeight: '85vh' }}
+          >
+            <div className="w-10 h-1 rounded-full mx-auto mb-4 shrink-0" style={{ background: 'oklch(30% 0.010 293)' }} />
+            <div className="flex items-start justify-between mb-1 shrink-0">
+              <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '26px', color: 'oklch(97% 0.005 293)', margin: 0 }}>
+                ROTATE EXERCISES
+              </h2>
+              <button onClick={() => setShowRotateSheet(false)} style={{ color: 'oklch(50% 0.010 293)' }}>✕</button>
+            </div>
+            <p className="text-xs mb-4 shrink-0" style={{ color: 'oklch(50% 0.010 293)' }}>
+              Science-based swaps ranked by movement pattern, subgroup overlap, and Nippard tier. Previous exercises are saved as 1-tap backups.
+            </p>
+
+            <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 pb-4">
+              {rotationProposals.map(p => {
+                const key = proposalKey(p)
+                const checked = selectedRotations.has(key)
+                const badge = TRIGGER_BADGE[p.trigger]
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => toggleProposal(key)}
+                    className="w-full p-3 rounded-xl text-left flex items-center gap-3 transition-colors"
+                    style={{
+                      background: checked ? 'oklch(17% 0.04 293)' : 'oklch(15% 0.010 293)',
+                      border: checked ? '1px solid oklch(40% 0.16 293)' : '1px solid oklch(20% 0.010 293)',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {}}
+                      className="w-4 h-4 accent-purple-500 shrink-0"
+                    />
+                    {p.suggestedExercise.imageUrl && (
+                      <img
+                        src={p.suggestedExercise.imageUrl}
+                        alt={p.suggestedExercise.name}
+                        loading="lazy"
+                        className="w-9 h-9 rounded-lg object-cover shrink-0"
+                        style={{ background: 'oklch(18% 0.012 293)' }}
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: 'oklch(50% 0.010 293)', textTransform: 'uppercase' }}>
+                          {p.routineName}
+                        </span>
+                        <span
+                          className="px-1.5 py-0.2 rounded"
+                          style={{
+                            background: badge.bg,
+                            color: badge.color,
+                            fontFamily: "'Barlow Condensed', sans-serif",
+                            fontWeight: 700,
+                            fontSize: '9px',
+                            letterSpacing: '0.06em',
+                          }}
+                        >
+                          {badge.label}
+                        </span>
+                      </div>
+                      <p className="text-xs truncate mt-0.5" style={{ color: 'oklch(60% 0.010 293)' }}>
+                        {p.currentExerciseName} →
+                      </p>
+                      <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '15px', color: 'oklch(97% 0.005 293)' }} className="truncate">
+                        {p.suggestedExercise.name}
+                      </p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {p.reasons.map(r => (
+                          <span
+                            key={r}
+                            className="px-1.5 py-0.2 rounded text-[9px]"
+                            style={{
+                              background: 'oklch(20% 0.02 293)',
+                              color: 'oklch(70% 0.10 293)',
+                              fontFamily: "'Barlow Condensed', sans-serif",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={applySelectedRotations}
+              className="w-full h-14 rounded-xl font-bold transition-all active:scale-[0.98] shrink-0 mt-2"
+              style={{
+                background: 'oklch(62% 0.24 293)',
+                color: 'oklch(7% 0.008 293)',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 800,
+                fontSize: '17px',
+                letterSpacing: '0.06em',
+              }}
+            >
+              APPLY ROTATIONS ({selectedRotations.size})
+            </button>
+          </div>
+        </>
+      )}
+
       {/* ── End Cycle Confirm Sheet ───────────── */}
       {showEndConfirm && (
         <>
@@ -404,7 +632,7 @@ export default function PlanPage() {
             <label style={{ fontSize: '11px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.1em', color: 'oklch(50% 0.010 293)', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>
               Target Weeks
             </label>
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-3 mb-4">
               {([4, 5, 6] as const).map(w => (
                 <button
                   key={w}
@@ -425,6 +653,23 @@ export default function PlanPage() {
             </div>
 
             <button
+              type="button"
+              onClick={() => { setShowNewMesoSheet(false); openRotateSheet() }}
+              className="w-full h-11 rounded-xl mb-3 transition-all active:scale-[0.98]"
+              style={{
+                background: 'oklch(18% 0.04 293)',
+                border: '1px solid oklch(28% 0.10 293)',
+                color: 'oklch(75% 0.16 293)',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: '14px',
+                letterSpacing: '0.06em',
+              }}
+            >
+              REVIEW EXERCISE ROTATIONS
+            </button>
+
+            <button
               onClick={startNewMesocycle}
               className="w-full h-14 rounded-xl font-bold transition-all active:scale-[0.98]"
               style={{ background: 'oklch(62% 0.24 293)', color: 'oklch(7% 0.008 293)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '18px', letterSpacing: '0.06em' }}
@@ -440,6 +685,7 @@ export default function PlanPage() {
         open={pickerOpen}
         onClose={() => { setPickerOpen(false); setSwapRoutineId(null); setSwapExerciseId(null) }}
         onSelect={handleSwapSelect}
+        sourceExerciseId={swapExerciseId ?? undefined}
         title="SWAP EXERCISE"
       />
     </div>
@@ -479,6 +725,15 @@ function RoutineCard({ routine, exMap, onSwap, mesoActive }: RoutineCardProps) {
             const ex = exMap.get(re.exerciseId)
             return (
               <div key={re.exerciseId} className="flex items-center px-4 py-2.5 gap-3">
+                {ex?.imageUrl && (
+                  <img
+                    src={ex.imageUrl}
+                    alt={ex.name}
+                    loading="lazy"
+                    className="w-8 h-8 rounded-lg object-cover shrink-0"
+                    style={{ background: 'oklch(18% 0.012 293)' }}
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: 'oklch(92% 0.005 293)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {ex?.name ?? re.exerciseId}

@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
-import type { WorkoutSession, Routine, Mesocycle, Exercise } from '../db/index.ts'
+import type { WorkoutSession, Routine, Mesocycle, Exercise, SetType } from '../db/index.ts'
 import { formatElapsed } from '../lib/utils.ts'
+import { isCompoundMovement } from '../lib/rotation.ts'
 import { syncWithBackend, getServerUrl } from '../lib/sync.ts'
 import ExerciseBlock from '../components/ExerciseBlock.tsx'
 import ExercisePickerSheet from '../components/ExercisePickerSheet.tsx'
@@ -13,21 +14,34 @@ interface Props {
   onBack: () => void
 }
 
+function formatRestClock(totalSec: number): string {
+  const mins = Math.floor(totalSec / 60)
+  const secs = totalSec % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
 export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
   const [, setTick] = useState(0)
   const [confirming, setConfirming] = useState(false)
   const [pendingSwaps, setPendingSwaps] = useState<Record<string, string>>({})
-  const [swapTarget, setSwapTarget] = useState<{ exerciseId: string; muscleGroup: string } | null>(null)
+  const [swapTarget, setSwapTarget] = useState<{ exerciseId: string; currentId: string; muscleGroup: string } | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [addExerciseOpen, setAddExerciseOpen] = useState(false)
+  const [restRemainingSec, setRestRemainingSec] = useState<number | null>(null)
 
   const session = useLiveQuery<WorkoutSession | undefined>(() => db.sessions.get(sessionId), [sessionId])
   const routine  = useLiveQuery<Routine | undefined>(() => session ? db.routines.get(session.routineId) : undefined, [session?.routineId])
   const activeMeso = useLiveQuery<Mesocycle | undefined>(() => db.mesocycles.filter(m => m.endedAt === null).first())
 
-  // Tick every second to recompute elapsed during render
+  // Tick every second to recompute elapsed during render and decrement rest timer
   useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 1000)
+    const id = setInterval(() => {
+      setTick(t => t + 1)
+      setRestRemainingSec(prev => {
+        if (prev === null) return null
+        return prev > 1 ? prev - 1 : null
+      })
+    }, 1000)
     return () => clearInterval(id)
   }, [])
 
@@ -45,19 +59,30 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
 
   const elapsed = session ? formatElapsed(session.startedAt) : ''
 
-  function openSwap(exerciseId: string, muscleGroup: string) {
-    setSwapTarget({ exerciseId, muscleGroup })
+  function openSwap(slotExerciseId: string, currentId: string, muscleGroup: string) {
+    setSwapTarget({ exerciseId: slotExerciseId, currentId, muscleGroup })
     setPickerOpen(true)
   }
 
   async function handleSwapSelect(newExercise: Exercise) {
     if (!swapTarget) return
-    // ponytail: use effectiveSwaps (persisted + pending) to avoid useLiveQuery staleness on rapid/resumed swaps
     const updated = { ...effectiveSwaps, [swapTarget.exerciseId]: newExercise.id }
     setPendingSwaps(prev => ({ ...prev, [swapTarget.exerciseId]: newExercise.id }))
     await db.sessions.update(sessionId, { swaps: updated })
     setPickerOpen(false)
     setSwapTarget(null)
+  }
+
+  async function handleQuickSwap(slotExerciseId: string, backupId: string) {
+    const updated = { ...effectiveSwaps, [slotExerciseId]: backupId }
+    setPendingSwaps(prev => ({ ...prev, [slotExerciseId]: backupId }))
+    await db.sessions.update(sessionId, { swaps: updated })
+  }
+
+  function handleSetLogged(ex: Exercise | undefined, setType: SetType) {
+    if (setType === 'warmup') return
+    const duration = isCompoundMovement(ex?.movementFamily) ? 150 : 90
+    setRestRemainingSec(duration)
   }
 
   async function handleAddExtraExercise(exercise: Exercise) {
@@ -138,6 +163,56 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
             FINISH
           </button>
         </div>
+
+        {/* Auto Rest Timer Pill */}
+        {restRemainingSec !== null && restRemainingSec > 0 && (
+          <div
+            className="mt-2.5 px-3 py-1.5 rounded-xl flex items-center justify-between"
+            style={{
+              background: 'oklch(16% 0.08 293)',
+              border: '1px solid oklch(30% 0.14 293)',
+            }}
+          >
+            <span
+              className="num"
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 800,
+                fontSize: '14px',
+                letterSpacing: '0.06em',
+                color: 'oklch(85% 0.16 293)',
+              }}
+            >
+              REST {formatRestClock(restRemainingSec)}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setRestRemainingSec(prev => (prev ?? 0) + 30)}
+                className="px-2 py-0.5 rounded-lg text-xs font-bold active:scale-95 transition-transform"
+                style={{
+                  background: 'oklch(24% 0.10 293)',
+                  color: 'oklch(92% 0.04 293)',
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                }}
+              >
+                +30s
+              </button>
+              <button
+                type="button"
+                onClick={() => setRestRemainingSec(null)}
+                className="w-6 h-6 rounded-lg flex items-center justify-center text-xs active:scale-95 transition-transform"
+                style={{
+                  background: 'oklch(20% 0.04 293)',
+                  color: 'oklch(60% 0.02 293)',
+                }}
+                aria-label="Dismiss rest timer"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Exercise list */}
@@ -147,6 +222,7 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
           .sort((a, b) => a.order - b.order)
           .map(ex => {
             const effectiveId = effectiveSwaps[ex.exerciseId] ?? ex.exerciseId
+            const allSlotBackups = [...new Set([ex.exerciseId, ...(ex.backupExerciseIds ?? [])])]
             return (
               <ExerciseBlock
                 key={ex.exerciseId}
@@ -156,8 +232,11 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
                 defaultSets={ex.defaultSets}
                 defaultReps={ex.defaultReps}
                 isDeload={activeMeso?.isDeloadWeek ?? false}
-                onSwap={(mg) => openSwap(ex.exerciseId, mg)}
-                isSwapped={!!effectiveSwaps[ex.exerciseId]}
+                onSwap={(mg) => openSwap(ex.exerciseId, effectiveId, mg)}
+                isSwapped={effectiveId !== ex.exerciseId}
+                backupExerciseIds={allSlotBackups}
+                onQuickSwap={(backupId) => handleQuickSwap(ex.exerciseId, backupId)}
+                onSetLogged={handleSetLogged}
               />
             )
           })}
@@ -172,6 +251,7 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
             defaultReps={ex.defaultReps}
             isDeload={activeMeso?.isDeloadWeek ?? false}
             isExtra={true}
+            onSetLogged={handleSetLogged}
           />
         ))}
 
@@ -201,6 +281,8 @@ export default function WorkoutPage({ sessionId, onComplete, onBack }: Props) {
         onClose={() => { setPickerOpen(false); setSwapTarget(null) }}
         onSelect={handleSwapSelect}
         filterMuscleGroup={swapTarget?.muscleGroup}
+        sourceExerciseId={swapTarget?.currentId}
+        excludeIds={usedExerciseIds}
         title="SWAP EXERCISE"
       />
 

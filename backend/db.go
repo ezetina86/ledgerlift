@@ -54,6 +54,7 @@ func InitDB(path string) (*sql.DB, error) {
 		reps          INTEGER NOT NULL,
 		weight_kg     REAL NOT NULL,
 		rpe           REAL,
+		set_type      TEXT NOT NULL DEFAULT 'work',
 		volume        REAL NOT NULL,
 		timestamp     INTEGER NOT NULL,
 		updated_at    INTEGER NOT NULL
@@ -140,6 +141,12 @@ func runMigrations(db *sql.DB) {
 		}
 		log.Println("migration: added sessions.is_deload")
 	}
+	if !columnExists(db, "sets", "set_type") {
+		if _, err := db.Exec(`ALTER TABLE sets ADD COLUMN set_type TEXT NOT NULL DEFAULT 'work'`); err != nil {
+			log.Fatalf("migrate sets.set_type: %v", err)
+		}
+		log.Println("migration: added sets.set_type")
+	}
 }
 
 func columnExists(db *sql.DB, table, column string) bool {
@@ -203,15 +210,19 @@ func upsertSession(db *sql.DB, s WorkoutSession, serverNow int64) error {
 
 func upsertSet(db *sql.DB, s SetLog, serverNow int64) error {
 	effectiveUpdatedAt := max(s.UpdatedAt, serverNow)
+	setType := s.SetType
+	if setType == "" {
+		setType = "work"
+	}
 	_, err := db.Exec(`
-		INSERT INTO sets(id,session_id,exercise_id,exercise_name,set_number,reps,weight_kg,rpe,volume,timestamp,updated_at)
-		VALUES(?,?,?,?,?,?,?,?,?,?,?)
+		INSERT INTO sets(id,session_id,exercise_id,exercise_name,set_number,reps,weight_kg,rpe,set_type,volume,timestamp,updated_at)
+		VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
 		ON CONFLICT(id) DO UPDATE SET
 			reps=excluded.reps, weight_kg=excluded.weight_kg, rpe=excluded.rpe,
-			volume=excluded.volume, updated_at=excluded.updated_at
+			set_type=excluded.set_type, volume=excluded.volume, updated_at=excluded.updated_at
 		WHERE excluded.updated_at > sets.updated_at`,
 		s.ID, s.SessionID, s.ExerciseID, s.ExerciseName,
-		s.SetNumber, s.Reps, s.WeightKg, s.RPE, s.Volume, s.Timestamp, effectiveUpdatedAt,
+		s.SetNumber, s.Reps, s.WeightKg, s.RPE, setType, s.Volume, s.Timestamp, effectiveUpdatedAt,
 	)
 	return err
 }
@@ -259,7 +270,7 @@ func fetchSessionsSince(db *sql.DB, since int64) ([]WorkoutSession, error) {
 }
 
 func fetchSetsSince(db *sql.DB, since int64) ([]SetLog, error) {
-	rows, err := db.Query(`SELECT id,session_id,exercise_id,exercise_name,set_number,reps,weight_kg,rpe,volume,timestamp,updated_at FROM sets WHERE updated_at > ?`, since)
+	rows, err := db.Query(`SELECT id,session_id,exercise_id,exercise_name,set_number,reps,weight_kg,rpe,set_type,volume,timestamp,updated_at FROM sets WHERE updated_at > ?`, since)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +279,7 @@ func fetchSetsSince(db *sql.DB, since int64) ([]SetLog, error) {
 	var out []SetLog
 	for rows.Next() {
 		var s SetLog
-		if err := rows.Scan(&s.ID, &s.SessionID, &s.ExerciseID, &s.ExerciseName, &s.SetNumber, &s.Reps, &s.WeightKg, &s.RPE, &s.Volume, &s.Timestamp, &s.UpdatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.SessionID, &s.ExerciseID, &s.ExerciseName, &s.SetNumber, &s.Reps, &s.WeightKg, &s.RPE, &s.SetType, &s.Volume, &s.Timestamp, &s.UpdatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, s)

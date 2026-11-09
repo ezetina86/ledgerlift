@@ -3,1694 +3,4097 @@
     "id": "cable-hip-adduction",
     "name": "Cable Hip Adduction",
     "primaryMuscleGroup": "Adductors",
+    "subgroups": [
+      "Adductors"
+    ],
+    "movementFamily": "adductor-abductor",
     "equipment": "Cable",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/cable-hip-adduction.webp",
+    "videoUrl": "/exercises/clip/cable-hip-adduction.mp4",
+    "instructions": [
+      "Attach the ankle cuff to your ankle and stand facing the cable machine.",
+      "Position yourself far enough away from the machine so that there is tension on the cable.",
+      "Place your hands on the machine for support.",
+      "Keeping your leg straight, slowly move your leg across your body towards the midline.",
+      "Pause for a moment at the end of the movement, then slowly return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "hip-adduction",
     "name": "Hip Adduction",
     "primaryMuscleGroup": "Adductors",
+    "subgroups": [
+      "Adductors"
+    ],
+    "movementFamily": "adductor-abductor",
     "equipment": "Machine",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/hip-adduction.webp",
+    "videoUrl": "/exercises/clip/hip-adduction.mp4",
+    "instructions": [
+      "Adjust the seat height and position yourself on the machine with your back against the backrest.",
+      "Place your feet on the footrests and grasp the handles for stability.",
+      "Engage your adductor muscles and slowly bring your legs together, squeezing your inner thighs.",
+      "Pause for a moment at the peak contraction, then slowly return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "1-arm-dumbbell-row",
     "name": "1-Arm Dumbbell Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Shoulder: Posterior",
+      "Back: Lats",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=446s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=446s",
+    "imageUrl": "/exercises/still/1-arm-dumbbell-row.webp",
+    "videoUrl": "/exercises/clip/1-arm-dumbbell-row.mp4",
+    "instructions": [
+      "Set up an incline bench at a 45-degree angle.",
+      "Sit on the bench with your chest against the backrest and your feet flat on the ground.",
+      "Hold a dumbbell in each hand with an underhand grip.",
+      "Lean forward and let your arms hang straight down, fully extended.",
+      "Pull the dumbbells up towards your chest, squeezing your shoulder blades together.",
+      "Pause for a moment at the top, then slowly lower the dumbbells back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "barbell-row",
     "name": "Barbell Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Shoulder: Posterior",
+      "Forearm",
+      "Back: Lats",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=300s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=300s",
+    "imageUrl": "/exercises/still/barbell-row.webp",
+    "videoUrl": "/exercises/clip/barbell-row.mp4",
+    "instructions": [
+      "Set up an incline bench at a 45-degree angle.",
+      "Sit on the bench facing the backrest with your chest against it.",
+      "Grab the barbell with a reverse grip (palms facing down) and hands slightly wider than shoulder-width apart.",
+      "Keep your back straight and core engaged.",
+      "Pull the barbell towards your upper abdomen, squeezing your shoulder blades together.",
+      "Pause for a moment at the top of the movement.",
+      "Slowly lower the barbell back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "cable-pull-over",
     "name": "Cable Pull-Over",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Triceps: Long",
+      "Back: Lats"
+    ],
+    "movementFamily": "pullover",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=637s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=637s",
+    "imageUrl": "/exercises/still/cable-pull-over.webp",
+    "videoUrl": "/exercises/clip/cable-pull-over.mp4",
+    "instructions": [
+      "Attach a cable handle to a low pulley and stand facing the machine.",
+      "Grasp the handle with your left hand and step away from the machine, extending your arm fully.",
+      "Position your feet shoulder-width apart, with your knees slightly bent.",
+      "Keep your back straight and your core engaged throughout the exercise.",
+      "Pull the handle towards your body, rotating your torso to the right as you do so.",
+      "Squeeze your back muscles at the end of the movement.",
+      "Slowly return to the starting position, keeping tension on the cable.",
+      "Repeat for the desired number of repetitions, then switch sides and perform with your right hand."
+    ]
   },
   {
     "id": "cable-single-lat-pull-in",
     "name": "Cable Single Lat Pull-In",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back: Lats"
+    ],
+    "movementFamily": "pullover",
     "equipment": "Cable",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/cable-single-lat-pull-in.webp",
+    "videoUrl": "/exercises/clip/cable-single-lat-pull-in.mp4",
+    "instructions": [
+      "Sit at the cable station with your feet braced and grab the handle with one hand.",
+      "Sit tall and let the arm extend with a slight stretch in the lat.",
+      "Pull your elbow down and back toward your hip, leading with the elbow.",
+      "Squeeze the lat for a moment, then slowly let the handle return.",
+      "Keep your torso still and shoulders down. Finish all reps, then switch arms."
+    ]
   },
   {
     "id": "chest-supported-t-bar-row",
     "name": "Chest-Supported T-Bar Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Shoulder: Posterior",
+      "Back: Lats",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "T-Bar, Bench",
     "nippardTierList": true,
     "tierListGrade": "5 - S+",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=533s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=533s",
+    "imageUrl": "/exercises/still/chest-supported-t-bar-row.webp",
+    "videoUrl": "/exercises/clip/chest-supported-t-bar-row.mp4",
+    "instructions": [
+      "Lie chest-down on the pad and grab the handles.",
+      "Start with your arms straight.",
+      "Pull the handles toward your torso.",
+      "Squeeze your shoulder blades.",
+      "Lower under control."
+    ]
   },
   {
     "id": "chin-up",
     "name": "Chin-Up",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Back: Lats",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "vertical-pull",
     "equipment": "Bench - Special",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=202s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=202s",
+    "imageUrl": "/exercises/still/chin-up.webp",
+    "videoUrl": "/exercises/clip/chin-up.mp4",
+    "instructions": [
+      "Hang from a pull-up bar with a narrow parallel grip, palms facing towards you.",
+      "Engage your back muscles and pull your body up towards the bar, keeping your elbows close to your body.",
+      "Continue pulling until your chin is above the bar.",
+      "Pause for a moment at the top, then slowly lower your body back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "cross-body-pull-around",
     "name": "Cross-Body Pull-Around",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "pullover",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=278s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=278s",
+    "imageUrl": "/exercises/still/cross-body-pull-around.webp",
+    "videoUrl": "/exercises/clip/cross-body-pull-around.mp4",
+    "instructions": [
+      "Attach a cable handle to a low pulley and stand facing the machine.",
+      "Grasp the handle with your left hand and step away from the machine, extending your arm fully.",
+      "Position your feet shoulder-width apart, with your knees slightly bent.",
+      "Keep your back straight and your core engaged throughout the exercise.",
+      "Pull the handle towards your body, rotating your torso to the right as you do so.",
+      "Squeeze your back muscles at the end of the movement.",
+      "Slowly return to the starting position, keeping tension on the cable.",
+      "Repeat for the desired number of repetitions, then switch sides and perform with your right hand."
+    ]
   },
   {
     "id": "deficit-pendley-barbell-row",
     "name": "Deficit Pendley Barbell Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=378s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=378s",
+    "imageUrl": "/exercises/still/deficit-pendley-barbell-row.webp",
+    "videoUrl": "/exercises/clip/deficit-pendley-barbell-row.mp4",
+    "instructions": [
+      "Set up an incline bench at a 45-degree angle.",
+      "Sit on the bench facing the backrest with your chest against it.",
+      "Grab the barbell with a reverse grip (palms facing down) and hands slightly wider than shoulder-width apart.",
+      "Keep your back straight and core engaged.",
+      "Pull the barbell towards your upper abdomen, squeezing your shoulder blades together.",
+      "Pause for a moment at the top of the movement.",
+      "Slowly lower the barbell back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "dumbbell-pull-over",
     "name": "Dumbbell Pull-Over",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "pullover",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=674s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=674s",
+    "imageUrl": "/exercises/still/dumbbell-pull-over.webp",
+    "videoUrl": "/exercises/clip/dumbbell-pull-over.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart, holding a dumbbell in each hand with an overhand grip.",
+      "Bend forward at the hips, keeping your back straight and your knees slightly bent.",
+      "Let your arms hang straight down, palms facing your body.",
+      "Engage your core and pull the dumbbells up towards your chest, keeping your elbows close to your body.",
+      "As you pull the dumbbells up, rotate your palms so they face away from your body.",
+      "Squeeze your shoulder blades together at the top of the movement.",
+      "Slowly lower the dumbbells back down to the starting position, rotating your palms back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "free-standing-t-bar-row",
     "name": "Free-Standing T-Bar Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "T-Bar",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=505s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=505s",
+    "imageUrl": "/exercises/still/free-standing-t-bar-row.webp",
+    "videoUrl": "/exercises/clip/free-standing-t-bar-row.mp4",
+    "instructions": [
+      "Lie chest-down on the pad and grab the handles.",
+      "Start with your arms straight.",
+      "Pull the handles toward your torso.",
+      "Squeeze your shoulder blades.",
+      "Lower under control."
+    ]
   },
   {
     "id": "half-kneeling-1-arm-pull-down",
     "name": "Half-Kneeling 1-Arm Pull-Down",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "vertical-pull",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=248s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=248s",
+    "imageUrl": "/exercises/still/half-kneeling-1-arm-pull-down.webp",
+    "videoUrl": "/exercises/clip/half-kneeling-1-arm-pull-down.mp4",
+    "instructions": [
+      "Kneel facing the cable stack and grab the handle with one hand.",
+      "Sit tall with your chest up.",
+      "Pull the handle down toward your shoulder.",
+      "Squeeze your lat at the bottom.",
+      "Let the arm rise back up slowly.",
+      "Finish your reps, then switch arms."
+    ]
   },
   {
     "id": "kroc-dumbbell-row",
     "name": "Kroc Dumbbell Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=477s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=477s",
+    "imageUrl": "/exercises/still/kroc-dumbbell-row.webp",
+    "videoUrl": "/exercises/clip/kroc-dumbbell-row.mp4",
+    "instructions": [
+      "Stand beside a bench with one hand and knee supported on it and hold a heavy dumbbell.",
+      "Let the weight hang with a stretch in the lat.",
+      "Row the dumbbell to your hip using controlled momentum.",
+      "Lower slowly to a full stretch.",
+      "Keep your back flat. Finish the reps, then switch arms."
+    ]
   },
   {
     "id": "lying-rope-face-pull",
     "name": "Lying Rope Face-Pull",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "face-pull",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=614s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=614s",
+    "imageUrl": "/exercises/still/lying-rope-face-pull.webp",
+    "videoUrl": "/exercises/clip/lying-rope-face-pull.mp4",
+    "instructions": [
+      "Attach a rope to a cable machine and set the pulley at the highest position.",
+      "Lie down on a bench with your head towards the cable machine.",
+      "Hold the rope with both hands and extend your arms straight up above your chest.",
+      "Keeping your arms straight, slowly lower the rope behind your head while maintaining control.",
+      "Pause for a moment at the bottom, then slowly raise the rope back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "meadows-t-bar-row",
     "name": "Meadows T-Bar Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "T-Bar",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=388s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=388s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/meadows-t-bar-row.webp",
+    "videoUrl": "/exercises/clip/meadows-t-bar-row.mp4",
+    "instructions": [
+      "Lie chest-down on the pad and grab the handles.",
+      "Start with your arms straight.",
+      "Pull the handles toward your torso.",
+      "Squeeze your shoulder blades.",
+      "Lower under control."
+    ]
   },
   {
     "id": "neutral-grip-cable-row",
     "name": "Neutral-Grip Cable Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=388s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=388s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/neutral-grip-cable-row.webp",
+    "videoUrl": "/exercises/clip/neutral-grip-cable-row.mp4",
+    "instructions": [
+      "Sit on the floor with your legs extended and your back straight.",
+      "Attach a cable handle to a low pulley and position the cable machine behind you.",
+      "Grasp the handle with a wide overhand grip, palms facing down.",
+      "Lean back slightly, keeping your back straight and your chest lifted.",
+      "Pull the handle towards your waist, squeezing your shoulder blades together.",
+      "Pause for a moment at the top of the movement, then slowly release the handle back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "neutral-grip-pull-down",
     "name": "Neutral-Grip Pull-Down",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Shoulder: Posterior",
+      "Back: Lats",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "vertical-pull",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=238s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=238s",
+    "imageUrl": "/exercises/still/neutral-grip-pull-down.webp",
+    "videoUrl": "/exercises/clip/neutral-grip-pull-down.mp4",
+    "instructions": [
+      "Sit at the pulldown station with your thighs under the pads.",
+      "Grab the wide neutral grip handles.",
+      "Lean back slightly and keep your chest up.",
+      "Pull the handles down toward your upper chest.",
+      "Squeeze your lats at the bottom.",
+      "Let the handles rise slowly with control."
+    ]
   },
   {
     "id": "neutral-grip-pull-up",
     "name": "Neutral-Grip Pull-Up",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Shoulder: Posterior",
+      "Forearm",
+      "Back: Lats",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "vertical-pull",
     "equipment": "Bench - Special",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=196s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=196s",
+    "imageUrl": "/exercises/still/neutral-grip-pull-up.webp",
+    "videoUrl": "/exercises/clip/neutral-grip-pull-up.mp4",
+    "instructions": [
+      "Hang from a pull-up bar with a neutral grip (palms facing each other) and your arms fully extended.",
+      "Engage your core and squeeze your shoulder blades together.",
+      "Pull your body up towards the bar by bending your elbows and driving your elbows down towards your hips.",
+      "Continue pulling until your chin is above the bar.",
+      "Pause for a moment at the top, then slowly lower your body back down to the starting position with control.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "pendley-barbell-row",
     "name": "Pendley Barbell Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Shoulder: Posterior",
+      "Forearm",
+      "Back: Lats",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=351s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=351s",
+    "imageUrl": "/exercises/still/pendley-barbell-row.webp",
+    "videoUrl": "/exercises/clip/pendley-barbell-row.mp4",
+    "instructions": [
+      "Set up an incline bench at a 45-degree angle.",
+      "Sit on the bench facing the backrest with your chest against it.",
+      "Grab the barbell with a reverse grip (palms facing down) and hands slightly wider than shoulder-width apart.",
+      "Keep your back straight and core engaged.",
+      "Pull the barbell towards your upper abdomen, squeezing your shoulder blades together.",
+      "Pause for a moment at the top of the movement.",
+      "Slowly lower the barbell back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "seated-rope-face-pull",
     "name": "Seated Rope Face-Pull",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "face-pull",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=614s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=614s",
+    "imageUrl": "/exercises/still/seated-rope-face-pull.webp",
+    "videoUrl": "/exercises/clip/seated-rope-face-pull.mp4",
+    "instructions": [
+      "Sit on the elevated seat facing the cable machine.",
+      "Grab the cable rope handles with an overhand grip, palms facing each other.",
+      "Keep your back straight and lean slightly back, maintaining a slight bend in your knees.",
+      "Pull the cable towards your body by retracting your shoulder blades and squeezing your back muscles.",
+      "Pause for a moment at the fully contracted position.",
+      "Slowly release the tension and extend your arms back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "standing-rope-face-pull",
     "name": "Standing Rope Face-Pull",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "face-pull",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=591s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=591s",
+    "imageUrl": "/exercises/still/standing-rope-face-pull.webp",
+    "videoUrl": "/exercises/clip/standing-rope-face-pull.mp4",
+    "instructions": [
+      "Attach a rope to a high pulley and stand facing it, hinging slightly forward.",
+      "Grab the rope with straight arms.",
+      "Push the rope down to your thighs, keeping your arms nearly straight.",
+      "Squeeze your lats at the bottom.",
+      "Let the rope rise slowly to shoulder height."
+    ]
   },
   {
     "id": "wide-grip-cable-row",
     "name": "Wide-Grip Cable Row",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Back"
+    ],
+    "movementFamily": "horizontal-row",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=576s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=576s",
+    "imageUrl": "/exercises/still/wide-grip-cable-row.webp",
+    "videoUrl": "/exercises/clip/wide-grip-cable-row.mp4",
+    "instructions": [
+      "Sit on the floor with your legs extended and your back straight.",
+      "Attach a cable handle to a low pulley and position the cable machine behind you.",
+      "Grasp the handle with a wide overhand grip, palms facing down.",
+      "Lean back slightly, keeping your back straight and your chest lifted.",
+      "Pull the handle towards your waist, squeezing your shoulder blades together.",
+      "Pause for a moment at the top of the movement, then slowly release the handle back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "wide-grip-pull-down",
     "name": "Wide-Grip Pull-Down",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Shoulder: Posterior",
+      "Back: Lats",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "vertical-pull",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=217s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=217s",
+    "imageUrl": "/exercises/still/wide-grip-pull-down.webp",
+    "videoUrl": "/exercises/clip/wide-grip-pull-down.mp4",
+    "instructions": [
+      "Sit at the pulldown station and secure your thighs under the pads.",
+      "Grab the bar with a wide overhand grip.",
+      "Lean back slightly and pull the bar down to your upper chest.",
+      "Drive your elbows down and back, squeezing your shoulder blades.",
+      "Control the bar back up until your arms are fully extended.",
+      "Avoid swinging your torso."
+    ]
   },
   {
     "id": "wide-grip-pull-up",
     "name": "Wide-Grip Pull-up",
     "primaryMuscleGroup": "Back",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Shoulder: Posterior",
+      "Forearm",
+      "Back: Lats",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "vertical-pull",
     "equipment": "Bench - Special",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=168s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=jLvqKgW-_G8&t=168s",
+    "imageUrl": "/exercises/still/wide-grip-pull-up.webp",
+    "videoUrl": "/exercises/clip/wide-grip-pull-up.mp4",
+    "instructions": [
+      "Hang from a pull-up bar with your palms facing away from you and your hands wider than shoulder-width apart.",
+      "Engage your core and squeeze your shoulder blades together.",
+      "Pull your body up towards the bar until your chin is above the bar.",
+      "Lower your body back down to the starting position with control.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "barbell-curl",
     "name": "Barbell Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=117s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=117s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/barbell-curl.webp",
+    "videoUrl": "/exercises/clip/barbell-curl.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart and hold a barbell with an underhand grip, hands wider than shoulder-width apart.",
+      "Keep your back straight and your elbows close to your torso.",
+      "Exhale and curl the barbell up towards your shoulders, keeping your upper arms stationary.",
+      "Pause for a moment at the top, squeezing your biceps.",
+      "Inhale and slowly lower the barbell back to the starting position, fully extending your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "bayesian-cable-curl-variation",
     "name": "Bayesian Cable Curl Variation",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-lengthened",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=671s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=671s",
+    "imageUrl": "/exercises/still/bayesian-cable-curl-variation.webp",
+    "videoUrl": "/exercises/clip/bayesian-cable-curl-variation.mp4",
+    "instructions": [
+      "Stand facing a cable machine with your feet shoulder-width apart.",
+      "Hold the cable handle with an overhand grip, palms facing down.",
+      "Keep your arms straight and your elbows close to your sides.",
+      "Slowly curl your wrists upward, bringing the cable handle towards your body.",
+      "Pause for a moment at the top, then slowly lower the cable handle back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "cheat-curl",
     "name": "Cheat Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=706s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=706s",
+    "imageUrl": "/exercises/still/cheat-curl.webp",
+    "videoUrl": "/exercises/clip/cheat-curl.mp4",
+    "instructions": [
+      "Stand holding a barbell with an underhand grip, arms straight.",
+      "Lean back slightly and swing your hips to start the lift.",
+      "Curl the bar up to your chest.",
+      "Lower the bar slowly, resisting its weight.",
+      "Reset your posture before the next rep."
+    ]
   },
   {
     "id": "chin-ups",
     "name": "Chin-Ups",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "Bench - Special",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=511s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=511s",
+    "imageUrl": "/exercises/still/chin-ups.webp",
+    "videoUrl": "/exercises/clip/chin-ups.mp4",
+    "instructions": [
+      "Hang from a pull-up bar with a narrow parallel grip, palms facing towards you.",
+      "Engage your back muscles and pull your body up towards the bar, keeping your elbows close to your body.",
+      "Continue pulling until your chin is above the bar.",
+      "Pause for a moment at the top, then slowly lower your body back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "dumbbell-preacher-curl",
     "name": "Dumbbell Preacher Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "Bench - Incline",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=265s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=265s",
+    "imageUrl": "/exercises/still/dumbbell-preacher-curl.webp",
+    "videoUrl": "/exercises/clip/dumbbell-preacher-curl.mp4",
+    "instructions": [
+      "Sit on a preacher curl bench with your feet flat on the floor.",
+      "Hold a dumbbell in one hand with an underhand grip, resting your upper arm against the preacher pad.",
+      "Keeping your upper arm stationary, exhale and curl the dumbbell up towards your shoulder.",
+      "Pause for a moment at the top, then inhale and slowly lower the dumbbell back down to the starting position.",
+      "Repeat for the desired number of repetitions, then switch arms."
+    ]
   },
   {
     "id": "ez-bar-curl",
     "name": "EZ Bar Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Biceps: Brachialis"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=166s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=166s",
+    "imageUrl": "/exercises/still/ez-bar-curl.webp",
+    "videoUrl": "/exercises/clip/ez-bar-curl.mp4",
+    "instructions": [
+      "Stand up straight with your feet shoulder-width apart and hold the ez barbell with an underhand grip, palms facing up.",
+      "Place your upper arms against the arm blaster, keeping them stationary throughout the exercise.",
+      "Keeping your elbows close to your body, exhale and curl the barbell up towards your shoulders.",
+      "Pause for a moment at the top, squeezing your biceps.",
+      "Inhale and slowly lower the barbell back to the starting position, fully extending your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "face-away-bayesian-curl",
     "name": "Face Away Bayesian Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Neck: Flexors"
+    ],
+    "movementFamily": "curl-lengthened",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "5 - S+",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=629s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=629s",
+    "imageUrl": "/exercises/still/face-away-bayesian-curl.webp",
+    "videoUrl": "/exercises/clip/face-away-bayesian-curl.mp4",
+    "instructions": [
+      "Stand facing a cable machine with your feet shoulder-width apart.",
+      "Hold the cable handle with an overhand grip, palms facing down.",
+      "Keep your arms straight and your elbows close to your sides.",
+      "Slowly curl your wrists upward, bringing the cable handle towards your body.",
+      "Pause for a moment at the top, then slowly lower the cable handle back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "flat-bench-curl",
     "name": "Flat Bench Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=390s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=390s",
+    "imageUrl": "/exercises/still/flat-bench-curl.webp",
+    "videoUrl": "/exercises/clip/flat-bench-curl.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart, holding a dumbbell in one hand with your palm facing forward.",
+      "Place your other hand on an incline bench for support.",
+      "Keeping your upper arm stationary, exhale and curl the dumbbell towards your shoulder by contracting your biceps.",
+      "Pause for a moment at the top, then inhale and slowly lower the dumbbell back to the starting position.",
+      "Repeat for the desired number of repetitions, then switch arms."
+    ]
   },
   {
     "id": "hammer-curl",
     "name": "Hammer Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Biceps: Brachialis",
+      "Forearm"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=788s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=788s",
+    "imageUrl": "/exercises/still/hammer-curl.webp",
+    "videoUrl": "/exercises/clip/hammer-curl.mp4",
+    "instructions": [
+      "Hold a filled bottle in each hand with palms facing each other.",
+      "Keep your elbows by your sides.",
+      "Curl the bottles toward your shoulders.",
+      "Squeeze at the top.",
+      "Lower with control.",
+      "Avoid swinging."
+    ]
   },
   {
     "id": "incline-curl",
     "name": "Incline Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-lengthened",
     "equipment": "Bench - Incline",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=319s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=319s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/incline-curl.webp",
+    "videoUrl": "/exercises/clip/incline-curl.mp4",
+    "instructions": [
+      "Sit on an incline bench with a dumbbell in each hand, palms facing your torso and arms fully extended.",
+      "Keep your back against the bench and your feet flat on the floor.",
+      "While keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.",
+      "Continue to raise the weights until your biceps are fully contracted and the dumbbells are at shoulder level.",
+      "Hold the contracted position for a brief pause as you squeeze your biceps.",
+      "Inhale and slowly begin to lower the dumbbells back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "inverse-zottman-curl",
     "name": "Inverse Zottman Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Biceps: Brachialis"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=865s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=865s",
+    "imageUrl": "/exercises/still/inverse-zottman-curl.webp",
+    "videoUrl": "/exercises/clip/inverse-zottman-curl.mp4",
+    "instructions": [
+      "Sit on a preacher curl bench and hold a dumbbell in one hand with an underhand grip.",
+      "Rest your upper arm on the preacher bench pad, allowing your arm to fully extend.",
+      "Curl the dumbbell up towards your shoulder, keeping your upper arm stationary.",
+      "At the top of the curl, rotate your wrist so that your palm faces up.",
+      "Slowly lower the dumbbell back down to the starting position, rotating your wrist back to the starting position.",
+      "Repeat for the desired number of repetitions, then switch arms."
+    ]
   },
   {
     "id": "lying-dumbbell-curl",
     "name": "Lying Dumbbell Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-lengthened",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=334s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=334s",
+    "imageUrl": "/exercises/still/lying-dumbbell-curl.webp",
+    "videoUrl": "/exercises/clip/lying-dumbbell-curl.mp4",
+    "instructions": [
+      "Lie flat on a bench with a dumbbell in each hand, palms facing up and arms fully extended.",
+      "Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.",
+      "Continue to raise the weights until your biceps are fully contracted and the dumbbells are at shoulder level.",
+      "Hold the contracted position for a brief pause as you squeeze your biceps.",
+      "Inhale and slowly begin to lower the dumbbells back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "machine-preacher-curl",
     "name": "Machine Preacher Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=420s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=420s",
+    "imageUrl": "/exercises/still/machine-preacher-curl.webp",
+    "videoUrl": "/exercises/clip/machine-preacher-curl.mp4",
+    "instructions": [
+      "Adjust the seat height and position yourself on the machine with your upper arms resting on the pad and your chest against the support.",
+      "Grasp the handles with an underhand grip, slightly wider than shoulder-width apart.",
+      "Keep your upper arms stationary and exhale as you curl the handles towards your shoulders, contracting your biceps.",
+      "Pause for a moment at the top of the movement, squeezing your biceps.",
+      "Inhale as you slowly lower the handles back to the starting position, fully extending your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "modified-21s",
     "name": "Modified 21s",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=609s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=609s",
+    "imageUrl": "/exercises/still/modified-21s.webp",
+    "videoUrl": "/exercises/clip/modified-21s.mp4",
+    "instructions": [
+      "Stand holding an EZ bar with an underhand grip.",
+      "Curl from the bottom to halfway up for 7 reps.",
+      "Curl from halfway to the top for 7 reps.",
+      "Do 7 full-range curls.",
+      "Keep your elbows pinned to your sides.",
+      "Use a lighter weight than normal."
+    ]
   },
   {
     "id": "preacher-hammer-curl",
     "name": "Preacher Hammer Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long",
+      "Biceps: Brachialis",
+      "Forearm"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "Bench - Incline",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=855s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=855s",
+    "imageUrl": "/exercises/still/preacher-hammer-curl.webp",
+    "videoUrl": "/exercises/clip/preacher-hammer-curl.mp4",
+    "instructions": [
+      "Sit on a preacher bench with a dumbbell in one hand and your upper arm resting on the pad.",
+      "Hold the dumbbell with a neutral grip (palms facing your body).",
+      "Keeping your upper arm stationary, exhale and curl the dumbbell up towards your shoulder.",
+      "Pause for a moment at the top, squeezing your biceps.",
+      "Inhale and slowly lower the dumbbell back to the starting position.",
+      "Repeat for the desired number of repetitions, then switch arms."
+    ]
   },
   {
     "id": "standing-cable-curl",
     "name": "Standing Cable Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=612s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=612s",
+    "imageUrl": "/exercises/still/standing-cable-curl.webp",
+    "videoUrl": "/exercises/clip/standing-cable-curl.mp4",
+    "instructions": [
+      "Stand facing a cable machine with your feet shoulder-width apart.",
+      "Hold the cable handle with an overhand grip, palms facing down.",
+      "Keep your arms straight and your elbows close to your sides.",
+      "Slowly curl your wrists upward, bringing the cable handle towards your body.",
+      "Pause for a moment at the top, then slowly lower the cable handle back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "standing-dumbbell-curl",
     "name": "Standing Dumbbell Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=218s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=218s",
+    "imageUrl": "/exercises/still/standing-dumbbell-curl.webp",
+    "videoUrl": "/exercises/clip/standing-dumbbell-curl.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart and hold a dumbbell in one hand, with your arm fully extended and palm facing inwards.",
+      "Place your opposite hand on your thigh for support.",
+      "Keeping your upper arm stationary, exhale and curl the dumbbell towards your shoulder by contracting your biceps.",
+      "Continue to raise the dumbbell until your biceps are fully contracted and the dumbbell is at shoulder level.",
+      "Hold the contracted position for a brief pause as you squeeze your biceps.",
+      "Inhale and slowly lower the dumbbell back to the starting position.",
+      "Repeat for the desired number of repetitions, then switch arms."
+    ]
   },
   {
     "id": "strict-curl",
     "name": "Strict Curl",
     "primaryMuscleGroup": "Biceps",
+    "subgroups": [
+      "Biceps: Short",
+      "Biceps: Long"
+    ],
+    "movementFamily": "curl-shortened",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=752s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=GNO4OtYoCYk&t=752s",
+    "imageUrl": "/exercises/still/strict-curl.webp",
+    "videoUrl": "/exercises/clip/strict-curl.mp4",
+    "instructions": [
+      "Stand holding dumbbells with your palms facing in.",
+      "Keep your elbows at your sides.",
+      "Curl one dumbbell up without swinging.",
+      "Lower it slowly.",
+      "Repeat with the other arm.",
+      "Keep your torso still."
+    ]
   },
   {
     "id": "seated-calf-raise",
     "name": "Seated Calf Raise",
     "primaryMuscleGroup": "Calves",
+    "subgroups": [
+      "Calves"
+    ],
+    "movementFamily": "calf",
     "equipment": "Machine",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/seated-calf-raise.webp",
+    "videoUrl": "/exercises/clip/seated-calf-raise.mp4",
+    "instructions": [
+      "Sit on the machine with your back against the pad and your feet on the footrest.",
+      "Place one leg on the footrest and keep the other leg off the footrest.",
+      "Using your calf muscles, raise your heel as high as possible.",
+      "Pause for a moment at the top, then slowly lower your heel back down to the starting position.",
+      "Repeat for the desired number of repetitions, then switch legs and repeat."
+    ]
   },
   {
     "id": "standing-calf-raise",
     "name": "Standing Calf Raise",
     "primaryMuscleGroup": "Calves",
+    "subgroups": [
+      "Calves"
+    ],
+    "movementFamily": "calf",
     "equipment": "Machine",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/standing-calf-raise.webp",
+    "videoUrl": "/exercises/clip/standing-calf-raise.mp4",
+    "instructions": [
+      "Adjust the smith machine bar to a height that allows you to stand with your feet flat on the ground and your shoulders under the bar.",
+      "Position yourself under the bar with your feet shoulder-width apart and your toes pointing forward.",
+      "Place your hands on the bar for stability.",
+      "Engage your calves and slowly raise your heels off the ground, lifting your body up onto your toes.",
+      "Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "banded-pushups",
     "name": "Banded Pushups",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Resistance Bands",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=389s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=389s",
+    "imageUrl": "/exercises/still/banded-pushups.webp",
+    "videoUrl": "/exercises/clip/banded-pushups.mp4",
+    "instructions": [
+      "Start in a high plank position with your hands slightly wider than shoulder-width apart and your feet together.",
+      "Engage your core and lower your body towards the ground by bending your elbows, keeping your body in a straight line.",
+      "Pause for a moment when your chest is just above the ground, then push yourself back up to the starting position by straightening your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "bench-press",
     "name": "Bench Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=107s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=107s",
+    "imageUrl": "/exercises/still/bench-press.webp",
+    "videoUrl": "/exercises/clip/bench-press.mp4",
+    "instructions": [
+      "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+      "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+      "Lift the barbell off the rack and hold it directly above your chest with your arms fully extended.",
+      "Lower the barbell slowly towards your chest, keeping your elbows tucked in.",
+      "Pause for a moment when the barbell touches your chest.",
+      "Push the barbell back up to the starting position by extending your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "cable-crossovers",
     "name": "Cable Crossovers",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "chest-fly",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=613s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=613s",
+    "imageUrl": "/exercises/still/cable-crossovers.webp",
+    "videoUrl": "/exercises/clip/cable-crossovers.mp4",
+    "instructions": [
+      "Stand in the middle of a cable machine with your feet shoulder-width apart.",
+      "Hold the handles of the cables with your palms facing down and your arms extended straight out to the sides.",
+      "Keeping your arms straight, bring your hands together in front of your body, crossing them over each other.",
+      "Pause for a moment, then slowly return to the starting position, keeping your arms extended.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "cable-press-around",
     "name": "Cable Press-Around",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Chest: Upper",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "chest-fly",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=732s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=732s",
+    "imageUrl": "/exercises/still/cable-press-around.webp",
+    "videoUrl": "/exercises/clip/cable-press-around.mp4",
+    "instructions": [
+      "Sit on an exercise ball with your feet flat on the ground and your knees at a 90-degree angle.",
+      "Hold the cable handles at chest height with your palms facing down and your elbows bent.",
+      "Engage your core and press the cable handles forward until your arms are fully extended.",
+      "Pause for a moment, then slowly release the tension and bring the cable handles back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "close-grip-bench-press",
     "name": "Close-Grip Bench Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Upper",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Rack",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=728s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=728s",
+    "imageUrl": "/exercises/still/close-grip-bench-press.webp",
+    "videoUrl": "/exercises/clip/close-grip-bench-press.mp4",
+    "instructions": [
+      "Adjust the smith machine to a decline position.",
+      "Lie down on the bench with your feet secured under the foot pads.",
+      "Grasp the barbell with a close grip, slightly narrower than shoulder-width apart.",
+      "Unrack the barbell and lower it slowly towards your chest, keeping your elbows tucked in.",
+      "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "decline-bench-press",
     "name": "Decline Bench Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Bench - Incline",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=176s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=176s",
+    "imageUrl": "/exercises/still/decline-bench-press.webp",
+    "videoUrl": "/exercises/clip/decline-bench-press.mp4",
+    "instructions": [
+      "Lie on a decline bench with your feet secured and your head lower than your hips.",
+      "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+      "Unrack the barbell and lower it slowly towards your chest, keeping your elbows tucked in.",
+      "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "decline-dumbbell-press",
     "name": "Decline Dumbbell Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Bench - Incline",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=263s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=263s",
+    "imageUrl": "/exercises/still/decline-dumbbell-press.webp",
+    "videoUrl": "/exercises/clip/decline-dumbbell-press.mp4",
+    "instructions": [
+      "Lie on a decline bench with a dumbbell in one hand, resting on your chest.",
+      "Place your feet flat on the ground and keep your back pressed against the bench.",
+      "Extend your arm and push the dumbbell up towards the ceiling, fully extending your elbow.",
+      "Pause for a moment at the top, then slowly lower the dumbbell back down to the starting position.",
+      "Repeat for the desired number of repetitions, then switch to the other arm."
+    ]
   },
   {
     "id": "deficit-pushups",
     "name": "Deficit Pushups",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Steps",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=405s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=405s",
+    "imageUrl": "/exercises/still/deficit-pushups.webp",
+    "videoUrl": "/exercises/clip/deficit-pushups.mp4",
+    "instructions": [
+      "Start in a high plank position with your hands slightly wider than shoulder-width apart and your feet together.",
+      "Engage your core and lower your body towards the ground by bending your elbows, keeping your body in a straight line.",
+      "Pause for a moment when your chest is just above the ground, then push yourself back up to the starting position by straightening your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "dips",
     "name": "Dips",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Bench - Special",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=307s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=307s",
+    "imageUrl": "/exercises/still/dips.webp",
+    "videoUrl": "/exercises/clip/dips.mp4",
+    "instructions": [
+      "Adjust the machine to your desired height and secure your knees on the pad.",
+      "Grasp the handles with your palms facing down and your arms fully extended.",
+      "Lower your body by bending your elbows until your upper arms are parallel to the floor.",
+      "Pause for a moment, then push yourself back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "dumbbell-bench-press",
     "name": "Dumbbell Bench Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Bench - Flat",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/dumbbell-bench-press.webp",
+    "videoUrl": "/exercises/clip/dumbbell-bench-press.mp4",
+    "instructions": [
+      "Lie down on a decline bench with your feet secured and your head lower than your hips.",
+      "Hold a dumbbell in each hand and extend your arms straight up above your chest, palms facing forward.",
+      "Lower the dumbbells slowly to the sides of your chest, keeping your elbows at a 90-degree angle.",
+      "Push the dumbbells back up to the starting position, fully extending your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "dumbbell-fly",
     "name": "Dumbbell Fly",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "chest-fly",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=691s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=691s",
+    "imageUrl": "/exercises/still/dumbbell-fly.webp",
+    "videoUrl": "/exercises/clip/dumbbell-fly.mp4",
+    "instructions": [
+      "Lie flat on a bench with a dumbbell in each hand, palms facing each other.",
+      "Extend your arms straight up over your chest, with a slight bend in your elbows.",
+      "Keeping a slight bend in your elbows, lower the dumbbells out to the sides in a wide arc until you feel a stretch in your chest.",
+      "Pause for a moment, then reverse the movement and bring the dumbbells back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "dumbbell-guillotine-press",
     "name": "Dumbbell Guillotine Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Chest: Upper",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=529s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=529s",
+    "imageUrl": "/exercises/still/dumbbell-guillotine-press.webp",
+    "videoUrl": "/exercises/clip/dumbbell-guillotine-press.mp4",
+    "instructions": [
+      "Lie on a bench holding dumbbells with palms facing each other.",
+      "Start with the weights above your chest.",
+      "Lower them to the sides of your chest, elbows slightly tucked.",
+      "Press back up until your arms are straight.",
+      "Keep your feet planted and shoulder blades pinched."
+    ]
   },
   {
     "id": "flat-dumbbell-press",
     "name": "Flat Dumbbell Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=214s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=214s",
+    "imageUrl": "/exercises/still/flat-dumbbell-press.webp",
+    "videoUrl": "/exercises/clip/flat-dumbbell-press.mp4",
+    "instructions": [
+      "Lie flat on a bench with a dumbbell in one hand and your feet flat on the ground.",
+      "Hold the dumbbell at shoulder level with your palm facing forward.",
+      "Press the dumbbell upward until your arm is fully extended.",
+      "Pause for a moment at the top, then slowly lower the dumbbell back to the starting position.",
+      "Repeat for the desired number of repetitions, then switch to the other arm."
+    ]
   },
   {
     "id": "incline-bench-press",
     "name": "Incline Bench Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Upper",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "incline-press",
     "equipment": "Bench - Incline",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=152s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=152s",
+    "imageUrl": "/exercises/still/incline-bench-press.webp",
+    "videoUrl": "/exercises/clip/incline-bench-press.mp4",
+    "instructions": [
+      "Set up an incline bench at a 45-degree angle.",
+      "Sit on the bench with your back against the backrest and feet flat on the ground.",
+      "Hold a dumbbell in each hand with an overhand grip, palms facing inwards.",
+      "Extend your arms straight up above your chest, keeping a slight bend in your elbows.",
+      "Lower the dumbbells slowly towards your shoulders, keeping your elbows close to your body.",
+      "Pause for a moment at the bottom, then press the dumbbells back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "incline-dumbbell-bench-press",
     "name": "Incline Dumbbell Bench Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Upper",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "incline-press",
     "equipment": "Bench - Incline",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/incline-dumbbell-bench-press.webp",
+    "videoUrl": "/exercises/clip/incline-dumbbell-bench-press.mp4",
+    "instructions": [
+      "Set up an incline bench at a 45-degree angle.",
+      "Sit on the bench with your feet flat on the ground and your back pressed firmly against the bench.",
+      "Hold a dumbbell in each hand, palms facing forward, and lift them to shoulder height.",
+      "Slowly lower the dumbbells to the sides of your chest, keeping your elbows at a 90-degree angle.",
+      "Push the dumbbells back up to the starting position, fully extending your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "incline-dumbbell-press",
     "name": "Incline Dumbbell Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Chest: Upper",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "incline-press",
     "equipment": "Bench - Incline",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=254s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=254s",
+    "imageUrl": "/exercises/still/incline-dumbbell-press.webp",
+    "videoUrl": "/exercises/clip/incline-dumbbell-press.mp4",
+    "instructions": [
+      "Set an incline bench to a 45-degree angle and sit on it with a dumbbell in each hand, resting on your thighs.",
+      "Lie back on the bench and position the dumbbells at shoulder level with your palms facing each other.",
+      "Press the dumbbells up and away from your body until your arms are fully extended.",
+      "Pause for a moment at the top, then slowly lower the dumbbells back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "incline-smith-machine-bench-press",
     "name": "Incline Smith Machine Bench Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Chest: Upper",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "incline-press",
     "equipment": "Smith",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=586s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=586s",
+    "imageUrl": "/exercises/still/incline-smith-machine-bench-press.webp",
+    "videoUrl": "/exercises/clip/incline-smith-machine-bench-press.mp4",
+    "instructions": [
+      "Adjust the bench to a 30-45 degree incline.",
+      "Sit on the bench with your back flat against the pad and feet firmly on the ground.",
+      "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+      "Unrack the barbell and lower it slowly towards your upper chest, keeping your elbows slightly tucked in.",
+      "Pause for a moment at the bottom, then push the barbell back up to the starting position, fully extending your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "machine-chest-press",
     "name": "Machine Chest Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "5 - S+",
     "muscleLadder": false,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=274s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=274s",
+    "imageUrl": "/exercises/still/machine-chest-press.webp",
+    "videoUrl": "/exercises/clip/machine-chest-press.mp4",
+    "instructions": [
+      "Adjust the seat height and position yourself on the machine with your back flat against the pad.",
+      "Grasp the handles with an overhand grip and position your elbows at a 90-degree angle.",
+      "Push the handles forward until your arms are fully extended, exhaling during the movement.",
+      "Pause for a moment at the end of the movement, then slowly return to the starting position, inhaling as you do so.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "pec-deck",
     "name": "Pec Deck",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "chest-fly",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=668s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=668s",
+    "imageUrl": "/exercises/still/pec-deck.webp",
+    "videoUrl": "/exercises/clip/pec-deck.mp4",
+    "instructions": [
+      "Sit on the pec deck with your back flat and the arms at chest level.",
+      "Place your forearms or hands on the pads with elbows slightly bent.",
+      "Bring the arms together in front of your chest.",
+      "Squeeze for a moment, then open slowly until you feel a chest stretch.",
+      "Keep your shoulders down and back."
+    ]
   },
   {
     "id": "seated-cable-pec-fly",
     "name": "Seated Cable Pec Fly",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Chest: Upper",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "chest-fly",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=648s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=648s",
+    "imageUrl": "/exercises/still/seated-cable-pec-fly.webp",
+    "videoUrl": "/exercises/clip/seated-cable-pec-fly.mp4",
+    "instructions": [
+      "Sit on a bench between two cable stacks with the pulleys at chest height.",
+      "Grab a handle in each hand and hold your arms out with soft elbows.",
+      "Press your back firmly into the bench.",
+      "Bring your hands together in front of your chest in a wide arc.",
+      "Squeeze, then open your arms slowly.",
+      "Stop when you feel a good stretch."
+    ]
   },
   {
     "id": "smith-machine-bench-press",
     "name": "Smith Machine Bench Press",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "horizontal-press",
     "equipment": "Smith",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=567s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=fGm-ef-4PVk&t=567s",
+    "imageUrl": "/exercises/still/smith-machine-bench-press.webp",
+    "videoUrl": "/exercises/clip/smith-machine-bench-press.mp4",
+    "instructions": [
+      "Adjust the smith machine to a decline position.",
+      "Lie down on the bench with your feet secured under the foot pads.",
+      "Grasp the barbell with a close grip, slightly narrower than shoulder-width apart.",
+      "Unrack the barbell and lower it slowly towards your chest, keeping your elbows tucked in.",
+      "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "standing-cable-pec-fly",
     "name": "Standing Cable Pec Fly",
     "primaryMuscleGroup": "Chest",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Chest: Upper",
+      "Chest: Middle",
+      "Chest: Lower"
+    ],
+    "movementFamily": "chest-fly",
     "equipment": "Cable",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/standing-cable-pec-fly.webp",
+    "videoUrl": "/exercises/clip/standing-cable-pec-fly.mp4",
+    "instructions": [
+      "Attach the handles to the cables at chest height.",
+      "Stand with your feet shoulder-width apart, facing away from the cable machine.",
+      "Grasp the handles with an overhand grip, palms facing forward.",
+      "Step forward slightly to create tension in the cables.",
+      "Keep your core engaged and your back straight throughout the exercise.",
+      "With a slight bend in your elbows, slowly bring your arms forward and together in front of your chest.",
+      "Squeeze your chest muscles at the peak of the movement.",
+      "Slowly reverse the movement, returning your arms to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "cable-crunch",
     "name": "Cable Crunch",
     "primaryMuscleGroup": "Core",
+    "subgroups": [
+      "Core: Abdominis",
+      "Core: Obliques"
+    ],
+    "movementFamily": "core",
     "equipment": "Cable",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/cable-crunch.webp",
+    "videoUrl": "/exercises/clip/cable-crunch.mp4",
+    "instructions": [
+      "Sit on a cable machine with your feet flat on the ground and your knees bent.",
+      "Hold the cable handle with both hands and position it behind your head.",
+      "Engage your abs and slowly curl your upper body forward, bringing your chest towards your knees.",
+      "Pause for a moment at the top, then slowly return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "hanging-leg-raise",
     "name": "Hanging Leg Raise",
     "primaryMuscleGroup": "Core",
+    "subgroups": [
+      "Core: Abdominis",
+      "Core: Hip Flexors"
+    ],
+    "movementFamily": "core",
     "equipment": "Bench - Special",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/hanging-leg-raise.webp",
+    "videoUrl": "/exercises/clip/hanging-leg-raise.mp4",
+    "instructions": [
+      "Hang from a pull-up bar with your arms fully extended and your palms facing away from you.",
+      "Engage your core and lift your legs up in front of you, keeping them straight.",
+      "Continue lifting until your legs are parallel to the ground or as high as you can comfortably go.",
+      "Pause for a moment at the top, then slowly lower your legs back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "long-lever-pelvic-tilt-llpt-plank",
     "name": "Long-Lever Pelvic Tilt (LLPT) Plank",
     "primaryMuscleGroup": "Core",
+    "subgroups": [
+      "Core: Abdominis",
+      "Core: Obliques"
+    ],
+    "movementFamily": "core",
     "equipment": "None",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/long-lever-pelvic-tilt-llpt-plank.webp",
+    "videoUrl": "/exercises/clip/long-lever-pelvic-tilt-llpt-plank.mp4",
+    "instructions": [
+      "Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Place your hands by your sides.",
+      "Engage your abs and tilt your pelvis upward, pressing your lower back into the ground.",
+      "Hold this position for a few seconds, focusing on contracting your abs.",
+      "Release the tilt and return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "plank",
     "name": "Plank",
     "primaryMuscleGroup": "Core",
+    "subgroups": [
+      "Core: Abdominis",
+      "Core: Obliques"
+    ],
+    "movementFamily": "core",
     "equipment": "None",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/plank.webp",
+    "videoUrl": "/exercises/clip/plank.mp4",
+    "instructions": [
+      "Lie face down and prop yourself on your forearms, elbows under your shoulders.",
+      "Lift your hips and knees off the floor, resting on your toes.",
+      "Keep your body in a straight line from head to heels.",
+      "Squeeze your abs and glutes.",
+      "Hold for 20-60 seconds while breathing steadily.",
+      "Don't let your hips sag or pike up."
+    ]
   },
   {
     "id": "plate-loaded-decline-sit-up",
     "name": "Plate-Loaded Decline Sit-Up",
     "primaryMuscleGroup": "Core",
+    "subgroups": [
+      "Core: Abdominis",
+      "Core: Hip Flexors"
+    ],
+    "movementFamily": "core",
     "equipment": "Bench - Incline",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/plate-loaded-decline-sit-up.webp",
+    "videoUrl": "/exercises/clip/plate-loaded-decline-sit-up.mp4",
+    "instructions": [
+      "Lie back on the decline seat and hook your feet under the pads.",
+      "Cross your arms or hold the handles.",
+      "Curl your torso up toward your knees.",
+      "Squeeze your abs at the top.",
+      "Lower back slowly under control."
+    ]
   },
   {
     "id": "dumbbell-wrist-curl",
     "name": "Dumbbell Wrist Curl",
     "primaryMuscleGroup": "Forarm",
+    "subgroups": [
+      "Forearm"
+    ],
+    "movementFamily": "forearm",
     "equipment": "Bench - Flat",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/dumbbell-wrist-curl.webp",
+    "videoUrl": "/exercises/clip/dumbbell-wrist-curl.mp4",
+    "instructions": [
+      "Sit on a bench with your feet flat on the ground and hold a dumbbell in one hand, palm facing up.",
+      "Rest your forearm on your thigh, allowing your wrist to hang off the edge.",
+      "Keeping your forearm stationary, curl your wrist upward as far as possible.",
+      "Pause for a moment at the top, then slowly lower your wrist back down to the starting position.",
+      "Repeat for the desired number of repetitions, then switch to the other hand."
+    ]
   },
   {
     "id": "dumbbell-wrist-extension",
     "name": "Dumbbell Wrist Extension",
     "primaryMuscleGroup": "Forarm",
+    "subgroups": [
+      "Forearm"
+    ],
+    "movementFamily": "forearm",
     "equipment": "Bench - Flat",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/dumbbell-wrist-extension.webp",
+    "videoUrl": "/exercises/clip/dumbbell-wrist-extension.mp4",
+    "instructions": [
+      "Sit on a bench with your feet flat on the ground and hold a dumbbell in one hand, palm facing up.",
+      "Rest your forearm on your thigh, allowing your wrist to hang off the edge.",
+      "Keeping your forearm stationary, curl your wrist upward as far as possible.",
+      "Pause for a moment at the top, then slowly lower your wrist back down to the starting position.",
+      "Repeat for the desired number of repetitions, then switch to the other hand."
+    ]
   },
   {
     "id": "back-extension-45-degree",
     "name": "Back Extension - 45 Degree",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Hamstring",
+      "Back: Spinal Erectors"
+    ],
+    "movementFamily": "hip-hinge",
     "equipment": "Bench - Special",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=728s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=728s",
+    "imageUrl": "/exercises/still/back-extension-45-degree.webp",
+    "videoUrl": "/exercises/clip/back-extension-45-degree.mp4",
+    "instructions": [
+      "Set up on a 45 degree bench with your ankles locked.",
+      "Cross your arms over your chest and round your upper back slightly.",
+      "Lower your torso by hinging at the hips.",
+      "Squeeze the glutes to raise back up.",
+      "Stop when your body is in a straight line.",
+      "Avoid overarching your lower back."
+    ]
   },
   {
     "id": "barbell-hip-thrust",
     "name": "Barbell Hip Thrust",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower"
+    ],
+    "movementFamily": "hip-thrust",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=127s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=127s",
+    "imageUrl": "/exercises/still/barbell-hip-thrust.webp",
+    "videoUrl": "/exercises/clip/barbell-hip-thrust.mp4",
+    "instructions": [
+      "Set your upper back on a bench with a padded barbell over your hips.",
+      "Extend one leg or hold it bent in the air.",
+      "Drive through the planted heel to lift your hips level.",
+      "Squeeze your glute at the top without twisting.",
+      "Lower under control.",
+      "Finish the reps, then switch legs."
+    ]
   },
   {
     "id": "barbell-lunge",
     "name": "Barbell Lunge",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Glute: Medius",
+      "Glute: Minimus",
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "lunge",
     "equipment": "Rack",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/barbell-lunge.webp",
+    "videoUrl": "/exercises/clip/barbell-lunge.mp4",
+    "instructions": [
+      "Start by standing with your feet shoulder-width apart, holding a barbell across your upper back.",
+      "Lower your body into a squat position by bending your knees and pushing your hips back.",
+      "Explode upwards, jumping off the ground as high as you can.",
+      "Land softly on your feet and immediately step back with one leg into a reverse lunge.",
+      "Lower your body down until your front thigh is parallel to the ground, keeping your back straight.",
+      "Push through your front heel to return to the starting position.",
+      "Repeat the jump and lunge sequence on the other leg.",
+      "Continue alternating legs for the desired number of repetitions."
+    ]
   },
   {
     "id": "cable-hip-abduction",
     "name": "Cable Hip Abduction",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Medius",
+      "Glute: Minimus",
+      "Abductors"
+    ],
+    "movementFamily": "adductor-abductor",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=544s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=544s",
+    "imageUrl": "/exercises/still/cable-hip-abduction.webp",
+    "videoUrl": "/exercises/clip/cable-hip-abduction.mp4",
+    "instructions": [
+      "Attach an ankle cuff to a low pulley and strap it to your outer ankle.",
+      "Stand sideways to the machine and hold a support.",
+      "Keep your torso upright and your standing leg slightly bent.",
+      "Lift the cuffed leg out to the side.",
+      "Pause at the top, then lower slowly.",
+      "Finish your reps and switch legs."
+    ]
   },
   {
     "id": "cable-pull-through",
     "name": "Cable Pull Through",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Middle"
+    ],
+    "movementFamily": "hip-hinge",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=754s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=754s",
+    "imageUrl": "/exercises/still/cable-pull-through.webp",
+    "videoUrl": "/exercises/clip/cable-pull-through.mp4",
+    "instructions": [
+      "Attach a rope to a low pulley and face away from the stack, holding the rope between your legs.",
+      "Step forward until the cable is taut and bend your knees slightly.",
+      "Push your hips back, letting the rope travel behind you.",
+      "Drive your hips forward and squeeze your glutes to stand tall.",
+      "Keep your back flat throughout."
+    ]
   },
   {
     "id": "curtsy-lunges",
     "name": "Curtsy Lunges",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Medius",
+      "Glute: Minimus"
+    ],
+    "movementFamily": "lunge",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=630s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=630s",
+    "imageUrl": "/exercises/still/curtsy-lunges.webp",
+    "videoUrl": "/exercises/clip/curtsy-lunges.mp4",
+    "instructions": [
+      "Hold a dumbbell in each hand at your sides and stand tall.",
+      "Step forward with one leg and lower until both knees are bent at about 90 degrees.",
+      "Keep your torso upright and your front knee over your ankle.",
+      "Push off your back foot and step through into a lunge with the other leg.",
+      "Continue walking forward, alternating legs."
+    ]
   },
   {
     "id": "deadlift",
     "name": "Deadlift",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Quad: Vastus",
+      "Quad: Rectus Femoris",
+      "Hamstring",
+      "Back: Spinal Erectors"
+    ],
+    "movementFamily": "hip-hinge",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=651s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=651s",
+    "imageUrl": "/exercises/still/deadlift.webp",
+    "videoUrl": "/exercises/clip/deadlift.mp4",
+    "instructions": [
+      "Stand with feet hip width apart, bar over mid-foot.",
+      "Hinge at the hips and grip the bar just outside your legs.",
+      "Brace your core and keep your back flat.",
+      "Push the floor away and stand up, keeping the bar close to your legs.",
+      "Lock out your hips at the top without leaning back.",
+      "Lower the bar by pushing your hips back and bending your knees."
+    ]
   },
   {
     "id": "glute-bridge",
     "name": "Glute Bridge",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower"
+    ],
+    "movementFamily": "hip-thrust",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=284s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=284s",
+    "imageUrl": "/exercises/still/glute-bridge.webp",
+    "videoUrl": "/exercises/clip/glute-bridge.mp4",
+    "instructions": [
+      "Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Engage your glutes and lift your hips off the ground, forming a straight line from your knees to your shoulders.",
+      "While keeping your hips lifted, lift one foot off the ground and bring your knee towards your chest.",
+      "Lower your foot back to the ground and repeat the movement with the other leg.",
+      "Continue alternating legs in a marching motion while maintaining the bridge position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "hip-abduction",
     "name": "Hip Abduction",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Medius",
+      "Glute: Minimus",
+      "Abductors"
+    ],
+    "movementFamily": "adductor-abductor",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=500s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=500s",
+    "imageUrl": "/exercises/still/hip-abduction.webp",
+    "videoUrl": "/exercises/clip/hip-abduction.mp4",
+    "instructions": [
+      "Stand next to the machine and place the outer side of your leg against the pad.",
+      "Hold the support for balance.",
+      "Push your leg out to the side in a smooth motion.",
+      "Pause briefly, then return slowly.",
+      "Keep your torso upright. Finish the reps, then switch legs."
+    ]
   },
   {
     "id": "kickbacks",
     "name": "Kickbacks",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Medius",
+      "Glute: Minimus",
+      "Hamstring"
+    ],
+    "movementFamily": "adductor-abductor",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=444s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=444s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/kickbacks.webp",
+    "videoUrl": "/exercises/clip/kickbacks.mp4",
+    "instructions": [
+      "Lie on your side with a cuff on your top ankle.",
+      "Position the cable behind you.",
+      "Kick your top leg back and slightly up.",
+      "Squeeze your glute at the top.",
+      "Return slowly.",
+      "Do your reps, then switch sides."
+    ]
   },
   {
     "id": "machine-hip-thrust",
     "name": "Machine Hip Thrust",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Middle"
+    ],
+    "movementFamily": "hip-thrust",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=232s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=232s",
+    "imageUrl": "/exercises/still/machine-hip-thrust.webp",
+    "videoUrl": "/exercises/clip/machine-hip-thrust.mp4",
+    "instructions": [
+      "Sit on the machine with your upper back on the pad and a band around your thighs above the knees.",
+      "Place your feet flat and push your knees gently out against the band.",
+      "Drive through your heels and lift your hips until your torso and thighs are in line.",
+      "Squeeze your glutes at the top.",
+      "Lower slowly and repeat, keeping the knees pressed out."
+    ]
   },
   {
     "id": "single-leg-dumbbell-hip-thrust",
     "name": "Single-Leg Dumbbell Hip Thrust",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Glute: Medius",
+      "Glute: Minimus"
+    ],
+    "movementFamily": "hip-thrust",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=264s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=264s",
+    "imageUrl": "/exercises/still/single-leg-dumbbell-hip-thrust.webp",
+    "videoUrl": "/exercises/clip/single-leg-dumbbell-hip-thrust.mp4",
+    "instructions": [
+      "Sit with your upper back against a bench and a dumbbell on your hips.",
+      "Plant one foot and lift the other leg.",
+      "Drive your hips up until your body is straight.",
+      "Squeeze your glute at the top.",
+      "Lower slowly, finish your reps, then switch legs."
+    ]
   },
   {
     "id": "smith-machine-lunge",
     "name": "Smith Machine Lunge",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower"
+    ],
+    "movementFamily": "lunge",
     "equipment": "Smith",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=611s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=611s",
+    "imageUrl": "/exercises/still/smith-machine-lunge.webp",
+    "videoUrl": "/exercises/clip/smith-machine-lunge.mp4",
+    "instructions": [
+      "Set up the smith machine with the barbell at hip height.",
+      "Stand facing away from the machine with your feet shoulder-width apart.",
+      "Step back with your right foot and place it on the barbell, resting the top of your foot on the bar.",
+      "Bend your left knee and lower your body into a lunge position, keeping your back straight.",
+      "Push through your left heel to return to the starting position.",
+      "Repeat on the other side, stepping back with your left foot.",
+      "Continue alternating sides for the desired number of repetitions."
+    ]
   },
   {
     "id": "smith-machine-lunge-elevated",
     "name": "Smith Machine Lunge (Elevated)",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower"
+    ],
+    "movementFamily": "lunge",
     "equipment": "Smith",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=624s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=624s",
+    "imageUrl": "/exercises/still/smith-machine-lunge-elevated.webp",
+    "videoUrl": "/exercises/clip/smith-machine-lunge-elevated.mp4",
+    "instructions": [
+      "Set up the smith machine with the barbell at hip height.",
+      "Stand facing away from the machine with your feet shoulder-width apart.",
+      "Step back with your right foot and place it on the barbell, resting the top of your foot on the bar.",
+      "Bend your left knee and lower your body into a lunge position, keeping your back straight.",
+      "Push through your left heel to return to the starting position.",
+      "Repeat on the other side, stepping back with your left foot.",
+      "Continue alternating sides for the desired number of repetitions."
+    ]
   },
   {
     "id": "step-up",
     "name": "Step Up",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Medius",
+      "Glute: Minimus"
+    ],
+    "movementFamily": "lunge",
     "equipment": "Steps",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=475s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=475s",
+    "imageUrl": "/exercises/still/step-up.webp",
+    "videoUrl": "/exercises/clip/step-up.mp4",
+    "instructions": [
+      "Place a band around your thighs, just above your knees.",
+      "Stand facing a step or platform with your feet hip-width apart.",
+      "Step up onto the platform with your right foot, pushing through your heel.",
+      "Extend your left leg behind you, keeping it straight.",
+      "Lower your left foot back down to the ground.",
+      "Repeat with your left foot stepping up onto the platform.",
+      "Continue alternating legs for the desired number of repetitions."
+    ]
   },
   {
     "id": "sumo-deadlift",
     "name": "Sumo Deadlift",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Glute: Medius",
+      "Quad: Vastus",
+      "Quad: Rectus Femoris",
+      "Adductors",
+      "Back: Spinal Erectors"
+    ],
+    "movementFamily": "hip-hinge",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=680s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=680s",
+    "imageUrl": "/exercises/still/sumo-deadlift.webp",
+    "videoUrl": "/exercises/clip/sumo-deadlift.mp4",
+    "instructions": [
+      "Stand with your feet wider than shoulder-width apart, toes pointing outwards.",
+      "Place a barbell on the ground in front of you, centered between your feet.",
+      "Bend your knees and lower your hips, keeping your back straight and chest up, to grip the barbell with an overhand grip.",
+      "Engage your core and drive through your heels to lift the barbell off the ground, extending your hips and knees simultaneously.",
+      "As you lift, keep your chest up and back straight, and push your hips forward to fully engage your glutes.",
+      "Pause for a moment at the top, then slowly lower the barbell back down to the starting position, maintaining control throughout the movement.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "walking-dumbbell-lunges",
     "name": "Walking Dumbbell Lunges",
     "primaryMuscleGroup": "Glute",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Glute: Medius",
+      "Glute: Minimus",
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "lunge",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "5 - S+",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=566s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=566s",
+    "imageUrl": "/exercises/still/walking-dumbbell-lunges.webp",
+    "videoUrl": "/exercises/clip/walking-dumbbell-lunges.mp4",
+    "instructions": [
+      "Hold a dumbbell in each hand at your sides and stand tall.",
+      "Step forward with one leg and lower until both knees are bent at about 90 degrees.",
+      "Keep your torso upright and your front knee over your ankle.",
+      "Push off your back foot and step through into a lunge with the other leg.",
+      "Continue walking forward, alternating legs."
+    ]
   },
   {
     "id": "glut-ham-raise",
     "name": "Glut-Ham Raise",
     "primaryMuscleGroup": "Hamstring",
+    "subgroups": [
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Hamstring"
+    ],
+    "movementFamily": "leg-curl",
     "equipment": "Bench - Special",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/glut-ham-raise.webp",
+    "videoUrl": "/exercises/clip/glut-ham-raise.mp4",
+    "instructions": [
+      "Adjust the glute-ham raise machine to fit your body.",
+      "Position yourself face down on the machine with your ankles secured.",
+      "Place your hands on your chest or cross them over your chest.",
+      "Engage your hamstrings and glutes to lift your upper body up towards the ceiling.",
+      "Continue lifting until your body is in a straight line from your head to your heels.",
+      "Pause for a moment at the top, then slowly lower your body back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "good-morning",
     "name": "Good Morning",
     "primaryMuscleGroup": "Hamstring",
+    "subgroups": [
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Hamstring",
+      "Back: Spinal Erectors"
+    ],
+    "movementFamily": "hip-hinge",
     "equipment": "Rack",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/good-morning.webp",
+    "videoUrl": "/exercises/clip/good-morning.mp4",
+    "instructions": [
+      "Sit on a bench with your feet flat on the ground and a barbell resting on your upper back.",
+      "Keep your back straight and your chest up.",
+      "Slowly hinge forward at the hips, lowering your torso towards the ground.",
+      "Pause for a moment at the bottom, then push through your heels to return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "lying-leg-curl",
     "name": "Lying Leg Curl",
     "primaryMuscleGroup": "Hamstring",
+    "subgroups": [
+      "Hamstring"
+    ],
+    "movementFamily": "leg-curl",
     "equipment": "Machine",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/lying-leg-curl.webp",
+    "videoUrl": "/exercises/clip/lying-leg-curl.mp4",
+    "instructions": [
+      "Adjust the machine to fit your body and sit on it with your back against the backrest.",
+      "Place your legs on the lever pad, just above your ankles.",
+      "Grasp the handles on the sides of the machine for support.",
+      "Keeping your upper body still, exhale and curl your legs up towards your glutes.",
+      "Pause for a moment at the top, then inhale and slowly lower your legs back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "nordic-ham-curl",
     "name": "Nordic Ham Curl",
     "primaryMuscleGroup": "Hamstring",
+    "subgroups": [
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Hamstring"
+    ],
+    "movementFamily": "leg-curl",
     "equipment": "Partner",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/nordic-ham-curl.webp",
+    "videoUrl": "/exercises/clip/nordic-ham-curl.mp4",
+    "instructions": [
+      "Kneel with ankles secured.",
+      "Hold the band.",
+      "Lower your body forward.",
+      "Use the band to help.",
+      "Pull back up.",
+      "Keep hips extended."
+    ]
   },
   {
     "id": "romanian-deadlift",
     "name": "Romanian Deadlift",
     "primaryMuscleGroup": "Hamstring",
+    "subgroups": [
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Hamstring",
+      "Back: Spinal Erectors"
+    ],
+    "movementFamily": "hip-hinge",
     "equipment": "Rack",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=701s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=3ryh7PNhz3E&t=701s",
+    "imageUrl": "/exercises/still/romanian-deadlift.webp",
+    "videoUrl": "/exercises/clip/romanian-deadlift.mp4",
+    "instructions": [
+      "Hold a barbell in front of your thighs with a wide stance and toes turned out.",
+      "Push your hips back, keeping your knees slightly bent.",
+      "Lower the bar along your legs until you feel a hamstring stretch.",
+      "Keep your back flat.",
+      "Drive your hips forward to stand tall."
+    ]
   },
   {
     "id": "seated-leg-curl",
     "name": "Seated Leg Curl",
     "primaryMuscleGroup": "Hamstring",
+    "subgroups": [
+      "Hamstring"
+    ],
+    "movementFamily": "leg-curl",
     "equipment": "Machine",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/seated-leg-curl.webp",
+    "videoUrl": "/exercises/clip/seated-leg-curl.mp4",
+    "instructions": [
+      "Adjust the machine to fit your body and sit on it with your back against the backrest.",
+      "Place your lower legs under the padded lever, just above your ankles.",
+      "Grasp the handles on the sides of the machine for support.",
+      "Keeping your upper legs stationary, exhale and curl your legs up as far as possible.",
+      "Hold the contracted position for a brief pause as you squeeze your hamstrings.",
+      "Inhale and slowly lower the lever back to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "barbell-shrug",
     "name": "Barbell Shrug",
     "primaryMuscleGroup": "Neck",
+    "subgroups": [
+      "Back: Traps",
+      "Neck: Levator Scapulae",
+      "Core: Obliques"
+    ],
+    "movementFamily": "shrug-neck",
     "equipment": "None",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/barbell-shrug.webp",
+    "videoUrl": "/exercises/clip/barbell-shrug.mp4",
+    "instructions": [
+      "Hold a barbell locked out overhead with a wide grip.",
+      "Keep your arms straight and your ribs down.",
+      "Shrug your shoulders up toward your ears.",
+      "Pause briefly at the top.",
+      "Lower slowly without bending your elbows."
+    ]
   },
   {
     "id": "cable-shrug",
     "name": "Cable Shrug",
     "primaryMuscleGroup": "Neck",
+    "subgroups": [
+      "Back: Traps",
+      "Neck: Levator Scapulae",
+      "Core: Obliques"
+    ],
+    "movementFamily": "shrug-neck",
     "equipment": "Cable",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/cable-shrug.webp",
+    "videoUrl": "/exercises/clip/cable-shrug.mp4",
+    "instructions": [
+      "Stand facing the cable machine with your feet shoulder-width apart.",
+      "Grasp the cable handles with an overhand grip and let your arms hang down in front of you.",
+      "Keeping your arms straight, shrug your shoulders up towards your ears.",
+      "Hold the contraction for a moment, then slowly lower your shoulders back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "dumbbell-shrug",
     "name": "Dumbbell Shrug",
     "primaryMuscleGroup": "Neck",
+    "subgroups": [
+      "Back: Traps",
+      "Neck: Levator Scapulae",
+      "Core: Obliques"
+    ],
+    "movementFamily": "shrug-neck",
     "equipment": "None",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/dumbbell-shrug.webp",
+    "videoUrl": "/exercises/clip/dumbbell-shrug.mp4",
+    "instructions": [
+      "Set an incline bench to a 45-degree angle and sit on it with a dumbbell in each hand.",
+      "Place your feet flat on the ground and let your arms hang straight down with your palms facing your body.",
+      "Keeping your arms straight, shrug your shoulders up towards your ears as high as possible.",
+      "Hold the contraction for a moment, then slowly lower your shoulders back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "head-harness-neck-extension",
     "name": "Head Harness Neck Extension",
     "primaryMuscleGroup": "Neck",
+    "subgroups": [
+      "Neck: Extensors"
+    ],
+    "movementFamily": "shrug-neck",
     "equipment": "Head Harness",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/head-harness-neck-extension.webp",
+    "videoUrl": "/exercises/clip/head-harness-neck-extension.mp4",
+    "instructions": [
+      "Sit on a bench wearing a head harness with a light weight hanging in front.",
+      "Lean slightly forward and rest your hands on your thighs.",
+      "Let your chin drop toward your chest in a controlled way.",
+      "Raise your head back up until your neck is neutral.",
+      "Repeat slowly for the set.",
+      "Keep your back straight and use a light load."
+    ]
   },
   {
     "id": "plate-loaded-neck-curl",
     "name": "Plate-Loaded Neck Curl",
     "primaryMuscleGroup": "Neck",
+    "subgroups": [
+      "Neck: Flexors",
+      "Core: Hip Flexors"
+    ],
+    "movementFamily": "shrug-neck",
     "equipment": "Bench - Flat",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/plate-loaded-neck-curl.webp",
+    "videoUrl": "/exercises/clip/plate-loaded-neck-curl.mp4",
+    "instructions": [
+      "Set the weight light and position the pad against the right side of your head.",
+      "Sit tall with your shoulders relaxed.",
+      "Tilt your head to the right against the resistance.",
+      "Keep the movement small and smooth.",
+      "Return slowly to the centre.",
+      "Repeat for the planned reps with control."
+    ]
   },
   {
     "id": "plate-loaded-neck-extension",
     "name": "Plate-Loaded Neck Extension",
     "primaryMuscleGroup": "Neck",
+    "subgroups": [
+      "Neck: Extensors"
+    ],
+    "movementFamily": "shrug-neck",
     "equipment": "Bench - Flat",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/plate-loaded-neck-extension.webp",
+    "videoUrl": "/exercises/clip/plate-loaded-neck-extension.mp4",
+    "instructions": [
+      "Set the weight light and adjust the pad to rest on the back of your head.",
+      "Sit tall and bring your chin slightly down.",
+      "Press your head back against the pad slowly.",
+      "Move only through a comfortable range.",
+      "Return slowly to the start.",
+      "Repeat for the planned reps with control."
+    ]
   },
   {
     "id": "barbell-back-squat",
     "name": "Barbell Back Squat",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Quad: Vastus",
+      "Quad: Rectus Femoris",
+      "Adductors",
+      "Back: Spinal Erectors"
+    ],
+    "movementFamily": "squat",
     "equipment": "Rack",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=121s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=121s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/barbell-back-squat.webp",
+    "videoUrl": "/exercises/clip/barbell-back-squat.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart, toes slightly turned out.",
+      "Hold the barbell across your upper back, resting it on your traps or rear delts.",
+      "Engage your core and keep your chest up as you begin to lower your body down.",
+      "Bend at the knees and hips, pushing your hips back and down as if sitting into a chair.",
+      "Lower your body until your thighs are parallel to the ground or slightly below.",
+      "Keep your knees in line with your toes and your weight in your heels.",
+      "Drive through your heels to stand back up, extending your hips and knees.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "barbell-front-squat",
     "name": "Barbell Front Squat",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Quad: Vastus",
+      "Quad: Rectus Femoris",
+      "Adductors",
+      "Back: Spinal Erectors"
+    ],
+    "movementFamily": "squat",
     "equipment": "Rack",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=184s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=184s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/barbell-front-squat.webp",
+    "videoUrl": "/exercises/clip/barbell-front-squat.mp4",
+    "instructions": [
+      "Start by standing with your feet shoulder-width apart, toes slightly turned out.",
+      "Hold the barbell in front of your shoulders, resting it on your collarbone and shoulders.",
+      "Engage your core and keep your chest up as you lower your body down into a squat position, pushing your hips back and bending your knees.",
+      "Lower until your thighs are parallel to the ground, or as low as you can comfortably go.",
+      "Pause for a moment at the bottom, then push through your heels to return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "bulgarian-split-squat",
     "name": "Bulgarian Split Squat",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Medius",
+      "Glute: Minimus",
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "lunge",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=574s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=574s",
+    "imageUrl": "/exercises/still/bulgarian-split-squat.webp",
+    "videoUrl": "/exercises/clip/bulgarian-split-squat.mp4",
+    "instructions": [
+      "Stand a stride length in front of a bench holding a dumbbell in each hand.",
+      "Rest the top of your back foot on the bench.",
+      "Lower straight down until your front thigh is about parallel to the floor.",
+      "Keep your torso upright and your front knee tracking over your toes.",
+      "Drive through your front heel to stand back up.",
+      "Finish all reps, then switch legs."
+    ]
   },
   {
     "id": "goblet-squat",
     "name": "Goblet Squat",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Quad: Vastus",
+      "Quad: Rectus Femoris",
+      "Adductors",
+      "Back: Spinal Erectors"
+    ],
+    "movementFamily": "squat",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=530s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=530s",
+    "imageUrl": "/exercises/still/goblet-squat.webp",
+    "videoUrl": "/exercises/clip/goblet-squat.mp4",
+    "instructions": [
+      "Hold one dumbbell at your chest and place your front foot on a low platform.",
+      "Place your back foot behind you on the floor.",
+      "Lower your back knee toward the floor with your torso upright.",
+      "Push through your front heel to stand.",
+      "Finish the reps, then switch legs."
+    ]
   },
   {
     "id": "hack-squat",
     "name": "Hack Squat",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "squat",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "5 - S+",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=276s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=276s",
+    "imageUrl": "/exercises/still/hack-squat.webp",
+    "videoUrl": "/exercises/clip/hack-squat.mp4",
+    "instructions": [
+      "Set your shoulders under the pads and your feet shoulder-width on the platform.",
+      "Unlock the safety and straighten your legs.",
+      "Lower your hips slowly until your thighs are below parallel.",
+      "Keep your back flat against the pad and knees tracking over your toes.",
+      "Press through your whole foot to stand back up."
+    ]
   },
   {
     "id": "low-bar-squat",
     "name": "Low-Bar Squat",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "squat",
     "equipment": "Rack",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=248s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=248s",
+    "imageUrl": "/exercises/still/low-bar-squat.webp",
+    "videoUrl": "/exercises/clip/low-bar-squat.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart and the barbell resting on your upper back.",
+      "Keeping your chest up and core engaged, slowly lower your body by bending your knees and pushing your hips back.",
+      "Continue lowering until your thighs are parallel to the ground or slightly below.",
+      "Pause for a moment, then push through your heels to return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "machine-leg-extension",
     "name": "Machine Leg Extension",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "leg-extension",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=425s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=425s",
+    "imageUrl": "/exercises/still/machine-leg-extension.webp",
+    "videoUrl": "/exercises/clip/machine-leg-extension.mp4",
+    "instructions": [
+      "Sit with your back against the pad and your shins behind the rollers.",
+      "Hold the handles.",
+      "Extend one leg until it is straight.",
+      "Lower it slowly.",
+      "Repeat with the other leg and keep alternating."
+    ]
   },
   {
     "id": "machine-leg-press-45-degree",
     "name": "Machine Leg Press - 45 Degree",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Glute: Maximus Upper",
+      "Glute: Maximus Middle",
+      "Glute: Maximus Lower",
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "leg-press",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=350s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=350s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/machine-leg-press-45-degree.webp",
+    "videoUrl": "/exercises/clip/machine-leg-press-45-degree.mp4",
+    "instructions": [
+      "Adjust the sled machine to a 45-degree angle.",
+      "Sit on the sled machine with your back against the pad and your feet on the footplate.",
+      "Place one foot on the footplate and extend your leg, pushing the sled away from you.",
+      "Slowly bend your knee and lower the sled back to the starting position.",
+      "Repeat with the other leg.",
+      "Continue alternating legs for the desired number of repetitions."
+    ]
   },
   {
     "id": "pendulum-squate",
     "name": "Pendulum Squate",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "squat",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=307s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=307s",
+    "imageUrl": "/exercises/still/pendulum-squate.webp",
+    "videoUrl": "/exercises/clip/pendulum-squate.mp4",
+    "instructions": [
+      "Load the machine and step onto the platform.",
+      "Place your shoulders under the pads.",
+      "Unlock the machine and lower in a controlled squat.",
+      "Go as deep as comfortable.",
+      "Push through your feet to stand.",
+      "Keep your chest up and heels down."
+    ]
   },
   {
     "id": "reverse-nordic",
     "name": "Reverse Nordic",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "leg-extension",
     "equipment": "Resistance Bands",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=494s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=494s",
+    "imageUrl": "/exercises/still/reverse-nordic.webp",
+    "videoUrl": "/exercises/clip/reverse-nordic.mp4",
+    "instructions": [
+      "Face the pad of the hack squat sled with your chest against it and feet on the platform.",
+      "Hold the handles and release the safety.",
+      "Lower by bending your knees and pushing your hips back.",
+      "Keep your chest pressed against the pad.",
+      "Drive through your heels to stand back up."
+    ]
   },
   {
     "id": "sissy-squat",
     "name": "Sissy Squat",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "leg-extension",
     "equipment": "Resistance Bands",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=656s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=656s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/sissy-squat.webp",
+    "videoUrl": "/exercises/clip/sissy-squat.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart and your toes pointing slightly outward.",
+      "Hold a weight in front of your chest with both hands, or place a barbell across your upper back.",
+      "Keeping your chest up and your core engaged, slowly lower your body down by bending at the knees and hips.",
+      "Continue lowering until your thighs are parallel to the ground or as low as you can comfortably go.",
+      "Pause for a moment at the bottom, then push through your heels to return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "smith-machine-squat",
     "name": "Smith Machine Squat",
     "primaryMuscleGroup": "Quad",
+    "subgroups": [
+      "Quad: Vastus",
+      "Quad: Rectus Femoris"
+    ],
+    "movementFamily": "squat",
     "equipment": "Smith",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=325s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=kIXcoivzGf8&t=325s",
+    "imageUrl": "/exercises/still/smith-machine-squat.webp",
+    "videoUrl": "/exercises/clip/smith-machine-squat.mp4",
+    "instructions": [
+      "Set up the smith machine with the barbell at an appropriate height for your squat.",
+      "Stand with your feet shoulder-width apart, toes slightly turned out.",
+      "Position yourself under the barbell, resting it on your upper traps and shoulders.",
+      "Grip the barbell with a wide grip, slightly wider than shoulder-width apart.",
+      "Engage your core and unrack the barbell, stepping back to clear the rack.",
+      "Keeping your chest up and back straight, initiate the squat by bending at the hips and knees.",
+      "Lower your body until your thighs are parallel to the ground or slightly below.",
+      "Pause for a moment at the bottom, then drive through your heels to return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "arnold-style-side-lying-dumbbell-raise",
     "name": "Arnold Style' Side Lying Dumbbell Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral",
+      "Shoulder: Posterior"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=383s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=383s",
+    "imageUrl": "/exercises/still/arnold-style-side-lying-dumbbell-raise.webp",
+    "videoUrl": "/exercises/clip/arnold-style-side-lying-dumbbell-raise.mp4",
+    "instructions": [
+      "Lie on your side with your legs extended and your head supported by your arm.",
+      "Hold a dumbbell in your top hand with your palm facing down.",
+      "Keeping your arm straight, raise the dumbbell up to shoulder height.",
+      "Pause for a moment at the top, then slowly lower the dumbbell back down to the starting position.",
+      "Repeat for the desired number of repetitions, then switch sides."
+    ]
   },
   {
     "id": "atlantis-standing-machine-lat-raise",
     "name": "Atlantis Standing Machine Lat Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=426s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=426s",
+    "imageUrl": "/exercises/still/atlantis-standing-machine-lat-raise.webp",
+    "videoUrl": "/exercises/clip/atlantis-standing-machine-lat-raise.mp4",
+    "instructions": [
+      "Stand in the machine with pads against your arms.",
+      "Keep your torso upright.",
+      "Raise your arms out to the sides to shoulder height.",
+      "Pause at the top.",
+      "Lower slowly."
+    ]
   },
   {
     "id": "band-pull-apart",
     "name": "Band Pull-Apart",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Posterior",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "face-pull",
     "equipment": "Resistance Bands",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/band-pull-apart.webp",
+    "videoUrl": "/exercises/clip/band-pull-apart.mp4",
+    "instructions": [
+      "Hold a resistance band in front of you at chest height, arms straight.",
+      "Keep your hands about shoulder-width apart.",
+      "Pull the band apart by moving your hands out to the sides.",
+      "Squeeze your shoulder blades together.",
+      "Return slowly to the start.",
+      "Keep your ribs down and shoulders relaxed."
+    ]
   },
   {
     "id": "barbell-upright-row",
     "name": "Barbell Upright Row",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral",
+      "Back: Traps"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "None",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/barbell-upright-row.webp",
+    "videoUrl": "/exercises/clip/barbell-upright-row.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+      "Let the barbell hang in front of your thighs, arms fully extended.",
+      "Keeping your core engaged and back straight, exhale as you lift the barbell straight up towards your chin, leading with your elbows.",
+      "Pause for a moment at the top, then inhale as you slowly lower the barbell back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "behind-the-back-cuffed-lateral-raise",
     "name": "Behind-the-Back Cuffed Lateral Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=545s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=545s",
+    "imageUrl": "/exercises/still/behind-the-back-cuffed-lateral-raise.webp",
+    "videoUrl": "/exercises/clip/behind-the-back-cuffed-lateral-raise.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart, facing the cable machine.",
+      "Hold the cable handle with one hand, palm facing down, and stand far enough away from the machine so that there is tension on the cable.",
+      "Keep your arm straight and slowly raise it out to the side until it is parallel to the ground.",
+      "Pause for a moment at the top, then slowly lower your arm back down to the starting position.",
+      "Repeat for the desired number of repetitions, then switch sides."
+    ]
   },
   {
     "id": "bent-over-reverse-dumbbell-fly",
     "name": "Bent Over Reverse Dumbbell Fly",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Posterior",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "face-pull",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=696s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=696s",
+    "imageUrl": "/exercises/still/bent-over-reverse-dumbbell-fly.webp",
+    "videoUrl": "/exercises/clip/bent-over-reverse-dumbbell-fly.mp4",
+    "instructions": [
+      "Hinge forward with a flat back, a bottle in each hand hanging below you.",
+      "Keep a slight bend in your elbows.",
+      "Raise your arms out to the sides to shoulder height.",
+      "Squeeze your shoulder blades.",
+      "Lower slowly."
+    ]
   },
   {
     "id": "cable-lateral-raise",
     "name": "Cable Lateral Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "5 - S+",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=477s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=477s",
+    "imageUrl": "/exercises/still/cable-lateral-raise.webp",
+    "videoUrl": "/exercises/clip/cable-lateral-raise.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart, facing the cable machine.",
+      "Hold the cable handle with one hand, palm facing down, and stand far enough away from the machine so that there is tension on the cable.",
+      "Keep your arm straight and slowly raise it out to the side until it is parallel to the ground.",
+      "Pause for a moment at the top, then slowly lower your arm back down to the starting position.",
+      "Repeat for the desired number of repetitions, then switch sides."
+    ]
   },
   {
     "id": "cable-upright-row",
     "name": "Cable Upright Row",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral",
+      "Back: Traps"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "Cable",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/cable-upright-row.webp",
+    "videoUrl": "/exercises/clip/cable-upright-row.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart, knees slightly bent, and hold the cable attachment with an overhand grip.",
+      "Keep your back straight and your core engaged throughout the exercise.",
+      "Pull the cable attachment straight up towards your chin, leading with your elbows.",
+      "Pause for a moment at the top, squeezing your shoulder blades together.",
+      "Slowly lower the cable attachment back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "cable-y-raise",
     "name": "Cable Y-Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral",
+      "Shoulder: Posterior"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=532s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=532s",
+    "imageUrl": "/exercises/still/cable-y-raise.webp",
+    "videoUrl": "/exercises/clip/cable-y-raise.mp4",
+    "instructions": [
+      "Set the pulleys low and hold a handle in each hand, arms crossed in front.",
+      "Stand tall with a slight lean forward.",
+      "Raise both arms up and out into a Y shape.",
+      "Keep your thumbs pointing up and shoulders down.",
+      "Lower slowly to the start."
+    ]
   },
   {
     "id": "dumbbell-overhead-press",
     "name": "Dumbbell Overhead Press",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "vertical-press",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=324s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=324s",
+    "imageUrl": "/exercises/still/dumbbell-overhead-press.webp",
+    "videoUrl": "/exercises/clip/dumbbell-overhead-press.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart, holding a dumbbell in each hand at shoulder level with your palms facing forward.",
+      "Press one dumbbell overhead, fully extending your arm.",
+      "Lower the dumbbell back to shoulder level.",
+      "Repeat with the other arm.",
+      "Continue alternating arms for the desired number of repetitions."
+    ]
   },
   {
     "id": "lean-away-dumbbell-lateral-raise",
     "name": "Lean-Away Dumbbell Lateral Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=178s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=178s",
+    "imageUrl": "/exercises/still/lean-away-dumbbell-lateral-raise.webp",
+    "videoUrl": "/exercises/clip/lean-away-dumbbell-lateral-raise.mp4",
+    "instructions": [
+      "Hold a support with one hand and lean your body away.",
+      "Hold a dumbbell in your free hand by your side.",
+      "Raise the dumbbell out to the side until it reaches shoulder height.",
+      "Keep a slight bend in your elbow.",
+      "Lower slowly to the start.",
+      "Finish your reps, then switch arms."
+    ]
   },
   {
     "id": "lean-in-dubbell-lateral-raise",
     "name": "Lean-In Dubbell Lateral Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=163s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=163s",
+    "imageUrl": "/exercises/still/lean-in-dubbell-lateral-raise.webp",
+    "videoUrl": "/exercises/clip/lean-in-dubbell-lateral-raise.mp4",
+    "instructions": [
+      "Hold a support with one hand and lean your body away.",
+      "Hold a dumbbell in your free hand by your side.",
+      "Raise the dumbbell out to the side until it reaches shoulder height.",
+      "Keep a slight bend in your elbow.",
+      "Lower slowly to the start.",
+      "Finish your reps, then switch arms."
+    ]
   },
   {
     "id": "machine-shoulder-press",
     "name": "Machine Shoulder Press",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "vertical-press",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=348s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=348s",
+    "imageUrl": "/exercises/still/machine-shoulder-press.webp",
+    "videoUrl": "/exercises/clip/machine-shoulder-press.mp4",
+    "instructions": [
+      "Adjust the seat so the handles are at shoulder height.",
+      "Sit back with your feet flat and grip the handles.",
+      "Press upward until your arms are nearly straight.",
+      "Pause briefly at the top.",
+      "Lower slowly back to the start."
+    ]
   },
   {
     "id": "overhead-press",
     "name": "Overhead Press",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Shoulder: Lateral",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Upper"
+    ],
+    "movementFamily": "vertical-press",
     "equipment": "Rack",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=230s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=230s",
+    "imageUrl": "/exercises/still/overhead-press.webp",
+    "videoUrl": "/exercises/clip/overhead-press.mp4",
+    "instructions": [
+      "Set a cable low and stand sideways, holding the handle at your shoulder.",
+      "Brace your core and turn slightly toward the cable.",
+      "Press the handle overhead while rotating your torso to face forward.",
+      "Lower the handle back to your shoulder with control.",
+      "Finish your reps, then switch sides."
+    ]
   },
   {
     "id": "reverse-cable-crossover",
     "name": "Reverse Cable Crossover",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Posterior"
+    ],
+    "movementFamily": "face-pull",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=718s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=718s",
+    "imageUrl": "/exercises/still/reverse-cable-crossover.webp",
+    "videoUrl": "/exercises/clip/reverse-cable-crossover.mp4",
+    "instructions": [
+      "Attach a D-handle to each side of a cable machine at shoulder height.",
+      "Stand in the middle of the cable machine with your feet shoulder-width apart.",
+      "Grasp the handles with an overhand grip and extend your arms out to the sides, palms facing forward.",
+      "Keep a slight bend in your elbows and maintain a straight back throughout the exercise.",
+      "Engage your shoulder muscles and squeeze your shoulder blades together as you pull the handles towards the front of your body.",
+      "Pause for a moment at the peak of the movement, then slowly return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "reverse-pec-deck",
     "name": "Reverse Pec Deck",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Posterior",
+      "Back: Traps",
+      "Back: Rhomboids"
+    ],
+    "movementFamily": "face-pull",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=626s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=626s",
+    "imageUrl": "/exercises/still/reverse-pec-deck.webp",
+    "videoUrl": "/exercises/clip/reverse-pec-deck.mp4",
+    "instructions": [
+      "Adjust the seat height and position yourself on the machine with your chest against the pad and your feet flat on the floor.",
+      "Grasp the handles with an overhand grip and keep your arms slightly bent.",
+      "Exhale and squeeze your shoulder blades together as you pull the handles back and outward, away from your body.",
+      "Pause for a moment at the peak contraction, then inhale and slowly return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "rope-facepull",
     "name": "Rope Facepull",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Posterior",
+      "Back: Traps",
+      "Back: Rhomboids",
+      "Back: Rotator Cuff",
+      "Neck: Flexors",
+      "Core: Hip Flexors"
+    ],
+    "movementFamily": "face-pull",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=660s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=660s",
+    "imageUrl": "/exercises/still/rope-facepull.webp",
+    "videoUrl": "/exercises/clip/rope-facepull.mp4",
+    "instructions": [
+      "Attach a rope to a high pulley.",
+      "Grab it with both hands.",
+      "Pull toward your face, splitting the rope.",
+      "Squeeze your shoulder blades.",
+      "Return slowly."
+    ]
   },
   {
     "id": "seated-dumbbell-overhead-press",
     "name": "Seated Dumbbell Overhead Press",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "vertical-press",
     "equipment": "Bench - Incline",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/seated-dumbbell-overhead-press.webp",
+    "videoUrl": "/exercises/clip/seated-dumbbell-overhead-press.mp4",
+    "instructions": [
+      "Sit on a bench with a dumbbell in each hand, palms facing inward.",
+      "Raise the dumbbells to shoulder height, elbows bent and palms facing forward.",
+      "Press the dumbbells upward until your arms are fully extended overhead.",
+      "Pause for a moment at the top, then slowly lower the dumbbells back to shoulder height.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "seated-machine-lateral-raise",
     "name": "Seated Machine Lateral Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=458s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=458s",
+    "imageUrl": "/exercises/still/seated-machine-lateral-raise.webp",
+    "videoUrl": "/exercises/clip/seated-machine-lateral-raise.mp4",
+    "instructions": [
+      "Sit on a bench with your feet flat on the ground and a dumbbell in each hand, resting on your thighs.",
+      "Keep your back straight and core engaged.",
+      "Raise the dumbbells to your sides with a slight bend in your elbows, until your arms are parallel to the ground.",
+      "Pause for a moment at the top, then slowly lower the dumbbells back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "seated-overhead-press",
     "name": "Seated Overhead Press",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Anterior",
+      "Shoulder: Lateral",
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Chest: Upper"
+    ],
+    "movementFamily": "vertical-press",
     "equipment": "Rack",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=310s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=310s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/seated-overhead-press.webp",
+    "videoUrl": "/exercises/clip/seated-overhead-press.mp4",
+    "instructions": [
+      "Sit on a bench with your back straight and feet flat on the ground.",
+      "Hold the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+      "Lift the barbell off the rack and bring it to shoulder level, with your elbows bent and palms facing forward.",
+      "Press the barbell overhead by extending your arms fully.",
+      "Pause for a moment at the top, then slowly lower the barbell back to shoulder level.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "standing-dumbbell-lateral-raise",
     "name": "Standing Dumbbell Lateral Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral",
+      "Back: Traps"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=100s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=100s",
+    "imageUrl": "/exercises/still/standing-dumbbell-lateral-raise.webp",
+    "videoUrl": "/exercises/clip/standing-dumbbell-lateral-raise.mp4",
+    "instructions": [
+      "Stand tall with a dumbbell in each hand at your sides, palms facing in.",
+      "Keep a slight bend in your elbows and brace your core.",
+      "Raise both arms out to the sides until they reach shoulder height.",
+      "Lead with your elbows and avoid shrugging.",
+      "Pause briefly at the top.",
+      "Lower slowly to the start and repeat."
+    ]
   },
   {
     "id": "super-rom-lateral-raise",
     "name": "Super ROM Lateral Raise",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=193s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=193s",
+    "imageUrl": "/exercises/still/super-rom-lateral-raise.webp",
+    "videoUrl": "/exercises/clip/super-rom-lateral-raise.mp4",
+    "instructions": [
+      "Hold a towel with both hands and stand on its middle with one foot, or pull its ends apart.",
+      "Keep your elbows slightly bent.",
+      "Raise your arms out to the sides to shoulder height.",
+      "Lower slowly.",
+      "Keep tension on the towel throughout."
+    ]
   },
   {
     "id": "upright-row",
     "name": "Upright Row",
     "primaryMuscleGroup": "Shoulder",
+    "subgroups": [
+      "Shoulder: Lateral"
+    ],
+    "movementFamily": "lateral-raise",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=595s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=SgyUoY0IZ7A&t=595s",
+    "imageUrl": "/exercises/still/upright-row.webp",
+    "videoUrl": "/exercises/clip/upright-row.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart, knees slightly bent, and hold the cable attachment with an overhand grip.",
+      "Keep your back straight and your core engaged throughout the exercise.",
+      "Pull the cable attachment straight up towards your chin, leading with your elbows.",
+      "Pause for a moment at the top, squeezing your shoulder blades together.",
+      "Slowly lower the cable attachment back down to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "1-arm-dumbbell-overhead-extension",
     "name": "1 Arm Dumbbell Overhead Extension",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-overhead",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=390s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=390s",
+    "imageUrl": "/exercises/still/1-arm-dumbbell-overhead-extension.webp",
+    "videoUrl": "/exercises/clip/1-arm-dumbbell-overhead-extension.mp4",
+    "instructions": [
+      "Sit on a bench with your back straight and feet flat on the ground.",
+      "Hold a dumbbell with an underhand grip and extend your arm straight up overhead.",
+      "Lower the dumbbell behind your head by bending your elbow, keeping your upper arm stationary.",
+      "Pause for a moment, then extend your arm back up to the starting position.",
+      "Repeat for the desired number of repetitions, then switch arms."
+    ]
   },
   {
     "id": "barbell-skullcrusher",
     "name": "Barbell Skullcrusher",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "4 - S",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=410s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=410s",
+    "imageUrl": "/exercises/still/barbell-skullcrusher.webp",
+    "videoUrl": "/exercises/clip/barbell-skullcrusher.mp4",
+    "instructions": [
+      "Lie flat on a bench with your feet flat on the ground and your head at the end of the bench.",
+      "Hold the barbell with a reverse grip, palms facing towards your face, and your hands shoulder-width apart.",
+      "Extend your arms straight up over your chest, keeping your elbows in and your wrists straight.",
+      "Slowly lower the barbell towards your forehead by bending your elbows, keeping your upper arms stationary.",
+      "Pause for a moment at the bottom, then extend your arms back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "cable-triceps-kickback",
     "name": "Cable Triceps Kickback",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Triceps: Long"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=545s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=545s",
+    "imageUrl": "/exercises/still/cable-triceps-kickback.webp",
+    "videoUrl": "/exercises/clip/cable-triceps-kickback.mp4",
+    "instructions": [
+      "Stand with your feet shoulder-width apart and knees slightly bent.",
+      "Hold the cable handle in each hand with your palms facing inwards and your arms bent at a 90-degree angle.",
+      "Keeping your upper arms stationary, extend your forearms backwards until your arms are fully extended.",
+      "Pause for a moment, then slowly return to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "close-grip-dips",
     "name": "Close-Grip Dips",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Bench - Special",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=644s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=644s",
+    "imageUrl": "/exercises/still/close-grip-dips.webp",
+    "videoUrl": "/exercises/clip/close-grip-dips.mp4",
+    "instructions": [
+      "Adjust the seat height and position yourself on the bench with your feet flat on the ground.",
+      "Grasp the barbell with a close grip, slightly narrower than shoulder-width apart.",
+      "Lower the barbell towards your chest, keeping your elbows close to your body.",
+      "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "diamond-pushups",
     "name": "Diamond Pushups",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "None",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=795s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=795s",
+    "imageUrl": "/exercises/still/diamond-pushups.webp",
+    "videoUrl": "/exercises/clip/diamond-pushups.mp4",
+    "instructions": [
+      "Start in a high plank position with your hands close together, forming a diamond shape with your thumbs and index fingers.",
+      "Keep your body in a straight line from head to toe, engaging your core and glutes.",
+      "Lower your chest towards the diamond shape formed by your hands, keeping your elbows close to your body.",
+      "Pause for a moment at the bottom, then push yourself back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "dumbbell-french-press",
     "name": "Dumbbell French Press",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-overhead",
     "equipment": "Bench - Incline",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=348s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=348s",
+    "imageUrl": "/exercises/still/dumbbell-french-press.webp",
+    "videoUrl": "/exercises/clip/dumbbell-french-press.mp4",
+    "instructions": [
+      "Sit on an exercise ball with your feet flat on the ground and your back straight.",
+      "Hold a dumbbell in one hand with your palm facing up and your elbow bent at a 90-degree angle.",
+      "Extend your arm straight up towards the ceiling, keeping your elbow stationary.",
+      "Slowly lower the dumbbell back down to the starting position.",
+      "Repeat for the desired number of repetitions, then switch arms."
+    ]
   },
   {
     "id": "dumbbell-skullcrusher",
     "name": "Dumbbell Skullcrusher",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=453s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=453s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/dumbbell-skullcrusher.webp",
+    "videoUrl": "/exercises/clip/dumbbell-skullcrusher.mp4",
+    "instructions": [
+      "Lie on your back with knees bent, a dumbbell in each hand over your chest.",
+      "Keep your upper arms vertical and still.",
+      "Bend your elbows to lower the weights toward your head.",
+      "Stop when your upper arms touch the floor lightly.",
+      "Extend your elbows to press the weights back up.",
+      "Keep your elbows pointed forward and avoid flaring them."
+    ]
   },
   {
     "id": "ez-bar-skullcrusher",
     "name": "EZ Bar Skullcrusher",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Bench - Flat",
     "nippardTierList": false,
     "tierListGrade": null,
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": null
+    "demonstrationLink": null,
+    "imageUrl": "/exercises/still/ez-bar-skullcrusher.webp",
+    "videoUrl": "/exercises/clip/ez-bar-skullcrusher.mp4",
+    "instructions": [
+      "Lie on a bench holding an ez bar above your chest.",
+      "Lower the bar toward your forehead.",
+      "Let it travel back past your head slightly.",
+      "Extend your arms to return.",
+      "Keep your upper arms still."
+    ]
   },
   {
     "id": "jm-press",
     "name": "JM Press",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Bench - Flat",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=477s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=477s",
+    "imageUrl": "/exercises/still/jm-press.webp",
+    "videoUrl": "/exercises/clip/jm-press.mp4",
+    "instructions": [
+      "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+      "Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+      "Lower the barbell to your chest, keeping your elbows tucked in close to your body.",
+      "Push the barbell back up to the starting position, fully extending your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "katana-cable-triceps-extension",
     "name": "Katana Cable Triceps Extension",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Triceps: Long"
+    ],
+    "movementFamily": "triceps-overhead",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=294s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=294s",
+    "imageUrl": "/exercises/still/katana-cable-triceps-extension.webp",
+    "videoUrl": "/exercises/clip/katana-cable-triceps-extension.mp4",
+    "instructions": [
+      "Attach a rope handle to a high pulley and kneel down facing the cable machine.",
+      "Grasp the rope with a neutral grip (palms facing each other) and bring your hands to the sides of your head.",
+      "Keep your elbows close to your head and your upper arms stationary throughout the exercise.",
+      "Extend your forearms by contracting your triceps until your arms are fully extended.",
+      "Pause for a moment, then slowly return to the starting position by bending your elbows.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "machine-dips",
     "name": "Machine Dips",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Machine",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=705s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=705s",
+    "imageUrl": "/exercises/still/machine-dips.webp",
+    "videoUrl": "/exercises/clip/machine-dips.mp4",
+    "instructions": [
+      "Adjust the machine to your desired height and secure your knees on the pad.",
+      "Grasp the handles with your palms facing down and your arms fully extended.",
+      "Lower your body by bending your elbows until your upper arms are parallel to the floor.",
+      "Pause for a moment, then push yourself back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "overhead-cable-triceps-extension-bar",
     "name": "Overhead Cable Triceps Extension (Bar)",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Triceps: Long"
+    ],
+    "movementFamily": "triceps-overhead",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "5 - S+",
     "muscleLadder": true,
     "jeffSubgroupFav": true,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=193s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=193s",
+    "imageUrl": "/exercises/still/overhead-cable-triceps-extension-bar.webp",
+    "videoUrl": "/exercises/clip/overhead-cable-triceps-extension-bar.mp4",
+    "instructions": [
+      "Attach a bar to a high pulley and face away from the machine.",
+      "Hold the bar behind your head with elbows pointing forward.",
+      "Step forward and stagger your feet.",
+      "Extend your arms to press the bar overhead.",
+      "Lower slowly back and keep your elbows in place."
+    ]
   },
   {
     "id": "overhead-cable-triceps-extension-rope",
     "name": "Overhead Cable Triceps Extension (Rope)",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial",
+      "Triceps: Long"
+    ],
+    "movementFamily": "triceps-overhead",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=274s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=274s",
+    "imageUrl": "/exercises/still/overhead-cable-triceps-extension-rope.webp",
+    "videoUrl": "/exercises/clip/overhead-cable-triceps-extension-rope.mp4",
+    "instructions": [
+      "Attach a rope to a cable machine at a high position.",
+      "Stand facing away from the machine with your feet shoulder-width apart.",
+      "Grasp the rope with both hands, palms facing each other, and bring your hands above your head.",
+      "Keep your upper arms close to your head and your elbows pointing forward.",
+      "Slowly lower the rope behind your head by bending your elbows.",
+      "Pause for a moment, then extend your arms back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "smith-machine-jm-press",
     "name": "Smith Machine JM Press",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Smith",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=528s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=528s",
+    "imageUrl": "/exercises/still/smith-machine-jm-press.webp",
+    "videoUrl": "/exercises/clip/smith-machine-jm-press.mp4",
+    "instructions": [
+      "Adjust the bench on the smith machine to a decline position.",
+      "Lie down on the bench with your feet firmly planted on the ground.",
+      "Grasp the barbell with a close grip, slightly narrower than shoulder-width apart.",
+      "Unrack the barbell and lower it slowly towards your chest, keeping your elbows close to your body.",
+      "Pause for a moment when the barbell is just above your chest.",
+      "Push the barbell back up to the starting position, fully extending your arms.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "triceps-pressdown-bar",
     "name": "Triceps Pressdown (Bar)",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "3 - A",
     "muscleLadder": true,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=129s&pp=0gcJCTAAlc8ueATH"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=129s&pp=0gcJCTAAlc8ueATH",
+    "imageUrl": "/exercises/still/triceps-pressdown-bar.webp",
+    "videoUrl": "/exercises/clip/triceps-pressdown-bar.mp4",
+    "instructions": [
+      "Attach a v-bar attachment to the cable machine at the highest setting.",
+      "Stand facing the cable machine with your feet shoulder-width apart.",
+      "Grasp the v-bar with an overhand grip, palms facing down, and your hands shoulder-width apart.",
+      "Keep your elbows close to your sides and your upper arms stationary throughout the exercise.",
+      "Engage your triceps and exhale as you push the v-bar down until your arms are fully extended.",
+      "Pause for a moment at the bottom of the movement, squeezing your triceps.",
+      "Inhale as you slowly return the v-bar to the starting position, maintaining control.",
+      "Repeat for the desired number of repetitions."
+    ]
   },
   {
     "id": "triceps-pressdown-rope",
     "name": "Triceps Pressdown (Rope)",
     "primaryMuscleGroup": "Triceps",
+    "subgroups": [
+      "Triceps: Lateral",
+      "Triceps: Medial"
+    ],
+    "movementFamily": "triceps-pressdown",
     "equipment": "Cable",
     "nippardTierList": true,
     "tierListGrade": "2 - B",
     "muscleLadder": false,
     "jeffSubgroupFav": false,
-    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=60s"
+    "demonstrationLink": "https://www.youtube.com/watch?v=OpRMRhr0Ycc&t=60s",
+    "imageUrl": "/exercises/still/triceps-pressdown-rope.webp",
+    "videoUrl": "/exercises/clip/triceps-pressdown-rope.mp4",
+    "instructions": [
+      "Attach a rope to a cable machine and set it to the lowest position.",
+      "Lie on the floor facing up, with your head towards the cable machine.",
+      "Hold the rope with both hands, palms facing each other, and extend your arms straight up towards the ceiling.",
+      "Keep your upper arms stationary and slowly lower the rope towards your forehead, bending your elbows.",
+      "Pause for a moment, then extend your arms back up to the starting position.",
+      "Repeat for the desired number of repetitions."
+    ]
   }
 ]

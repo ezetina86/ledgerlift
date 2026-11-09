@@ -6,19 +6,54 @@ export interface OverloadSuggestion {
   note: string
 }
 
+export function parseRepRange(defaultReps?: string): { minReps: number; maxReps: number } | null {
+  if (!defaultReps) return null
+  const rangeMatch = defaultReps.trim().match(/^(\d+)\s*-\s*(\d+)$/)
+  if (rangeMatch) {
+    return { minReps: Number(rangeMatch[1]), maxReps: Number(rangeMatch[2]) }
+  }
+  const singleMatch = defaultReps.trim().match(/^(\d+)$/)
+  if (singleMatch) {
+    const val = Number(singleMatch[1])
+    return { minReps: val, maxReps: val }
+  }
+  return null
+}
+
+export function workingSetsOnly(sets: SetLog[]): SetLog[] {
+  return sets.filter(s => s.setType !== 'warmup')
+}
+
+export function estimate1RM(weightKg: number, reps: number, rpe?: number | null): number {
+  if (weightKg <= 0 || reps <= 0) return 0
+  const rir = Math.max(0, 10 - (rpe ?? 8))
+  const effectiveReps = Math.min(15, reps + rir)
+  if (effectiveReps === 1) return weightKg
+  return Math.round(weightKg * (1 + effectiveReps / 30) * 10) / 10
+}
+
 /**
- * RPE rules (Nippard, 1–10):
- *   ≤ 7  → +2.5 kg, same reps
- *   = 8  → same weight, +1 rep
+ * RPE rules (Nippard, 1–10) + Double Progression:
+ *   ≤ 7  → +2.5 kg, minReps (if rep range given) or same reps
+ *   = 8  → if hit top of rep range: +2.5 kg, reset to minReps; else: same weight, +1 rep
  *   ≥ 9  → hold weight + reps, cue form
  */
-export function suggestNext(lastSets: SetLog[]): OverloadSuggestion | null {
-  if (lastSets.length === 0) return null
-  const last = lastSets[lastSets.length - 1]
-  const maxRpe = Math.max(...lastSets.map(s => s.rpe ?? 8))
+export function suggestNext(lastSets: SetLog[], defaultReps?: string): OverloadSuggestion | null {
+  const workSets = workingSetsOnly(lastSets)
+  if (workSets.length === 0) return null
+  const last = workSets[workSets.length - 1]
+  const maxRpe = Math.max(...workSets.map(s => s.rpe ?? 8))
+  const range = parseRepRange(defaultReps)
 
-  if (maxRpe <= 7) return { weightKg: last.weightKg + 2.5, reps: last.reps, note: '↑ +2.5 kg (RPE easy)' }
-  if (maxRpe === 8) return { weightKg: last.weightKg, reps: last.reps + 1, note: '↑ +1 rep (same weight)' }
+  if (maxRpe <= 7) {
+    return { weightKg: last.weightKg + 2.5, reps: range ? range.minReps : last.reps, note: '↑ +2.5 kg (RPE easy)' }
+  }
+  if (maxRpe === 8) {
+    if (range && last.reps >= range.maxReps) {
+      return { weightKg: last.weightKg + 2.5, reps: range.minReps, note: `★ Top of ${defaultReps} hit! ↑ +2.5 kg` }
+    }
+    return { weightKg: last.weightKg, reps: last.reps + 1, note: '↑ +1 rep (same weight)' }
+  }
   return { weightKg: last.weightKg, reps: last.reps, note: '→ Hold. Cue form (RPE high)' }
 }
 
@@ -29,14 +64,14 @@ export interface VolumeByGroup {
   pct: number         // 0–100 relative to max group
 }
 
-/** Compute 7-day rolling volume per muscle group. Needs exercises map for group lookup. */
+/** Compute 7-day rolling volume per muscle group. Needs exercises map for group lookup. Skips warmup sets. */
 export function weeklyVolumeByGroup(
   sets: SetLog[],
   exercises: Map<string, Exercise>,
   windowMs = 7 * 24 * 60 * 60 * 1000
 ): VolumeByGroup[] {
   const cutoff = Date.now() - windowMs
-  const recent = sets.filter(s => s.timestamp >= cutoff)
+  const recent = workingSetsOnly(sets).filter(s => s.timestamp >= cutoff)
 
   const vol: Record<string, { volume: number; sets: number }> = {}
   for (const s of recent) {
@@ -58,14 +93,16 @@ export interface ExercisePR {
   exerciseName: string
   bestWeightKg: number
   bestReps: number
+  bestEst1RM: number
   sessionCount: number
   lastTs: number
 }
 
-/** Personal records: best weight per exercise across all time. */
+/** Personal records: best weight and best estimated 1RM per exercise across all time (skips warmup sets). */
 export function computePRs(sets: SetLog[]): ExercisePR[] {
   const map = new Map<string, ExercisePR>()
-  for (const s of sets) {
+  for (const s of workingSetsOnly(sets)) {
+    const est1RM = estimate1RM(s.weightKg, s.reps, s.rpe)
     const existing = map.get(s.exerciseId)
     if (!existing) {
       map.set(s.exerciseId, {
@@ -73,6 +110,7 @@ export function computePRs(sets: SetLog[]): ExercisePR[] {
         exerciseName: s.exerciseName,
         bestWeightKg: s.weightKg,
         bestReps: s.reps,
+        bestEst1RM: est1RM,
         sessionCount: 1,
         lastTs: s.timestamp,
       })
@@ -80,6 +118,9 @@ export function computePRs(sets: SetLog[]): ExercisePR[] {
       if (s.weightKg > existing.bestWeightKg) {
         existing.bestWeightKg = s.weightKg
         existing.bestReps = s.reps
+      }
+      if (est1RM > existing.bestEst1RM) {
+        existing.bestEst1RM = est1RM
       }
       existing.sessionCount += 1
       if (s.timestamp > existing.lastTs) existing.lastTs = s.timestamp
@@ -94,13 +135,13 @@ export interface ProgressPoint {
   totalVolume: number
 }
 
-/** Per-exercise progression: max weight per session, sorted ascending by date. */
+/** Per-exercise progression: max weight per session, sorted ascending by date (skips warmup sets). */
 export function exerciseProgression(
   sets: SetLog[],
   exerciseId: string
 ): ProgressPoint[] {
   const bySess = new Map<string, { date: number; maxW: number; vol: number }>()
-  for (const s of sets) {
+  for (const s of workingSetsOnly(sets)) {
     if (s.exerciseId !== exerciseId) continue
     const entry = bySess.get(s.sessionId)
     if (!entry) {
@@ -136,7 +177,7 @@ export interface FatigueSignal {
 
 /**
  * Returns per-exercise RPE history grouped by session (ordered oldest → newest).
- * Only completed sessions are included.
+ * Only completed sessions and working sets are included.
  */
 export function rpeHistory(
   sets: SetLog[],
@@ -147,7 +188,7 @@ export function rpeHistory(
   const sessionDateMap = new Map(sessions.map(s => [s.id, s.startedAt]))
 
   const bySess = new Map<string, { date: number; maxRpe: number }>()
-  for (const s of sets) {
+  for (const s of workingSetsOnly(sets)) {
     if (s.exerciseId !== exerciseId) continue
     if (!completedIds.has(s.sessionId)) continue
     const rpe = s.rpe ?? 8
@@ -209,4 +250,54 @@ export function detectFatigue(
   }
 
   return signals
+}
+
+// ── Subgroup coverage ────────────────────────────────────────────────────────
+
+export interface SubgroupStat {
+  subgroup: string
+  primaryGroup: string
+  sets: number
+}
+
+/**
+ * Aggregates rolling window working sets across anatomical subgroups.
+ * Known subgroups are gathered from `exercises.values()` and initialized to 0.
+ * Sets fallback to `[ex.primaryMuscleGroup]` if `ex.subgroups` is empty.
+ * Returns sorted by sets descending, then subgroup alphabetical.
+ */
+export function subgroupWeeklySets(
+  sets: SetLog[],
+  exercises: Map<string, Exercise>,
+  windowMs = 7 * 24 * 60 * 60 * 1000,
+): SubgroupStat[] {
+  const cutoff = Date.now() - windowMs
+  const map = new Map<string, SubgroupStat>()
+
+  for (const ex of exercises.values()) {
+    const sgs = ex.subgroups && ex.subgroups.length > 0
+      ? ex.subgroups
+      : [ex.primaryMuscleGroup]
+    for (const sg of sgs) {
+      if (!map.has(sg)) {
+        const colonIdx = sg.indexOf(':')
+        const primaryGroup = colonIdx !== -1 ? sg.slice(0, colonIdx).trim() : ex.primaryMuscleGroup
+        map.set(sg, { subgroup: sg, primaryGroup, sets: 0 })
+      }
+    }
+  }
+
+  const recent = workingSetsOnly(sets).filter(s => s.timestamp >= cutoff)
+  for (const s of recent) {
+    const ex = exercises.get(s.exerciseId)
+    if (!ex) continue
+    const sgs = ex.subgroups && ex.subgroups.length > 0
+      ? ex.subgroups
+      : [ex.primaryMuscleGroup]
+    for (const sg of sgs) {
+      map.get(sg)!.sets += 1
+    }
+  }
+
+  return [...map.values()].sort((a, b) => b.sets - a.sets || a.subgroup.localeCompare(b.subgroup))
 }

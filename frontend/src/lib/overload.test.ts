@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   suggestNext, weeklyVolumeByGroup, computePRs,
   exerciseProgression, rpeColor, rpeHistory, detectFatigue,
+  parseRepRange, workingSetsOnly, estimate1RM, subgroupWeeklySets,
 } from './overload.ts'
 import type { SetLog, Exercise, WorkoutSession } from '../db/index.ts'
 
@@ -475,5 +476,159 @@ describe('rpeColor', () => {
 
   it('RPE 10 returns red', () => {
     expect(rpeColor(10)).toContain('red')
+  })
+})
+
+// ── Double progression & warmup filtering ────────────────────────────────────
+
+describe('suggestNext double progression & warmup filtering', () => {
+  it('ignores warmup sets when computing suggestion', () => {
+    const sets = [
+      makeSet({ id: 'w1', weightKg: 40, reps: 10, rpe: 6, setType: 'warmup' }),
+      makeSet({ id: 's1', weightKg: 80, reps: 8, rpe: 8, setType: 'work' }),
+    ]
+    const res = suggestNext(sets, '8-12')
+    expect(res?.weightKg).toBe(80)
+    expect(res?.reps).toBe(9)
+  })
+
+  it('returns null when all sets are warmup sets', () => {
+    expect(suggestNext([makeSet({ setType: 'warmup' })], '8-12')).toBeNull()
+  })
+
+  it('bumps weight +2.5 kg and resets reps to minReps when RPE 8 hits top of rep range', () => {
+    const sets = [makeSet({ weightKg: 80, reps: 12, rpe: 8 })]
+    const res = suggestNext(sets, '8-12')
+    expect(res?.weightKg).toBe(82.5)
+    expect(res?.reps).toBe(8)
+    expect(res?.note).toContain('Top of 8-12')
+  })
+
+  it('resets reps to minReps when RPE <= 7 and rep range is provided', () => {
+    const sets = [makeSet({ weightKg: 80, reps: 11, rpe: 7 })]
+    const res = suggestNext(sets, '8-12')
+    expect(res?.weightKg).toBe(82.5)
+    expect(res?.reps).toBe(8)
+  })
+
+  it('holds weight and reps when RPE >= 9 even if top of rep range is reached', () => {
+    const sets = [makeSet({ weightKg: 80, reps: 12, rpe: 9 })]
+    const res = suggestNext(sets, '8-12')
+    expect(res?.weightKg).toBe(80)
+    expect(res?.reps).toBe(12)
+    expect(res?.note).toContain('Hold')
+  })
+})
+
+// ── parseRepRange & estimate1RM & workingSetsOnly ─────────────────────────────
+
+describe('parseRepRange & estimate1RM', () => {
+  it('parses standard rep range strings', () => {
+    expect(parseRepRange('8-12')).toEqual({ minReps: 8, maxReps: 12 })
+    expect(parseRepRange('6-8')).toEqual({ minReps: 6, maxReps: 8 })
+    expect(parseRepRange(' 5 - 10 ')).toEqual({ minReps: 5, maxReps: 10 })
+    expect(parseRepRange('5')).toEqual({ minReps: 5, maxReps: 5 })
+    expect(parseRepRange(undefined)).toBeNull()
+    expect(parseRepRange('')).toBeNull()
+    expect(parseRepRange('invalid')).toBeNull()
+  })
+
+  it('calculates Epley RPE-adjusted 1RM', () => {
+    // 100kg x 5 @ RPE 10 -> 0 RIR -> 100 * (1 + 5/30) = 116.7
+    expect(estimate1RM(100, 5, 10)).toBeCloseTo(116.7, 1)
+    // 100kg x 5 @ RPE 8 -> 2 RIR -> 7 effective reps -> 100 * (1 + 7/30) = 123.3
+    expect(estimate1RM(100, 5, 8)).toBeCloseTo(123.3, 1)
+    // 100kg x 1 @ RPE 10 -> 1 effective rep -> exactly 100
+    expect(estimate1RM(100, 1, 10)).toBe(100)
+    // handles null/undefined RPE (defaults to 8 -> 2 RIR)
+    expect(estimate1RM(100, 5)).toBeCloseTo(123.3, 1)
+    // 0 or negative weight/reps returns 0
+    expect(estimate1RM(0, 5, 10)).toBe(0)
+    expect(estimate1RM(100, 0, 10)).toBe(0)
+    expect(estimate1RM(-10, 5, 10)).toBe(0)
+    // caps effective reps at 15
+    expect(estimate1RM(100, 20, 10)).toBeCloseTo(100 * (1 + 15 / 30), 1)
+  })
+
+  it('workingSetsOnly filters warmup sets and keeps others', () => {
+    const sets = [
+      makeSet({ id: '1', setType: 'warmup' }),
+      makeSet({ id: '2', setType: 'work' }),
+      makeSet({ id: '3', setType: 'drop' }),
+      makeSet({ id: '4', setType: 'fail' }),
+      makeSet({ id: '5', setType: undefined }),
+    ]
+    const work = workingSetsOnly(sets)
+    expect(work.map(s => s.id)).toEqual(['2', '3', '4', '5'])
+  })
+
+  it('includes bestEst1RM in computePRs and skips warmup sets', () => {
+    const sets = [
+      makeSet({ id: 'w1', weightKg: 120, reps: 1, rpe: 6, setType: 'warmup' }),
+      makeSet({ id: 's1', weightKg: 100, reps: 5, rpe: 10, setType: 'work' }),
+    ]
+    const prs = computePRs(sets)
+    expect(prs).toHaveLength(1)
+    expect(prs[0].bestWeightKg).toBe(100)
+    expect(prs[0].bestEst1RM).toBeCloseTo(116.7, 1)
+  })
+
+  it('skips warmup sets in weeklyVolumeByGroup, exerciseProgression, and rpeHistory', () => {
+    const now = Date.now()
+    const exMap = new Map([['ex-1', makeExercise({ primaryMuscleGroup: 'Chest' })]])
+    const sess = makeSession({ id: 'sess-1', completedAt: now })
+
+    const sets = [
+      makeSet({ id: 'w1', exerciseId: 'ex-1', sessionId: 'sess-1', weightKg: 120, reps: 5, rpe: 10, volume: 600, timestamp: now, setType: 'warmup' }),
+      makeSet({ id: 's1', exerciseId: 'ex-1', sessionId: 'sess-1', weightKg: 80, reps: 8, rpe: 7, volume: 640, timestamp: now, setType: 'work' }),
+    ]
+
+    // weeklyVolumeByGroup
+    const vol = weeklyVolumeByGroup(sets, exMap)
+    expect(vol).toHaveLength(1)
+    expect(vol[0].volume).toBe(640)
+    expect(vol[0].sets).toBe(1)
+
+    // exerciseProgression
+    const prog = exerciseProgression(sets, 'ex-1')
+    expect(prog).toHaveLength(1)
+    expect(prog[0].maxWeightKg).toBe(80)
+    expect(prog[0].totalVolume).toBe(640)
+
+    // rpeHistory
+    const hist = rpeHistory(sets, [sess], 'ex-1')
+    expect(hist).toHaveLength(1)
+    expect(hist[0].maxRpe).toBe(7)
+  })
+})
+
+// ── subgroupWeeklySets ────────────────────────────────────────────────────────
+
+describe('subgroupWeeklySets', () => {
+  it('aggregates 7-day working sets across anatomical subgroups', () => {
+    const now = Date.now()
+    const exMap = new Map<string, Exercise>([
+      ['ex-1', makeExercise({ id: 'ex-1', primaryMuscleGroup: 'Chest', subgroups: ['Chest: Upper', 'Chest: Middle'] })],
+    ])
+    const sets = [
+      makeSet({ id: 's1', exerciseId: 'ex-1', timestamp: now - 1000, setType: 'work' }),
+      makeSet({ id: 's2', exerciseId: 'ex-1', timestamp: now - 500, setType: 'drop' }),
+      makeSet({ id: 'w1', exerciseId: 'ex-1', timestamp: now - 200, setType: 'warmup' }),
+    ]
+    const stats = subgroupWeeklySets(sets, exMap)
+    const upper = stats.find(s => s.subgroup === 'Chest: Upper')
+    expect(upper?.sets).toBe(2)
+    expect(upper?.primaryGroup).toBe('Chest')
+  })
+
+  it('initializes subgroups from exercises with 0 sets and falls back to primaryMuscleGroup', () => {
+    const exMap = new Map<string, Exercise>([
+      ['ex-1', makeExercise({ id: 'ex-1', primaryMuscleGroup: 'Chest', subgroups: ['Chest: Upper'] })],
+      ['ex-2', makeExercise({ id: 'ex-2', primaryMuscleGroup: 'Calves', subgroups: [] })],
+    ])
+    const stats = subgroupWeeklySets([], exMap)
+    expect(stats).toHaveLength(2)
+    expect(stats.find(s => s.subgroup === 'Chest: Upper')?.sets).toBe(0)
+    expect(stats.find(s => s.subgroup === 'Calves')?.primaryGroup).toBe('Calves')
   })
 })

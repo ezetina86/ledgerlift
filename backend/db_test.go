@@ -754,4 +754,148 @@ func TestFetchRunProgramsSince_ReturnsOnlyNewer(t *testing.T) {
 	}
 }
 
+func TestUpsertSetAndRoutine_SetTypeAndBackups(t *testing.T) {
+	db := testDB(t)
+
+	r := Routine{
+		ID: "upper-a", Name: "Upper A", SplitDay: "upperA",
+		Exercises: []RoutineExercise{
+			{
+				ExerciseID:        "bench-press",
+				Order:             1,
+				DefaultSets:       3,
+				DefaultReps:       "6-8",
+				BackupExerciseIDs: []string{"machine-chest-press", "flat-dumbbell-press"},
+			},
+		},
+		CreatedAt: 1000, UpdatedAt: 1000,
+	}
+	if err := upsertRoutine(db, r, 1000); err != nil {
+		t.Fatalf("upsertRoutine: %v", err)
+	}
+
+	sess := WorkoutSession{
+		ID: "sess-1", RoutineID: "upper-a", RoutineName: "Upper A",
+		SplitDay: "upperA", StartedAt: 1000, UpdatedAt: 1000,
+	}
+	if err := upsertSession(db, sess, 1000); err != nil {
+		t.Fatalf("upsertSession: %v", err)
+	}
+
+	s := SetLog{
+		ID: "set-1", SessionID: "sess-1", ExerciseID: "bench-press",
+		ExerciseName: "Bench Press", SetNumber: 1, Reps: 8, WeightKg: 80,
+		SetType: "drop", Volume: 640, Timestamp: 1000, UpdatedAt: 1000,
+	}
+	if err := upsertSet(db, s, 1000); err != nil {
+		t.Fatalf("upsertSet: %v", err)
+	}
+
+	routines, err := fetchRoutinesSince(db, 0)
+	if err != nil || len(routines) != 1 {
+		t.Fatalf("fetchRoutinesSince: %v", err)
+	}
+	if len(routines[0].Exercises[0].BackupExerciseIDs) != 2 {
+		t.Errorf("expected 2 backupExerciseIds, got %v", routines[0].Exercises[0].BackupExerciseIDs)
+	}
+
+	sets, err := fetchSetsSince(db, 0)
+	if err != nil || len(sets) != 1 {
+		t.Fatalf("fetchSetsSince: %v", err)
+	}
+	if sets[0].SetType != "drop" {
+		t.Errorf("expected setType 'drop', got %q", sets[0].SetType)
+	}
+}
+
+func TestMigration_SetsSetType(t *testing.T) {
+	dbFile := filepath.Join(t.TempDir(), "legacy.db")
+	db, err := sql.Open("sqlite", dbFile)
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	t.Cleanup(func() { db.Close() })
+
+	// Pre-v6 schema for sessions and sets (without set_type)
+	legacySchema := `
+	CREATE TABLE sessions (
+		id            TEXT PRIMARY KEY,
+		routine_id    TEXT NOT NULL,
+		routine_name  TEXT NOT NULL,
+		split_day     TEXT NOT NULL,
+		started_at    INTEGER NOT NULL,
+		completed_at  INTEGER,
+		notes         TEXT NOT NULL DEFAULT '',
+		mesocycle_id  TEXT,
+		is_deload     INTEGER NOT NULL DEFAULT 0,
+		updated_at    INTEGER NOT NULL
+	);
+	CREATE TABLE sets (
+		id            TEXT PRIMARY KEY,
+		session_id    TEXT NOT NULL REFERENCES sessions(id),
+		exercise_id   TEXT NOT NULL,
+		exercise_name TEXT NOT NULL,
+		set_number    INTEGER NOT NULL,
+		reps          INTEGER NOT NULL,
+		weight_kg     REAL NOT NULL,
+		rpe           REAL,
+		volume        REAL NOT NULL,
+		timestamp     INTEGER NOT NULL,
+		updated_at    INTEGER NOT NULL
+	);
+	INSERT INTO sessions(id, routine_id, routine_name, split_day, started_at, updated_at)
+	VALUES('sess-1', 'r-1', 'Routine', 'day', 1000, 1000);
+	INSERT INTO sets(id, session_id, exercise_id, exercise_name, set_number, reps, weight_kg, rpe, volume, timestamp, updated_at)
+	VALUES('set-pre-v6', 'sess-1', 'bench', 'Bench', 1, 8, 80, 8.0, 640, 1000, 1000);
+	`
+	if _, err := db.Exec(legacySchema); err != nil {
+		t.Fatalf("setup legacy schema: %v", err)
+	}
+
+	if columnExists(db, "sets", "set_type") {
+		t.Fatalf("expected set_type to not exist before migration")
+	}
+
+	runMigrations(db)
+
+	if !columnExists(db, "sets", "set_type") {
+		t.Fatalf("expected set_type to exist after migration")
+	}
+
+	var setType string
+	if err := db.QueryRow(`SELECT set_type FROM sets WHERE id='set-pre-v6'`).Scan(&setType); err != nil {
+		t.Fatalf("scan set_type: %v", err)
+	}
+	if setType != "work" {
+		t.Fatalf("expected existing rows to default to 'work', got %q", setType)
+	}
+}
+
+func TestUpsertSet_DefaultSetType(t *testing.T) {
+	db := testDB(t)
+	insertTestSession(t, db)
+
+	s := SetLog{
+		ID: "set-default", SessionID: "sess-1", ExerciseID: "bench",
+		ExerciseName: "Bench", SetNumber: 1, Reps: 8, WeightKg: 80,
+		Volume: 640, Timestamp: 1000, UpdatedAt: 100,
+	}
+	if err := upsertSet(db, s, 0); err != nil {
+		t.Fatalf("upsertSet: %v", err)
+	}
+
+	rows, err := fetchSetsSince(db, 0)
+	if err != nil {
+		t.Fatalf("fetchSetsSince: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 set, got %d", len(rows))
+	}
+	if rows[0].SetType != "work" {
+		t.Errorf("expected default setType 'work', got %q", rows[0].SetType)
+	}
+}
+
+
+
 

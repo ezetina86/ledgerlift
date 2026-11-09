@@ -146,3 +146,106 @@ describe('PlanPage C25K Reset Feature', () => {
     expect(programs[0].number).toBe(1)
   })
 })
+
+describe('PlanPage Exercise Rotation Wizard', () => {
+  beforeEach(async () => {
+    cleanup()
+    await db.open()
+    await db.exercises.clear()
+    await db.routines.clear()
+    await db.mesocycles.clear()
+    await db.exerciseSwaps.clear()
+  })
+
+  afterEach(async () => {
+    cleanup()
+  })
+
+  it('opens Rotate Exercises wizard, pre-selects duplicate slots, and applies rotations with backupExerciseIds', async () => {
+    const now = Date.now()
+    await db.exercises.bulkPut([
+      {
+        id: 'chest-supported-t-bar-row',
+        name: 'Chest-Supported T-Bar Row',
+        primaryMuscleGroup: 'Back',
+        subgroups: ['Back: Lats', 'Back: Mid-Back'],
+        movementFamily: 'horizontal-row',
+        equipment: 'Machine',
+        nippardTierList: true,
+        tierListGrade: '5 - S+',
+        muscleLadder: true,
+        jeffSubgroupFav: true,
+        demonstrationLink: null,
+      },
+      {
+        id: 'barbell-row',
+        name: 'Barbell Row',
+        primaryMuscleGroup: 'Back',
+        subgroups: ['Back: Lats', 'Back: Mid-Back'],
+        movementFamily: 'horizontal-row',
+        equipment: 'Barbell',
+        nippardTierList: true,
+        tierListGrade: '4 - S',
+        muscleLadder: true,
+        jeffSubgroupFav: false,
+        demonstrationLink: null,
+      },
+    ])
+
+    await db.mesocycles.add({
+      id: 'meso-1',
+      number: 1,
+      name: 'Mesocycle 1',
+      targetWeeks: 5,
+      startedAt: now,
+      endedAt: null,
+      isDeloadWeek: false,
+      updatedAt: now,
+    })
+
+    await db.routines.bulkAdd([
+      {
+        id: 'upper-a',
+        name: 'Upper A',
+        splitDay: 'upperA',
+        exercises: [
+          { exerciseId: 'chest-supported-t-bar-row', order: 1, defaultSets: 3, defaultReps: '8-12', backupExerciseIds: [] },
+        ],
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'upper-b',
+        name: 'Upper B',
+        splitDay: 'upperB',
+        exercises: [
+          { exerciseId: 'chest-supported-t-bar-row', order: 1, defaultSets: 3, defaultReps: '8-12', backupExerciseIds: [] },
+        ],
+        createdAt: now,
+        updatedAt: now,
+      },
+    ])
+
+    render(<PlanPage />)
+
+    const rotateBtn = await screen.findByRole('button', { name: /rotate exercises/i })
+    fireEvent.click(rotateBtn)
+
+    expect(await screen.findByText(/DUPLICATE/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Barbell Row/i).length).toBeGreaterThan(0)
+
+    const applyBtn = screen.getByRole('button', { name: /apply/i })
+    fireEvent.click(applyBtn)
+
+    await waitFor(async () => {
+      const upperB = await db.routines.get('upper-b')
+      expect(upperB?.exercises[0].exerciseId).toBe('barbell-row')
+      expect(upperB?.exercises[0].backupExerciseIds).toContain('chest-supported-t-bar-row')
+
+      const swaps = await db.exerciseSwaps.toArray()
+      expect(swaps).toHaveLength(1)
+      expect(swaps[0].removedExerciseId).toBe('chest-supported-t-bar-row')
+      expect(swaps[0].addedExerciseId).toBe('barbell-row')
+    })
+  })
+})
