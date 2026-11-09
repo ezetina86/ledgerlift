@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/index.ts'
 import type { Exercise, SetLog } from '../db/index.ts'
-import { weeklyVolumeByGroup, computePRs, exerciseProgression } from '../lib/overload.ts'
+import { weeklyVolumeByGroup, computePRs, exerciseProgression, subgroupWeeklySets } from '../lib/overload.ts'
 import type { ProgressPoint } from '../lib/overload.ts'
 import { formatWeight, kgToLbs, KG_TO_LBS } from '../lib/utils.ts'
 import { useWeightUnit } from '../lib/prefs.ts'
@@ -46,6 +46,7 @@ export default function ProgressPage() {
 
   const exMap         = useMemo(() => new Map(allExercises.map(e => [e.id, e])), [allExercises])
   const volByGroup    = useMemo(() => weeklyVolumeByGroup(allSets, exMap), [allSets, exMap])
+  const subgroupStats = useMemo(() => subgroupWeeklySets(allSets, exMap), [allSets, exMap])
   const prs           = useMemo(() => computePRs(allSets), [allSets])
   const progressionMap = useMemo(() => {
     const map = new Map<string, ProgressPoint[]>()
@@ -162,6 +163,53 @@ export default function ProgressPage() {
             )}
           </section>
 
+          {/* Section B: Subgroup Coverage (7d) */}
+          {subgroupStats.length > 0 && (
+            <section className="px-4 mb-6">
+              <Label>Subgroup Coverage (7d)</Label>
+              <div className="rounded-2xl p-4" style={{ background: 'oklch(12% 0.010 293)', border: '1px solid oklch(19% 0.008 293)' }}>
+                <div className="flex flex-wrap gap-1.5">
+                  {subgroupStats.map(sg => {
+                    const hit = sg.sets > 0
+                    return (
+                      <div
+                        key={sg.subgroup}
+                        className="px-2.5 py-1 rounded-lg flex items-center gap-1.5"
+                        style={{
+                          background: hit ? 'oklch(18% 0.06 293)' : 'oklch(15% 0.008 293)',
+                          border: hit ? '1px solid oklch(30% 0.12 293)' : '1px solid oklch(20% 0.008 293)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontFamily: "'Barlow Condensed', sans-serif",
+                            fontWeight: 700,
+                            color: hit ? 'oklch(92% 0.02 293)' : 'oklch(44% 0.008 293)',
+                          }}
+                        >
+                          {sg.subgroup}
+                        </span>
+                        <span
+                          className="num px-1 rounded"
+                          style={{
+                            fontSize: '10px',
+                            fontFamily: "'Barlow Condensed', sans-serif",
+                            fontWeight: 800,
+                            background: hit ? 'oklch(26% 0.12 293)' : 'oklch(18% 0.008 293)',
+                            color: hit ? 'oklch(75% 0.18 293)' : 'oklch(40% 0.008 293)',
+                          }}
+                        >
+                          {sg.sets}s
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Section C: Personal Records — tappable card grid */}
           <section className="px-4">
             <Label>Personal Records</Label>
@@ -175,6 +223,9 @@ export default function ProgressPage() {
                     : null
                   const groupColor = GROUP_COLORS[ex?.primaryMuscleGroup ?? 'Other'] ?? 'oklch(44% 0.008 293)'
                   const displayBest = formatWeight(unit === 'lb' ? kgToLbs(pr.bestWeightKg) : pr.bestWeightKg)
+                  const displayEst1RM = formatWeight(
+                    Math.round((unit === 'lb' ? kgToLbs(pr.bestEst1RM) : pr.bestEst1RM) * 10) / 10
+                  )
 
                   return (
                     <button
@@ -219,6 +270,11 @@ export default function ProgressPage() {
                         </span>
                         <span style={{ fontSize: '12px', color: 'oklch(44% 0.008 293)' }}>{unit}</span>
                       </div>
+
+                      {/* Est 1RM */}
+                      <p style={{ fontSize: '10px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.08em', color: 'oklch(62% 0.20 293)' }}>
+                        EST 1RM {displayEst1RM} {unit}
+                      </p>
 
                       {/* Mini sparkline */}
                       {prog.length >= 2 && (

@@ -15,6 +15,8 @@ vi.stubGlobal('localStorage', mockStorage)
 import { db, setSyncing } from '../db/index.ts'
 import type { Exercise, SetLog } from '../db/index.ts'
 import ProgressPage from './ProgressPage.tsx'
+import SetSheet from '../components/SetSheet.tsx'
+import WorkoutPage from './WorkoutPage.tsx'
 
 vi.mock('../components/ExerciseDashboardSheet.tsx', () => ({
   default: ({ exerciseName }: { exerciseName: string }) => (
@@ -102,5 +104,130 @@ describe('ProgressPage', () => {
 
     expect(await screen.findByText('COMPLETE A RUN TO SEE C25K PROGRESS')).toBeTruthy()
     expect(screen.queryByTestId('exercise-dashboard-sheet')).toBeNull()
+  })
+
+  it('renders EST 1RM on PR cards and Subgroup Coverage (7d) with active and neglected subgroups', async () => {
+    await db.exercises.bulkPut([
+      makeExercise({
+        id: 'bench-press',
+        name: 'Bench Press',
+        primaryMuscleGroup: 'Chest',
+        subgroups: ['Chest: Upper', 'Chest: Middle'],
+      }),
+      makeExercise({
+        id: 'incline-curl',
+        name: 'Incline Curl',
+        primaryMuscleGroup: 'Biceps',
+        subgroups: ['Biceps: Long Head'],
+      }),
+    ])
+    await db.sets.add(makeSet({
+      timestamp: Date.now() - 1000,
+      weightKg: 80,
+      reps: 8,
+      rpe: 8,
+      volume: 640,
+    }))
+
+    render(<ProgressPage />)
+
+    expect(await screen.findByText(/EST 1RM/i)).toBeTruthy()
+    expect(await screen.findByText(/Subgroup Coverage/i)).toBeTruthy()
+    expect(screen.getByText('Chest: Middle')).toBeTruthy()
+    expect(screen.getByText('Biceps: Long Head')).toBeTruthy()
+  })
+})
+
+describe('SetSheet & WorkoutPage Rest Timer and Backups', () => {
+  it('allows selecting setType in SetSheet and passes it to onConfirm', () => {
+    const onConfirm = vi.fn()
+    render(
+      <SetSheet
+        open={true}
+        initial={{ weightKg: 80, reps: 8, rpe: 8 }}
+        setNumber={1}
+        exerciseName="Bench Press"
+        onConfirm={onConfirm}
+        onClose={() => {}}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'WORK' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'WARMUP' })).toBeTruthy()
+    const dropBtn = screen.getByRole('button', { name: 'DROP' })
+    expect(dropBtn).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'FAIL' })).toBeTruthy()
+
+    fireEvent.click(dropBtn)
+    fireEvent.click(screen.getByRole('button', { name: 'LOG SET' }))
+
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({
+      weightKg: 80,
+      reps: 8,
+      rpe: 8,
+      setType: 'drop',
+    }))
+  })
+
+  it('shows 1-tap backup chips before logging sets and starts Auto Rest Timer Pill on working set log', async () => {
+    const now = Date.now()
+    await db.exercises.bulkPut([
+      makeExercise({
+        id: 'bench-press',
+        name: 'Bench Press',
+        primaryMuscleGroup: 'Chest',
+        movementFamily: 'horizontal-press',
+      }),
+      makeExercise({
+        id: 'dumbbell-bench-press',
+        name: 'Dumbbell Bench Press',
+        primaryMuscleGroup: 'Chest',
+        movementFamily: 'horizontal-press',
+      }),
+    ])
+    await db.routines.add({
+      id: 'upper-a',
+      name: 'Upper A',
+      splitDay: 'upperA',
+      exercises: [
+        {
+          exerciseId: 'bench-press',
+          order: 1,
+          defaultSets: 3,
+          defaultReps: '6-8',
+          backupExerciseIds: ['dumbbell-bench-press'],
+        },
+      ],
+      createdAt: now,
+      updatedAt: now,
+    })
+    await db.sessions.add({
+      id: 'sess-1',
+      routineId: 'upper-a',
+      routineName: 'Upper A',
+      splitDay: 'upperA',
+      startedAt: now,
+      completedAt: null,
+      notes: '',
+      mesocycleId: null,
+      isDeload: false,
+      updatedAt: now,
+    })
+
+    render(<WorkoutPage sessionId="sess-1" onComplete={() => {}} onBack={() => {}} />)
+
+    // 1-tap backup chip is rendered when 0 sets logged
+    expect(await screen.findByRole('button', { name: /ALT: Dumbbell Bench Press/i })).toBeTruthy()
+
+    // Log a working set
+    fireEvent.click(screen.getByRole('button', { name: /ADD SET/i }))
+    fireEvent.click(await screen.findByRole('button', { name: /LOG SET/i }))
+
+    // Auto rest timer pill starts at 2:30 for compound horizontal-press
+    expect(await screen.findByText(/REST 2:30/i)).toBeTruthy()
+
+    // +30s adds 30 seconds -> 3:00
+    fireEvent.click(screen.getByRole('button', { name: '+30s' }))
+    expect(await screen.findByText(/REST 3:00/i)).toBeTruthy()
   })
 })

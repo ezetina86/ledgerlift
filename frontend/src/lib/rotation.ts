@@ -67,6 +67,16 @@ export interface RankOptions {
   fatiguedIds?: Set<string>
 }
 
+export function recentExerciseIdsFromSets(
+  sets: SetLog[],
+  windowMs = 30 * 24 * 60 * 60 * 1000,
+): Set<string> {
+  const cutoff = Date.now() - windowMs
+  return new Set(
+    sets.filter(s => s.timestamp >= cutoff && s.setType !== 'warmup').map(s => s.exerciseId)
+  )
+}
+
 export function rankSubstitutes(
   target: Exercise,
   catalog: Exercise[],
