@@ -3,10 +3,11 @@ package main
 // Mirror of frontend TypeScript types.
 
 type RoutineExercise struct {
-	ExerciseID  string `json:"exerciseId"`
-	Order       int    `json:"order"`
-	DefaultSets int    `json:"defaultSets"`
-	DefaultReps string `json:"defaultReps"`
+	ExerciseID        string   `json:"exerciseId"`
+	Order             int      `json:"order"`
+	DefaultSets       int      `json:"defaultSets"`
+	DefaultReps       string   `json:"defaultReps"`
+	BackupExerciseIDs []string `json:"backupExerciseIds,omitempty"`
 }
 
 type Routine struct {
@@ -60,6 +61,7 @@ type SetLog struct {
 	Reps         int      `json:"reps"`
 	WeightKg     float64  `json:"weightKg"`
 	RPE          *float64 `json:"rpe"`
+	SetType      string   `json:"setType,omitempty"`
 	Volume       float64  `json:"volume"`
 	Timestamp    int64    `json:"timestamp"`
 	UpdatedAt    int64    `json:"updatedAt"`
