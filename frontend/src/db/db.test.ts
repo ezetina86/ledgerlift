@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { db, setSyncing, seedDatabase, DEFAULT_ROUTINES, getLastSetsForExercise, getActiveRunProgram, LEGACY_EXERCISE_ID_MAP } from './index'
+import { db, setSyncing, seedDatabase, DEFAULT_ROUTINES, getLastSetsForExercise, getActiveRunProgram, LEGACY_EXERCISE_ID_MAP, upgradeV6 } from './index'
 import type { WorkoutSession, SetLog, Routine, SetType, MovementFamily } from './index'
 
 // fake-indexeddb/auto is loaded via setupFiles in vitest.config.ts,
@@ -460,6 +460,152 @@ describe('Dexie v6 schema & migration', () => {
     expect(updated?.movementFamily).toBe('horizontal-press')
     expect(updated?.imageUrl).toBe('/exercises/still/bench-press.webp')
     expect(updated?.instructions?.length).toBeGreaterThan(0)
+  })
+
+  it('upgradeV6 migrates legacy IDs across routines, sets, swaps, and sessions', async () => {
+    setSyncing(true)
+    await db.routines.bulkAdd([
+      {
+        id: 'upper-a',
+        name: 'Upper A',
+        splitDay: 'upperA',
+        exercises: [
+          { exerciseId: 'cable-row-neutral-grip', order: 3, defaultSets: 3, defaultReps: '10-12' },
+          { exerciseId: 'custom-slot', order: 99, defaultSets: 3, defaultReps: '10', backupExerciseIds: ['hip-thrust', 'bench-press'] },
+        ],
+        createdAt: 1000,
+        updatedAt: 1000,
+      },
+      {
+        id: 'custom-routine',
+        name: 'Custom',
+        splitDay: 'upperB',
+        exercises: [
+          { exerciseId: 'dumbbell-shoulder-press', order: 1, defaultSets: 3, defaultReps: '8-12' },
+          { exerciseId: 'unknown-ex', order: 2, defaultSets: 3, defaultReps: '8-12' },
+        ],
+        createdAt: 1000,
+        updatedAt: 1000,
+      },
+    ])
+
+    await db.sets.bulkAdd([
+      makeSet('legacy-set-1', 'sess-1', { exerciseId: 'weighted-pull-up', setType: undefined }),
+      makeSet('modern-set-2', 'sess-1', { exerciseId: 'bench-press', setType: 'warmup' }),
+    ])
+
+    await db.exerciseSwaps.bulkAdd([
+      {
+        id: 'sw-1',
+        mesocycleId: 'm-1',
+        routineId: 'upper-a',
+        removedExerciseId: 'leg-press',
+        addedExerciseId: 'hip-thrust',
+        swappedAt: 1000,
+      },
+      {
+        id: 'sw-2',
+        mesocycleId: 'm-1',
+        routineId: 'upper-a',
+        removedExerciseId: 'bench-press',
+        addedExerciseId: 'hack-squat',
+        swappedAt: 1000,
+      },
+    ])
+
+    await db.sessions.bulkAdd([
+      makeSession('sess-mig-1', {
+        swaps: { 'weighted-pull-up': 'cable-row-neutral-grip', 'bench-press': 'incline-dumbbell-press' },
+        extraExercises: [
+          { exerciseId: 'hip-thrust', order: 7, defaultSets: 3, defaultReps: '10' },
+          { exerciseId: 'unknown-extra', order: 8, defaultSets: 3, defaultReps: '10' },
+          { exerciseId: 'bench-press', order: 9, defaultSets: 3, defaultReps: '10', backupExerciseIds: ['leg-press', 'hack-squat'] },
+        ],
+      }),
+      makeSession('sess-mig-2'),
+    ])
+    setSyncing(false)
+
+    await db.transaction('rw', [db.routines, db.sets, db.exerciseSwaps, db.sessions], async tx => {
+      await upgradeV6(tx)
+    })
+
+    const rUpperA = await db.routines.get('upper-a')
+    expect(rUpperA?.exercises[0].exerciseId).toBe('neutral-grip-cable-row')
+    expect(rUpperA?.exercises[0].backupExerciseIds?.length).toBeGreaterThan(0)
+    expect(rUpperA?.exercises[1].backupExerciseIds).toEqual(['barbell-hip-thrust', 'bench-press'])
+
+    const rCustom = await db.routines.get('custom-routine')
+    expect(rCustom?.exercises[0].exerciseId).toBe('seated-dumbbell-overhead-press')
+    expect(rCustom?.exercises[0].backupExerciseIds?.length).toBeGreaterThan(0)
+    expect(rCustom?.exercises[1].backupExerciseIds).toEqual([])
+
+    const migSet1 = await db.sets.get('legacy-set-1')
+    expect(migSet1?.exerciseId).toBe('wide-grip-pull-up')
+    expect(migSet1?.setType).toBe('work')
+
+    const migSet2 = await db.sets.get('modern-set-2')
+    expect(migSet2?.setType).toBe('warmup')
+
+    const migSwap1 = await db.exerciseSwaps.get('sw-1')
+    expect(migSwap1?.removedExerciseId).toBe('machine-leg-press-45-degree')
+    expect(migSwap1?.addedExerciseId).toBe('barbell-hip-thrust')
+
+    const migSess1 = await db.sessions.get('sess-mig-1')
+    expect(migSess1?.swaps).toEqual({
+      'wide-grip-pull-up': 'neutral-grip-cable-row',
+      'bench-press': 'incline-dumbbell-press',
+    })
+    expect(migSess1?.extraExercises?.[0].exerciseId).toBe('barbell-hip-thrust')
+    expect(migSess1?.extraExercises?.[0].backupExerciseIds?.length).toBeGreaterThan(0)
+    expect(migSess1?.extraExercises?.[1].backupExerciseIds).toEqual([])
+    expect(migSess1?.extraExercises?.[2].backupExerciseIds).toEqual(['machine-leg-press-45-degree', 'hack-squat'])
+  })
+
+  it('exercises updating hooks for mesocycles, runSessions, and runPrograms', async () => {
+    setSyncing(false)
+    await db.mesocycles.add({
+      id: 'm-hook',
+      number: 1,
+      name: 'M1',
+      targetWeeks: 4,
+      startedAt: 1000,
+      endedAt: null,
+      isDeloadWeek: false,
+      updatedAt: 0,
+    })
+    await db.mesocycles.update('m-hook', { name: 'M1 Updated' })
+
+    await db.runSessions.add({
+      id: 'rs-hook',
+      week: 1,
+      day: 1,
+      startedAt: 1000,
+      completedAt: 2000,
+      durationSec: 1000,
+      distanceKm: 2,
+      rpe: 6,
+      updatedAt: 0,
+    })
+    await db.runSessions.update('rs-hook', { distanceKm: 3 })
+
+    await db.runPrograms.add({
+      id: 'rp-hook',
+      number: 1,
+      startedAt: 1000,
+      endedAt: null,
+      updatedAt: 0,
+    })
+    await db.runPrograms.update('rp-hook', { endedAt: 5000 })
+
+    setSyncing(true)
+    await db.mesocycles.update('m-hook', { name: 'M1 Synced' })
+    await db.runSessions.update('rs-hook', { distanceKm: 4 })
+    await db.runPrograms.update('rp-hook', { endedAt: 6000 })
+    setSyncing(false)
+
+    const m = await db.mesocycles.get('m-hook')
+    expect(m?.name).toBe('M1 Synced')
   })
 })
 

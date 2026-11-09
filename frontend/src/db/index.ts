@@ -1,4 +1,4 @@
-import Dexie, { type EntityTable } from 'dexie'
+import Dexie, { type EntityTable, type Transaction } from 'dexie'
 import { uid } from '../lib/utils'
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
@@ -209,6 +209,77 @@ export const DEFAULT_ROUTINES: Omit<Routine, 'createdAt' | 'updatedAt'>[] = [
 let _isSyncing = false
 export function setSyncing(v: boolean) { _isSyncing = v }
 
+// ─── v6 migration helper ──────────────────────────────────────────────────────
+
+export async function upgradeV6(tx: Transaction) {
+  const defaultBackupMap = new Map<string, string[]>()
+  for (const r of DEFAULT_ROUTINES) {
+    for (const ex of r.exercises) {
+      if (ex.backupExerciseIds && ex.backupExerciseIds.length > 0) {
+        defaultBackupMap.set(ex.exerciseId, ex.backupExerciseIds)
+      }
+    }
+  }
+
+  await tx.table('routines').toCollection().modify((routine: Routine) => {
+    const defRoutine = DEFAULT_ROUTINES.find(r => r.id === routine.id)
+    for (const slot of routine.exercises) {
+      if (LEGACY_EXERCISE_ID_MAP[slot.exerciseId]) {
+        slot.exerciseId = LEGACY_EXERCISE_ID_MAP[slot.exerciseId]
+      }
+      if (!slot.backupExerciseIds || slot.backupExerciseIds.length === 0) {
+        const defSlot = defRoutine?.exercises.find(e => e.exerciseId === slot.exerciseId)
+          ?? defRoutine?.exercises.find(e => e.order === slot.order)
+        slot.backupExerciseIds = defSlot?.backupExerciseIds ?? defaultBackupMap.get(slot.exerciseId) ?? []
+      } else {
+        slot.backupExerciseIds = slot.backupExerciseIds.map(id => LEGACY_EXERCISE_ID_MAP[id] ?? id)
+      }
+    }
+  })
+
+  await tx.table('sets').toCollection().modify((set: SetLog) => {
+    if (LEGACY_EXERCISE_ID_MAP[set.exerciseId]) {
+      set.exerciseId = LEGACY_EXERCISE_ID_MAP[set.exerciseId]
+    }
+    if (set.setType === undefined) {
+      set.setType = 'work'
+    }
+  })
+
+  await tx.table('exerciseSwaps').toCollection().modify((swap: ExerciseSwap) => {
+    if (LEGACY_EXERCISE_ID_MAP[swap.removedExerciseId]) {
+      swap.removedExerciseId = LEGACY_EXERCISE_ID_MAP[swap.removedExerciseId]
+    }
+    if (LEGACY_EXERCISE_ID_MAP[swap.addedExerciseId]) {
+      swap.addedExerciseId = LEGACY_EXERCISE_ID_MAP[swap.addedExerciseId]
+    }
+  })
+
+  await tx.table('sessions').toCollection().modify((session: WorkoutSession) => {
+    if (session.swaps) {
+      const updatedSwaps: Record<string, string> = {}
+      for (const [origId, repId] of Object.entries(session.swaps)) {
+        const newOrig = LEGACY_EXERCISE_ID_MAP[origId] ?? origId
+        const newRep = LEGACY_EXERCISE_ID_MAP[repId] ?? repId
+        updatedSwaps[newOrig] = newRep
+      }
+      session.swaps = updatedSwaps
+    }
+    if (session.extraExercises) {
+      for (const slot of session.extraExercises) {
+        if (LEGACY_EXERCISE_ID_MAP[slot.exerciseId]) {
+          slot.exerciseId = LEGACY_EXERCISE_ID_MAP[slot.exerciseId]
+        }
+        if (!slot.backupExerciseIds || slot.backupExerciseIds.length === 0) {
+          slot.backupExerciseIds = defaultBackupMap.get(slot.exerciseId) ?? []
+        } else {
+          slot.backupExerciseIds = slot.backupExerciseIds.map(id => LEGACY_EXERCISE_ID_MAP[id] ?? id)
+        }
+      }
+    }
+  })
+}
+
 // ─── Database class ───────────────────────────────────────────────────────────
 
 export class LedgerLiftDB extends Dexie {
@@ -289,74 +360,7 @@ export class LedgerLiftDB extends Dexie {
       exerciseSwaps: 'id, mesocycleId, routineId, swappedAt',
       runSessions:   'id, startedAt, completedAt, updatedAt',
       runPrograms:   'id, number, startedAt, endedAt, updatedAt',
-    }).upgrade(async tx => {
-      const defaultBackupMap = new Map<string, string[]>()
-      for (const r of DEFAULT_ROUTINES) {
-        for (const ex of r.exercises) {
-          if (ex.backupExerciseIds && ex.backupExerciseIds.length > 0) {
-            defaultBackupMap.set(ex.exerciseId, ex.backupExerciseIds)
-          }
-        }
-      }
-
-      await tx.table('routines').toCollection().modify((routine: Routine) => {
-        const defRoutine = DEFAULT_ROUTINES.find(r => r.id === routine.id)
-        for (const slot of routine.exercises) {
-          if (LEGACY_EXERCISE_ID_MAP[slot.exerciseId]) {
-            slot.exerciseId = LEGACY_EXERCISE_ID_MAP[slot.exerciseId]
-          }
-          if (!slot.backupExerciseIds || slot.backupExerciseIds.length === 0) {
-            const defSlot = defRoutine?.exercises.find(e => e.exerciseId === slot.exerciseId)
-              ?? defRoutine?.exercises.find(e => e.order === slot.order)
-            slot.backupExerciseIds = defSlot?.backupExerciseIds ?? defaultBackupMap.get(slot.exerciseId) ?? []
-          } else {
-            slot.backupExerciseIds = slot.backupExerciseIds.map(id => LEGACY_EXERCISE_ID_MAP[id] ?? id)
-          }
-        }
-      })
-
-      await tx.table('sets').toCollection().modify((set: SetLog) => {
-        if (LEGACY_EXERCISE_ID_MAP[set.exerciseId]) {
-          set.exerciseId = LEGACY_EXERCISE_ID_MAP[set.exerciseId]
-        }
-        if (set.setType === undefined) {
-          set.setType = 'work'
-        }
-      })
-
-      await tx.table('exerciseSwaps').toCollection().modify((swap: ExerciseSwap) => {
-        if (LEGACY_EXERCISE_ID_MAP[swap.removedExerciseId]) {
-          swap.removedExerciseId = LEGACY_EXERCISE_ID_MAP[swap.removedExerciseId]
-        }
-        if (LEGACY_EXERCISE_ID_MAP[swap.addedExerciseId]) {
-          swap.addedExerciseId = LEGACY_EXERCISE_ID_MAP[swap.addedExerciseId]
-        }
-      })
-
-      await tx.table('sessions').toCollection().modify((session: WorkoutSession) => {
-        if (session.swaps) {
-          const updatedSwaps: Record<string, string> = {}
-          for (const [origId, repId] of Object.entries(session.swaps)) {
-            const newOrig = LEGACY_EXERCISE_ID_MAP[origId] ?? origId
-            const newRep = LEGACY_EXERCISE_ID_MAP[repId] ?? repId
-            updatedSwaps[newOrig] = newRep
-          }
-          session.swaps = updatedSwaps
-        }
-        if (session.extraExercises) {
-          for (const slot of session.extraExercises) {
-            if (LEGACY_EXERCISE_ID_MAP[slot.exerciseId]) {
-              slot.exerciseId = LEGACY_EXERCISE_ID_MAP[slot.exerciseId]
-            }
-            if (!slot.backupExerciseIds || slot.backupExerciseIds.length === 0) {
-              slot.backupExerciseIds = defaultBackupMap.get(slot.exerciseId) ?? []
-            } else {
-              slot.backupExerciseIds = slot.backupExerciseIds.map(id => LEGACY_EXERCISE_ID_MAP[id] ?? id)
-            }
-          }
-        }
-      })
-    })
+    }).upgrade(upgradeV6)
 
     // Auto-stamp updatedAt on every write — skipped during sync pull
     this.sessions.hook('creating', (_pk, obj) => { if (!_isSyncing) obj.updatedAt = Date.now() })

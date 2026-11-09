@@ -277,7 +277,7 @@ export function subgroupWeeklySets(
   for (const ex of exercises.values()) {
     const sgs = ex.subgroups && ex.subgroups.length > 0
       ? ex.subgroups
-      : (ex.primaryMuscleGroup ? [ex.primaryMuscleGroup] : [])
+      : [ex.primaryMuscleGroup]
     for (const sg of sgs) {
       if (!map.has(sg)) {
         const colonIdx = sg.indexOf(':')
@@ -293,16 +293,9 @@ export function subgroupWeeklySets(
     if (!ex) continue
     const sgs = ex.subgroups && ex.subgroups.length > 0
       ? ex.subgroups
-      : (ex.primaryMuscleGroup ? [ex.primaryMuscleGroup] : [])
+      : [ex.primaryMuscleGroup]
     for (const sg of sgs) {
-      const entry = map.get(sg)
-      if (entry) {
-        entry.sets += 1
-      } else {
-        const colonIdx = sg.indexOf(':')
-        const primaryGroup = colonIdx !== -1 ? sg.slice(0, colonIdx).trim() : ex.primaryMuscleGroup
-        map.set(sg, { subgroup: sg, primaryGroup, sets: 1 })
-      }
+      map.get(sg)!.sets += 1
     }
   }
 
