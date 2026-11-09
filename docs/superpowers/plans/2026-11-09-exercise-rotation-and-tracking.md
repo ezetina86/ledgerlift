@@ -18,17 +18,18 @@
 
 ---
 
-### Task 1: Export 36 Muscle Subgroups & Movement Families in Catalog + Dexie v6 Migration
+### Task 1: Export 36 Muscle Subgroups, Movement Families & openGym Media/Instructions in Catalog + Dexie v6 Migration
 
 **Files:**
 - Modify: `scripts/parse_catalog.py`
 - Modify: `frontend/src/data/exercises.json`
+- Create: `frontend/public/exercises/still/*.webp` and `frontend/public/exercises/clip/*.mp4`
 - Modify: `frontend/src/db/index.ts`
 - Test: `frontend/src/lib/split.test.ts`
 
 **Interfaces:**
 - Produces:
-  - `MovementFamily` union type and updated `Exercise` (`subgroups: string[]`, `movementFamily: MovementFamily`), `SetType` (`'work' | 'warmup' | 'drop' | 'fail'`), `RoutineExercise` (`backupExerciseIds?: string[]`), `SetLog` (`setType?: SetType`) in `frontend/src/db/index.ts`
+  - `MovementFamily` union type and updated `Exercise` (`subgroups: string[]`, `movementFamily: MovementFamily`, `imageUrl?: string | null`, `videoUrl?: string | null`, `instructions?: string[]`), `SetType` (`'work' | 'warmup' | 'drop' | 'fail'`), `RoutineExercise` (`backupExerciseIds?: string[]`), `SetLog` (`setType?: SetType`) in `frontend/src/db/index.ts`
   - `LEGACY_EXERCISE_ID_MAP: Record<string, string>` and repaired `DEFAULT_ROUTINES` in `frontend/src/db/index.ts`
 
 - [ ] **Step 1: Write the failing catalog & routine integrity tests in `frontend/src/lib/split.test.ts`**
@@ -52,6 +53,9 @@ describe('Catalog & DEFAULT_ROUTINES integrity', () => {
     const tbar = catalogMap.get('chest-supported-t-bar-row')
     expect(tbar?.subgroups).toContain('Back: Lats')
     expect(tbar?.movementFamily).toBe('horizontal-row')
+    expect(tbar?.imageUrl).toBe('/exercises/still/chest-supported-t-bar-row.webp')
+    expect(tbar?.videoUrl).toBe('/exercises/clip/chest-supported-t-bar-row.mp4')
+    expect(Array.isArray(tbar?.instructions)).toBe(true)
   })
 
   it('every exerciseId and backupExerciseId in DEFAULT_ROUTINES exists in exercises.json', () => {
@@ -105,6 +109,8 @@ except ImportError:
 
 XLSX_PATH = Path(__file__).parent.parent / "Nippard Exercise Catalog.xlsx"
 OUT_PATH = Path(__file__).parent.parent / "frontend" / "src" / "data" / "exercises.json"
+PUBLIC_EX_DIR = Path(__file__).parent.parent / "frontend" / "public" / "exercises"
+OPENGYM_ROOT = Path("/Users/Enrique_Zetina/.gemini/antigravity-cli/brain/9fa08630-d116-43f2-bfd6-2aa2011ed43f/scratch/openGym/catalogue")
 
 
 def slugify(text: str) -> str:
@@ -903,12 +909,12 @@ Expected: FAIL on the new UI test assertions.
 
 - [ ] **Step 3: Implement the UI enhancements across `ExercisePickerSheet.tsx`, `SetSheet.tsx`, `ExerciseBlock.tsx`, `WorkoutPage.tsx`, `PlanPage.tsx`, `ProgressPage.tsx`, and `CatalogPage.tsx`**
 
-- Update `ExercisePickerSheet.tsx` to accept optional `sourceExerciseId?: string` and render the top 5 `rankSubstitutes` matches under `"RECOMMENDED ROTATIONS"` when swapping.
+- Update `ExercisePickerSheet.tsx` to accept optional `sourceExerciseId?: string` and render the top 5 `rankSubstitutes` matches under `"RECOMMENDED ROTATIONS"` when swapping, plus show `.webp` exercise thumbnails (`ex.imageUrl`).
 - Update `SetSheet.tsx` to include `setType?: SetType` (`'work' | 'warmup' | 'drop' | 'fail'`) with 1-tap pills defaulting to `'work'`.
-- Update `ExerciseBlock.tsx` to pass `defaultReps` into `suggestNext(lastSets, defaultReps)`, exclude warmup sets from `setsLogged`, render 1-tap backup chips when `setsLogged === 0`, and call `onSetLogged?.(exercise, setType)` when adding a set.
+- Update `ExerciseBlock.tsx` to display the exercise `.webp` thumbnail (`exercise?.imageUrl`, tappable to open an inline demo modal with the looping `.mp4` video `exercise?.videoUrl` and `exercise?.instructions`), pass `defaultReps` into `suggestNext(lastSets, defaultReps)`, exclude warmup sets from `setsLogged`, render 1-tap backup chips when `setsLogged === 0`, and call `onSetLogged?.(exercise, setType)` when adding a set.
 - Update `WorkoutPage.tsx` to start the Auto Rest Timer Pill in the sticky header when a non-warmup set is logged (`150s` for compound movements, `90s` for isolations) with `+30s` and `✕` controls, and support 1-tap backup swapping.
-- Update `PlanPage.tsx` to add the **"ROTATE EXERCISES"** button and interactive Rotation Wizard sheet (showing `buildRoutineRotationProposal` items with checkboxes, applying swaps to routines, saving previous exercise IDs into `backupExerciseIds`, and logging `ExerciseSwap` entries).
-- Update `ProgressPage.tsx` to show `EST 1RM` on PR cards and a **Subgroup Coverage (7d)** section powered by `subgroupWeeklySets`, and update `CatalogPage.tsx` to display `subgroups`, `movementFamily`, and `FRESH` badges.
+- Update `PlanPage.tsx` to show `.webp` exercise thumbnails on `RoutineCard` rows and add the **"ROTATE EXERCISES"** button and interactive Rotation Wizard sheet (showing `buildRoutineRotationProposal` items with thumbnails and checkboxes, applying swaps to routines, saving previous exercise IDs into `backupExerciseIds`, and logging `ExerciseSwap` entries).
+- Update `ProgressPage.tsx` to show `EST 1RM` on PR cards and a **Subgroup Coverage (7d)** section powered by `subgroupWeeklySets`, and update `CatalogPage.tsx` to display `.webp` thumbnails in the list and the looping `.mp4` video (`selected.videoUrl`), step-by-step `selected.instructions`, `subgroups`, `movementFamily`, and `FRESH` badges in the detail sheet.
 
 - [ ] **Step 4: Run full frontend & backend test suites and production build**
 

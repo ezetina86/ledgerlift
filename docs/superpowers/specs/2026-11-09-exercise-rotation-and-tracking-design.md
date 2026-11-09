@@ -72,6 +72,9 @@ export interface Exercise {
   muscleLadder: boolean
   jeffSubgroupFav: boolean
   demonstrationLink: string | null
+  imageUrl?: string | null     // "/exercises/still/<id>.webp" from openGym
+  videoUrl?: string | null     // "/exercises/clip/<id>.mp4" from openGym
+  instructions?: string[]      // step-by-step cues from openGym
 }
 ```
 
