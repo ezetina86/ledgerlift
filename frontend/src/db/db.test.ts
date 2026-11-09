@@ -442,6 +442,25 @@ describe('Dexie v6 schema & migration', () => {
     const r = await db.routines.get('custom-r')
     expect(r?.exercises[0].backupExerciseIds).toEqual(['dumbbell-bench-press', 'machine-chest-press'])
   })
+
+  it('updates existing exercises with fresh catalog metadata on seedDatabase', async () => {
+    await db.exercises.add({
+      id: 'bench-press',
+      name: 'Old Bench',
+      primaryMuscleGroup: 'Chest',
+      equipment: 'Barbell',
+      nippardTierList: false,
+      tierListGrade: null,
+      muscleLadder: false,
+      jeffSubgroupFav: false,
+      demonstrationLink: null,
+    })
+    await seedDatabase()
+    const updated = await db.exercises.get('bench-press')
+    expect(updated?.movementFamily).toBe('horizontal-press')
+    expect(updated?.imageUrl).toBe('/exercises/still/bench-press.webp')
+    expect(updated?.instructions?.length).toBeGreaterThan(0)
+  })
 })
 
 

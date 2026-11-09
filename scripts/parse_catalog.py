@@ -6,6 +6,7 @@ Run with: .venv/bin/python scripts/parse_catalog.py
 """
 
 import json
+import os
 import re
 import shutil
 import sys
@@ -22,7 +23,7 @@ OUT_PATH = Path(__file__).parent.parent / "frontend" / "src" / "data" / "exercis
 PUBLIC_EX_DIR = Path(__file__).parent.parent / "frontend" / "public" / "exercises"
 PUBLIC_STILL = PUBLIC_EX_DIR / "still"
 PUBLIC_CLIP = PUBLIC_EX_DIR / "clip"
-OPENGYM_ROOT = Path("/Users/Enrique_Zetina/.gemini/antigravity-cli/brain/9fa08630-d116-43f2-bfd6-2aa2011ed43f/scratch/openGym/catalogue")
+OPENGYM_ROOT = Path(os.environ.get("OPENGYM_CATALOGUE_PATH", "/Users/Enrique_Zetina/.gemini/antigravity-cli/brain/9fa08630-d116-43f2-bfd6-2aa2011ed43f/scratch/openGym/catalogue"))
 
 
 def slugify(text: str) -> str:
@@ -255,7 +256,7 @@ def match_opengym(
     primary_group: str,
     equipment: str,
     candidates: list[dict],
-) -> dict:
+) -> dict | None:
     name_toks = normalize_tokens(name)
     g = primary_group.lower()
     eq = equipment.lower()
@@ -303,12 +304,26 @@ def main():
     ws = wb["Muscle Group Exercises"]
     col_to_subgroup = load_subgroup_columns(wb)
 
-    print("Loading openGym candidates...")
-    candidates = load_opengym_candidates()
-    print(f"Loaded {len(candidates)} valid openGym candidates with media.")
+    existing_data_map: dict[str, dict] = {}
+    if OUT_PATH.exists():
+        try:
+            prev_data = json.loads(OUT_PATH.read_text())
+            for ex in prev_data:
+                if "id" in ex:
+                    existing_data_map[ex["id"]] = ex
+        except Exception:
+            pass
 
-    PUBLIC_STILL.mkdir(parents=True, exist_ok=True)
-    PUBLIC_CLIP.mkdir(parents=True, exist_ok=True)
+    has_opengym = OPENGYM_ROOT.exists()
+    candidates = []
+    if has_opengym:
+        print("Loading openGym candidates...")
+        candidates = load_opengym_candidates()
+        print(f"Loaded {len(candidates)} valid openGym candidates with media.")
+        PUBLIC_STILL.mkdir(parents=True, exist_ok=True)
+        PUBLIC_CLIP.mkdir(parents=True, exist_ok=True)
+    else:
+        print(f"openGym catalogue not found at {OPENGYM_ROOT}; preserving existing media URLs & instructions.")
 
     exercises = []
     seen_ids: set[str] = set()
@@ -344,15 +359,24 @@ def main():
             counter += 1
         seen_ids.add(uid)
 
-        matched = match_opengym(name, primary_group, equipment, candidates)
-        instructions = matched["raw"].get("instructions", []) if matched else []
+        if has_opengym and candidates:
+            matched = match_opengym(name, primary_group, equipment, candidates)
+            instructions = matched["raw"].get("instructions", []) if matched else []
 
-        dest_still = PUBLIC_STILL / f"{uid}.webp"
-        dest_clip = PUBLIC_CLIP / f"{uid}.mp4"
+            dest_still = PUBLIC_STILL / f"{uid}.webp"
+            dest_clip = PUBLIC_CLIP / f"{uid}.mp4"
 
-        if matched:
-            shutil.copyfile(matched["still_path"], dest_still)
-            shutil.copyfile(matched["clip_path"], dest_clip)
+            if matched:
+                shutil.copyfile(matched["still_path"], dest_still)
+                shutil.copyfile(matched["clip_path"], dest_clip)
+
+            image_url = f"/exercises/still/{uid}.webp"
+            video_url = f"/exercises/clip/{uid}.mp4"
+        else:
+            prev_ex = existing_data_map.get(uid, {})
+            image_url = prev_ex.get("imageUrl", f"/exercises/still/{uid}.webp")
+            video_url = prev_ex.get("videoUrl", f"/exercises/clip/{uid}.mp4")
+            instructions = prev_ex.get("instructions", [])
 
         exercises.append({
             "id": uid,
@@ -366,8 +390,8 @@ def main():
             "muscleLadder": muscle_ladder,
             "jeffSubgroupFav": jeff_fav,
             "demonstrationLink": demo_link,
-            "imageUrl": f"/exercises/still/{uid}.webp",
-            "videoUrl": f"/exercises/clip/{uid}.mp4",
+            "imageUrl": image_url,
+            "videoUrl": video_url,
             "instructions": instructions,
         })
 
