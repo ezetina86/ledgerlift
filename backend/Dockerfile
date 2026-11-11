@@ -20,10 +20,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o ledgerlift .
 # ── Stage 3: Runtime ──────────────────────────────────────────────────────────
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates tzdata
-WORKDIR /data
+WORKDIR /app
 COPY --from=builder /app/ledgerlift /usr/local/bin/ledgerlift
-VOLUME ["/data"]
-ENV DB_PATH=/data/ledgerlift.db
+ENV MONGODB_DB=ledgerlift
 ENV PORT=9090
 EXPOSE 9090
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s \

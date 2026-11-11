@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"embed"
 	"encoding/json"
 	"flag"
@@ -17,11 +16,12 @@ import (
 var staticFiles embed.FS
 
 func main() {
-	port   := flag.String("port", envOr("PORT", "8080"), "listen port")
-	dbPath := flag.String("db", envOr("DB_PATH", "ledgerlift.db"), "SQLite file path")
+	port     := flag.String("port", envOr("PORT", "8080"), "listen port")
+	mongoURI := flag.String("mongo-uri", envOr("MONGODB_URI", ""), "MongoDB connection URI")
+	mongoDB  := flag.String("mongo-db", envOr("MONGODB_DB", "ledgerlift"), "MongoDB database name")
 	flag.Parse()
 
-	db := initDB(*dbPath)
+	db := initDB(*mongoURI, *mongoDB)
 	defer db.Close()
 
 	mux := http.NewServeMux()
@@ -40,7 +40,7 @@ func main() {
 	handler := corsMiddleware(mux)
 
 	addr := fmt.Sprintf(":%s", *port)
-	log.Printf("LedgerLift listening on %s  db=%s", addr, *dbPath)
+	log.Printf("LedgerLift listening on %s  mongo_db=%s", addr, *mongoDB)
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		log.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func handleHealth(w http.ResponseWriter, _ *http.Request) {
 
 // ── Sync ──────────────────────────────────────────────────────────────────────
 
-func makeSync(db *sql.DB, nowFn ...func() int64) http.HandlerFunc {
+func makeSync(db *Store, nowFn ...func() int64) http.HandlerFunc {
 	clock := nowMs
 	if len(nowFn) > 0 && nowFn[0] != nil {
 		clock = nowFn[0]

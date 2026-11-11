@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 )
 
 // ── handleHealth ──────────────────────────────────────────────────────────────
@@ -380,11 +382,16 @@ func TestMakeSPA_RootServesIndexHTML(t *testing.T) {
 // failures gracefully: errors are logged but the handler still returns 200
 // with empty arrays (nil-guarded), covering the log.Printf error branches.
 func TestMakeSync_DBClosed_UpsertErrors(t *testing.T) {
-	db := testDB(t)
-	handler := makeSync(db)
-	// Close DB to force all upsert and fetch operations to fail.
-	// testDB cleanup will call Close() a second time, which is safe.
-	db.Close()
+	s, err := InitDB(testMongoURI(), "ll_test_closed")
+	if err != nil {
+		t.Fatalf("InitDB: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	_ = s.DB.Drop(ctx)
+	cancel()
+	handler := makeSync(s)
+	// Disconnect client to force all upsert and fetch operations to fail.
+	_ = s.Close()
 
 	rpe := 8.0
 	completedAt := int64(2_000_000)
@@ -403,6 +410,19 @@ func TestMakeSync_DBClosed_UpsertErrors(t *testing.T) {
 			ID: "set-err", SessionID: "s-err", ExerciseID: "bench-press",
 			ExerciseName: "Bench Press", SetNumber: 1, Reps: 8, WeightKg: 80,
 			RPE: &rpe, Volume: 640, Timestamp: 1_500_000, UpdatedAt: 200,
+		}},
+		Mesocycles: []Mesocycle{{
+			ID: "meso-err", Number: 1, Name: "Meso", TargetWeeks: 5, StartedAt: 1000, UpdatedAt: 100,
+		}},
+		ExerciseSwaps: []ExerciseSwap{{
+			ID: "swap-err", MesocycleID: "meso-err", RoutineID: "r-err",
+			RemovedExerciseID: "a", AddedExerciseID: "b", SwappedAt: 100,
+		}},
+		RunSessions: []RunSession{{
+			ID: "rs-err", Week: 1, Day: 1, StartedAt: 1000, UpdatedAt: 100,
+		}},
+		RunPrograms: []RunProgram{{
+			ID: "rp-err", Number: 1, StartedAt: 1000, UpdatedAt: 100,
 		}},
 	}
 	encoded, _ := json.Marshal(reqBody)
