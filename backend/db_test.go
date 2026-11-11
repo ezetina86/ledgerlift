@@ -1,47 +1,128 @@
 package main
 
 import (
-	"database/sql"
-	"path/filepath"
+	"context"
+	"fmt"
+	"os"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-// testDB creates a temporary SQLite database for a test.
-// The file is automatically removed when the test ends.
-func testDB(t *testing.T) *sql.DB {
-	t.Helper()
-	db := initDB(filepath.Join(t.TempDir(), "test.db"))
-	t.Cleanup(func() { db.Close() })
-	return db
+var (
+	sharedClientOnce sync.Once
+	sharedStore      *Store
+	sharedStoreErr   error
+	dbCounter        atomic.Int64
+)
+
+func testMongoURI() string {
+	if uri := os.Getenv("MONGODB_URI"); uri != "" {
+		return uri
+	}
+	return "mongodb://localhost:27017"
 }
 
-// ── Schema ────────────────────────────────────────────────────────────────────
+// testDB creates an isolated MongoDB database for a test and drops it when the test ends.
+func testDB(t *testing.T) *Store {
+	t.Helper()
 
-func TestInitDB_TablesExist(t *testing.T) {
+	sharedClientOnce.Do(func() {
+		sharedStore, sharedStoreErr = InitDB(testMongoURI(), "ledgerlift_test_init")
+		if sharedStoreErr == nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = sharedStore.DB.Drop(ctx)
+		}
+	})
+	if sharedStoreErr != nil {
+		t.Fatalf("failed to connect to test MongoDB (%s): %v", testMongoURI(), sharedStoreErr)
+	}
+
+	dbName := fmt.Sprintf("ll_test_%d_%d", time.Now().UnixMilli(), dbCounter.Add(1))
+	db := sharedStore.Client.Database(dbName)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := ensureIndexes(ctx, db); err != nil {
+		t.Fatalf("ensureIndexes: %v", err)
+	}
+
+	s := &Store{Client: sharedStore.Client, DB: db}
+	t.Cleanup(func() {
+		dropCtx, dropCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer dropCancel()
+		_ = db.Drop(dropCtx)
+	})
+	return s
+}
+
+// ── Schema & Indexes ──────────────────────────────────────────────────────────
+
+func TestInitDB_IndexesExist(t *testing.T) {
 	db := testDB(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	for _, table := range []string{"routines", "sessions", "sets", "mesocycles", "exercise_swaps", "run_sessions", "run_programs"} {
-		var name string
-		err := db.QueryRow(
-			`SELECT name FROM sqlite_master WHERE type='table' AND name=?`, table,
-		).Scan(&name)
+	expected := map[string][]string{
+		"routines":       {"idx_routines_updated"},
+		"sessions":       {"idx_sessions_updated"},
+		"sets":           {"idx_sets_updated", "idx_sets_session"},
+		"mesocycles":     {"idx_mesos_updated"},
+		"exercise_swaps": {"idx_swaps_mesocycle", "idx_swaps_swapped"},
+		"run_sessions":   {"idx_run_sessions_updated"},
+		"run_programs":   {"idx_run_programs_updated"},
+	}
+
+	for coll, idxNames := range expected {
+		specs, err := db.DB.Collection(coll).Indexes().ListSpecifications(ctx)
 		if err != nil {
-			t.Errorf("table %q not found: %v", table, err)
+			t.Fatalf("list indexes for %s: %v", coll, err)
+		}
+		found := make(map[string]bool)
+		for _, sp := range specs {
+			found[sp.Name] = true
+		}
+		for _, want := range idxNames {
+			if !found[want] {
+				t.Errorf("collection %q missing index %q", coll, want)
+			}
 		}
 	}
 }
 
-func TestInitDB_IndexesExist(t *testing.T) {
-	db := testDB(t)
+func TestInitDB_Errors(t *testing.T) {
+	if _, err := InitDB("", "ledgerlift"); err == nil {
+		t.Error("expected error when URI is empty")
+	}
+	if _, err := InitDB("://bad-uri", ""); err == nil {
+		t.Error("expected error for invalid URI")
+	}
+	var nilStore *Store
+	if err := nilStore.Close(); err != nil {
+		t.Errorf("expected nil error closing nil Store, got %v", err)
+	}
+}
 
-	for _, idx := range []string{"idx_sessions_updated", "idx_sets_updated", "idx_sets_session", "idx_mesos_updated", "idx_swaps_mesocycle", "idx_run_sessions_updated", "idx_run_programs_updated"} {
-		var name string
-		err := db.QueryRow(
-			`SELECT name FROM sqlite_master WHERE type='index' AND name=?`, idx,
-		).Scan(&name)
-		if err != nil {
-			t.Errorf("index %q not found: %v", idx, err)
-		}
+func TestStore_PingAndFreshConnect(t *testing.T) {
+	s, err := InitDB(testMongoURI(), "ll_test_fresh_ping")
+	if err != nil {
+		t.Fatalf("InitDB: %v", err)
+	}
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = s.DB.Drop(ctx)
+		_ = s.Close()
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := s.Ping(ctx); err != nil {
+		t.Errorf("Ping: %v", err)
 	}
 }
 
@@ -78,15 +159,15 @@ func TestUpsertRoutine_Insert(t *testing.T) {
 		t.Errorf("expected 1 exercise, got %d", len(rows[0].Exercises))
 	}
 	if rows[0].Exercises[0].ExerciseID != "bench-press" {
-		t.Errorf("exercises JSON not round-tripped correctly")
+		t.Errorf("exercises BSON not round-tripped correctly")
 	}
 }
 
 func TestUpsertRoutine_NewerWins(t *testing.T) {
 	db := testDB(t)
 
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Original", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 100}, 0)
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Updated", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 200}, 0)
+	_ = upsertRoutine(db, Routine{ID: "r-1", Name: "Original", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 100}, 0)
+	_ = upsertRoutine(db, Routine{ID: "r-1", Name: "Updated", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 200}, 0)
 
 	rows, _ := fetchRoutinesSince(db, 0)
 	if len(rows) != 1 {
@@ -103,9 +184,9 @@ func TestUpsertRoutine_NewerWins(t *testing.T) {
 func TestUpsertRoutine_OlderNoOverwrite(t *testing.T) {
 	db := testDB(t)
 
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Original", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 200}, 0)
+	_ = upsertRoutine(db, Routine{ID: "r-1", Name: "Original", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 200}, 0)
 	// Stale record with older updated_at — should NOT overwrite
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Stale", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 50}, 0)
+	_ = upsertRoutine(db, Routine{ID: "r-1", Name: "Stale", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 50}, 0)
 
 	rows, _ := fetchRoutinesSince(db, 0)
 	if rows[0].Name != "Original" {
@@ -116,8 +197,8 @@ func TestUpsertRoutine_OlderNoOverwrite(t *testing.T) {
 func TestFetchRoutinesSince_FiltersOlder(t *testing.T) {
 	db := testDB(t)
 
-	upsertRoutine(db, Routine{ID: "r-1", Name: "Early", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 50}, 0)
-	upsertRoutine(db, Routine{ID: "r-2", Name: "Late", SplitDay: "lowerA", CreatedAt: 1000, UpdatedAt: 200}, 0)
+	_ = upsertRoutine(db, Routine{ID: "r-1", Name: "Early", SplitDay: "upperA", CreatedAt: 1000, UpdatedAt: 50}, 0)
+	_ = upsertRoutine(db, Routine{ID: "r-2", Name: "Late", SplitDay: "lowerA", CreatedAt: 1000, UpdatedAt: 200}, 0)
 
 	rows, err := fetchRoutinesSince(db, 100)
 	if err != nil {
@@ -174,11 +255,11 @@ func TestUpsertSession_Insert(t *testing.T) {
 func TestUpsertSession_NewerWins(t *testing.T) {
 	db := testDB(t)
 
-	upsertSession(db, WorkoutSession{
+	_ = upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, Notes: "original", UpdatedAt: 100,
 	}, 0)
-	upsertSession(db, WorkoutSession{
+	_ = upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, Notes: "updated", UpdatedAt: 200,
 	}, 0)
@@ -192,11 +273,11 @@ func TestUpsertSession_NewerWins(t *testing.T) {
 func TestUpsertSession_OlderNoOverwrite(t *testing.T) {
 	db := testDB(t)
 
-	upsertSession(db, WorkoutSession{
+	_ = upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, Notes: "original", UpdatedAt: 200,
 	}, 0)
-	upsertSession(db, WorkoutSession{
+	_ = upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, Notes: "stale", UpdatedAt: 50,
 	}, 0)
@@ -211,7 +292,7 @@ func TestUpsertSession_CompletedAt_Nullable(t *testing.T) {
 	db := testDB(t)
 
 	// Insert without completedAt
-	upsertSession(db, WorkoutSession{
+	_ = upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, UpdatedAt: 100,
 	}, 0)
@@ -223,7 +304,7 @@ func TestUpsertSession_CompletedAt_Nullable(t *testing.T) {
 
 	// Complete the session
 	completed := int64(2_000_000)
-	upsertSession(db, WorkoutSession{
+	_ = upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000, CompletedAt: &completed, UpdatedAt: 300,
 	}, 0)
@@ -239,11 +320,11 @@ func TestUpsertSession_CompletedAt_Nullable(t *testing.T) {
 func TestFetchSessionsSince_FiltersOlder(t *testing.T) {
 	db := testDB(t)
 
-	upsertSession(db, WorkoutSession{
+	_ = upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "A",
 		SplitDay: "upperA", StartedAt: 1000, UpdatedAt: 50,
 	}, 0)
-	upsertSession(db, WorkoutSession{
+	_ = upsertSession(db, WorkoutSession{
 		ID: "sess-2", RoutineID: "r-1", RoutineName: "B",
 		SplitDay: "lowerA", StartedAt: 2000, UpdatedAt: 300,
 	}, 0)
@@ -259,8 +340,7 @@ func TestFetchSessionsSince_FiltersOlder(t *testing.T) {
 
 // ── Sets ──────────────────────────────────────────────────────────────────────
 
-// insertTestSession creates a parent session so foreign-key constraints pass.
-func insertTestSession(t *testing.T, db *sql.DB) {
+func insertTestSession(t *testing.T, db *Store) {
 	t.Helper()
 	err := upsertSession(db, WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
@@ -331,14 +411,14 @@ func TestUpsertSet_NewerWins(t *testing.T) {
 		ExerciseName: "Bench", SetNumber: 1, Reps: 8, WeightKg: 80,
 		Volume: 640, Timestamp: 1_000_000, UpdatedAt: 100,
 	}
-	upsertSet(db, base, 0)
+	_ = upsertSet(db, base, 0)
 
 	updated := base
 	updated.Reps = 10
 	updated.WeightKg = 85
 	updated.Volume = 850
 	updated.UpdatedAt = 200
-	upsertSet(db, updated, 0)
+	_ = upsertSet(db, updated, 0)
 
 	rows, _ := fetchSetsSince(db, 0)
 	if rows[0].Reps != 10 || rows[0].WeightKg != 85 {
@@ -355,13 +435,13 @@ func TestUpsertSet_OlderNoOverwrite(t *testing.T) {
 		ExerciseName: "Bench", SetNumber: 1, Reps: 8, WeightKg: 80,
 		Volume: 640, Timestamp: 1_000_000, UpdatedAt: 200,
 	}
-	upsertSet(db, base, 0)
+	_ = upsertSet(db, base, 0)
 
 	stale := base
 	stale.Reps = 5
 	stale.WeightKg = 50
 	stale.UpdatedAt = 50
-	upsertSet(db, stale, 0)
+	_ = upsertSet(db, stale, 0)
 
 	rows, _ := fetchSetsSince(db, 0)
 	if rows[0].Reps != 8 {
@@ -373,12 +453,12 @@ func TestFetchSetsSince_FiltersOlder(t *testing.T) {
 	db := testDB(t)
 	insertTestSession(t, db)
 
-	upsertSet(db, SetLog{
+	_ = upsertSet(db, SetLog{
 		ID: "set-1", SessionID: "sess-1", ExerciseID: "e1",
 		ExerciseName: "E1", SetNumber: 1, Reps: 8, WeightKg: 80,
 		Volume: 640, Timestamp: 1000, UpdatedAt: 50,
 	}, 0)
-	upsertSet(db, SetLog{
+	_ = upsertSet(db, SetLog{
 		ID: "set-2", SessionID: "sess-1", ExerciseID: "e2",
 		ExerciseName: "E2", SetNumber: 2, Reps: 6, WeightKg: 100,
 		Volume: 600, Timestamp: 2000, UpdatedAt: 300,
@@ -430,8 +510,8 @@ func TestUpsertMesocycle_Insert(t *testing.T) {
 func TestUpsertMesocycle_NewerWins(t *testing.T) {
 	db := testDB(t)
 
-	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Original", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 100}, 0)
-	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Updated", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 200}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Original", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 100}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Updated", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 200}, 0)
 
 	rows, _ := fetchMesocyclesSince(db, 0)
 	if len(rows) != 1 {
@@ -445,8 +525,8 @@ func TestUpsertMesocycle_NewerWins(t *testing.T) {
 func TestUpsertMesocycle_OlderNoOverwrite(t *testing.T) {
 	db := testDB(t)
 
-	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Original", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 200}, 0)
-	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Stale", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 50}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Original", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 200}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Stale", TargetWeeks: 5, StartedAt: 1_000_000, UpdatedAt: 50}, 0)
 
 	rows, _ := fetchMesocyclesSince(db, 0)
 	if rows[0].Name != "Original" {
@@ -457,15 +537,13 @@ func TestUpsertMesocycle_OlderNoOverwrite(t *testing.T) {
 func TestUpsertMesocycle_IsDeloadWeek_RoundTrip(t *testing.T) {
 	db := testDB(t)
 
-	// Insert with isDeloadWeek=false
-	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, IsDeloadWeek: false, UpdatedAt: 100}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, IsDeloadWeek: false, UpdatedAt: 100}, 0)
 	rows, _ := fetchMesocyclesSince(db, 0)
 	if rows[0].IsDeloadWeek {
 		t.Error("expected IsDeloadWeek=false")
 	}
 
-	// Toggle deload on
-	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, IsDeloadWeek: true, UpdatedAt: 200}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, IsDeloadWeek: true, UpdatedAt: 200}, 0)
 	rows, _ = fetchMesocyclesSince(db, 0)
 	if !rows[0].IsDeloadWeek {
 		t.Error("expected IsDeloadWeek=true after update")
@@ -475,14 +553,14 @@ func TestUpsertMesocycle_IsDeloadWeek_RoundTrip(t *testing.T) {
 func TestUpsertMesocycle_EndedAt_Nullable(t *testing.T) {
 	db := testDB(t)
 
-	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, EndedAt: nil, UpdatedAt: 100}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, EndedAt: nil, UpdatedAt: 100}, 0)
 	rows, _ := fetchMesocyclesSince(db, 0)
 	if rows[0].EndedAt != nil {
 		t.Errorf("expected endedAt nil, got %v", rows[0].EndedAt)
 	}
 
 	ended := int64(2_000_000)
-	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, EndedAt: &ended, UpdatedAt: 300}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "M1", TargetWeeks: 5, StartedAt: 1_000_000, EndedAt: &ended, UpdatedAt: 300}, 0)
 	rows, _ = fetchMesocyclesSince(db, 0)
 	if rows[0].EndedAt == nil {
 		t.Error("expected endedAt to be set after ending cycle")
@@ -494,8 +572,8 @@ func TestUpsertMesocycle_EndedAt_Nullable(t *testing.T) {
 func TestFetchMesocyclesSince_FiltersOlder(t *testing.T) {
 	db := testDB(t)
 
-	upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Early", TargetWeeks: 5, StartedAt: 1000, UpdatedAt: 50}, 0)
-	upsertMesocycle(db, Mesocycle{ID: "meso-2", Number: 2, Name: "Late", TargetWeeks: 4, StartedAt: 2000, UpdatedAt: 300}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-1", Number: 1, Name: "Early", TargetWeeks: 5, StartedAt: 1000, UpdatedAt: 50}, 0)
+	_ = upsertMesocycle(db, Mesocycle{ID: "meso-2", Number: 2, Name: "Late", TargetWeeks: 4, StartedAt: 2000, UpdatedAt: 300}, 0)
 
 	rows, err := fetchMesocyclesSince(db, 100)
 	if err != nil {
@@ -558,16 +636,15 @@ func TestUpsertExerciseSwap_DuplicateIgnored(t *testing.T) {
 		ID: "swap-1", MesocycleID: "meso-1", RoutineID: "upper-a",
 		RemovedExerciseID: "bench-press", AddedExerciseID: "incline-press", SwappedAt: 1_000_000,
 	}
-	upsertExerciseSwap(db, s)
-	// Insert the same ID again — INSERT OR IGNORE should silently discard
+	_ = upsertExerciseSwap(db, s)
+	// Insert the same ID again — $setOnInsert should keep original values
 	s.AddedExerciseID = "dumbbell-press"
-	upsertExerciseSwap(db, s)
+	_ = upsertExerciseSwap(db, s)
 
 	rows, _ := fetchExerciseSwapsSince(db, 0)
 	if len(rows) != 1 {
 		t.Fatalf("expected 1 swap after duplicate insert, got %d", len(rows))
 	}
-	// First insert wins — added_exercise_id should still be incline-press
 	if rows[0].AddedExerciseID != "incline-press" {
 		t.Errorf("duplicate should be ignored; expected 'incline-press', got %q", rows[0].AddedExerciseID)
 	}
@@ -576,11 +653,11 @@ func TestUpsertExerciseSwap_DuplicateIgnored(t *testing.T) {
 func TestFetchExerciseSwapsSince_FiltersOlder(t *testing.T) {
 	db := testDB(t)
 
-	upsertExerciseSwap(db, ExerciseSwap{
+	_ = upsertExerciseSwap(db, ExerciseSwap{
 		ID: "swap-1", MesocycleID: "meso-1", RoutineID: "upper-a",
 		RemovedExerciseID: "ex-old", AddedExerciseID: "ex-new", SwappedAt: 50,
 	})
-	upsertExerciseSwap(db, ExerciseSwap{
+	_ = upsertExerciseSwap(db, ExerciseSwap{
 		ID: "swap-2", MesocycleID: "meso-1", RoutineID: "lower-a",
 		RemovedExerciseID: "ex-old2", AddedExerciseID: "ex-new2", SwappedAt: 300,
 	})
@@ -617,7 +694,12 @@ func TestUpsertSession_MesocycleFields(t *testing.T) {
 	s := WorkoutSession{
 		ID: "sess-1", RoutineID: "r-1", RoutineName: "Upper A",
 		SplitDay: "upperA", StartedAt: 1_000_000,
-		MesocycleID: &mesoID, IsDeload: true, UpdatedAt: 100,
+		MesocycleID: &mesoID, IsDeload: true,
+		Swaps: map[string]string{"bench-press": "dumbbell-bench-press"},
+		ExtraExercises: []RoutineExercise{
+			{ExerciseID: "cable-crunch", Order: 7, DefaultSets: 3, DefaultReps: "12-15"},
+		},
+		UpdatedAt: 100,
 	}
 	if err := upsertSession(db, s, 0); err != nil {
 		t.Fatalf("upsertSession: %v", err)
@@ -636,6 +718,12 @@ func TestUpsertSession_MesocycleFields(t *testing.T) {
 	if !rows[0].IsDeload {
 		t.Error("expected isDeload=true")
 	}
+	if rows[0].Swaps["bench-press"] != "dumbbell-bench-press" {
+		t.Errorf("expected swaps round-trip, got %v", rows[0].Swaps)
+	}
+	if len(rows[0].ExtraExercises) != 1 || rows[0].ExtraExercises[0].ExerciseID != "cable-crunch" {
+		t.Errorf("expected extraExercises round-trip, got %v", rows[0].ExtraExercises)
+	}
 }
 
 // ── RunSessions ───────────────────────────────────────────────────────────────
@@ -646,8 +734,9 @@ func TestUpsertRunSession_Insert(t *testing.T) {
 	if err := upsertRunSession(db, rs, 0); err != nil {
 		t.Fatalf("upsert: %v", err)
 	}
-	var id string
-	if err := db.QueryRow(`SELECT id FROM run_sessions WHERE id='rs-1'`).Scan(&id); err != nil {
+	var got RunSession
+	err := db.DB.Collection("run_sessions").FindOne(context.Background(), bson.M{"_id": "rs-1"}).Decode(&got)
+	if err != nil || got.ID != "rs-1" {
 		t.Fatalf("not found: %v", err)
 	}
 }
@@ -661,12 +750,12 @@ func TestUpsertRunSession_LastWriteWins(t *testing.T) {
 	rs2 := RunSession{ID: "rs-2", Week: 1, Day: 2, StartedAt: 1000, CompletedAt: &completed, UpdatedAt: 200}
 	_ = upsertRunSession(db, rs2, 0)
 
-	var got *int64
-	if err := db.QueryRow(`SELECT completed_at FROM run_sessions WHERE id='rs-2'`).Scan(&got); err != nil {
+	rows, err := fetchRunSessionsSince(db, 0)
+	if err != nil || len(rows) != 1 {
 		t.Fatalf("query: %v", err)
 	}
-	if got == nil || *got != 2000 {
-		t.Errorf("expected completed_at=2000, got %v", got)
+	if rows[0].CompletedAt == nil || *rows[0].CompletedAt != 2000 {
+		t.Errorf("expected completed_at=2000, got %v", rows[0].CompletedAt)
 	}
 }
 
@@ -687,11 +776,7 @@ func TestFetchRunSessionsSince_ReturnsOnlyNewer(t *testing.T) {
 // ── RunPrograms ───────────────────────────────────────────────────────────────
 
 func TestSyncRunPrograms(t *testing.T) {
-	db, err := InitDB(":memory:")
-	if err != nil {
-		t.Fatalf("InitDB: %v", err)
-	}
-	defer db.Close()
+	db := testDB(t)
 
 	payload := SyncPayload{
 		RunPrograms: []RunProgram{
@@ -716,8 +801,8 @@ func TestUpsertRunProgram_Insert(t *testing.T) {
 	if err := upsertRunProgram(db, rp, 0); err != nil {
 		t.Fatalf("upsert: %v", err)
 	}
-	var id string
-	if err := db.QueryRow(`SELECT id FROM run_programs WHERE id='rp-1'`).Scan(&id); err != nil {
+	var got RunProgram
+	if err := db.DB.Collection("run_programs").FindOne(context.Background(), bson.M{"_id": "rp-1"}).Decode(&got); err != nil {
 		t.Fatalf("not found: %v", err)
 	}
 }
@@ -731,12 +816,12 @@ func TestUpsertRunProgram_LastWriteWins(t *testing.T) {
 	rp2 := RunProgram{ID: "rp-2", Number: 1, StartedAt: 1000, EndedAt: &ended, UpdatedAt: 200}
 	_ = upsertRunProgram(db, rp2, 0)
 
-	var got *int64
-	if err := db.QueryRow(`SELECT ended_at FROM run_programs WHERE id='rp-2'`).Scan(&got); err != nil {
+	rows, err := fetchRunProgramsSince(db, 0)
+	if err != nil || len(rows) != 1 {
 		t.Fatalf("query: %v", err)
 	}
-	if got == nil || *got != 2000 {
-		t.Errorf("expected ended_at=2000, got %v", got)
+	if rows[0].EndedAt == nil || *rows[0].EndedAt != 2000 {
+		t.Errorf("expected ended_at=2000, got %v", rows[0].EndedAt)
 	}
 }
 
@@ -808,69 +893,6 @@ func TestUpsertSetAndRoutine_SetTypeAndBackups(t *testing.T) {
 	}
 }
 
-func TestMigration_SetsSetType(t *testing.T) {
-	dbFile := filepath.Join(t.TempDir(), "legacy.db")
-	db, err := sql.Open("sqlite", dbFile)
-	if err != nil {
-		t.Fatalf("open: %v", err)
-	}
-	t.Cleanup(func() { db.Close() })
-
-	// Pre-v6 schema for sessions and sets (without set_type)
-	legacySchema := `
-	CREATE TABLE sessions (
-		id            TEXT PRIMARY KEY,
-		routine_id    TEXT NOT NULL,
-		routine_name  TEXT NOT NULL,
-		split_day     TEXT NOT NULL,
-		started_at    INTEGER NOT NULL,
-		completed_at  INTEGER,
-		notes         TEXT NOT NULL DEFAULT '',
-		mesocycle_id  TEXT,
-		is_deload     INTEGER NOT NULL DEFAULT 0,
-		updated_at    INTEGER NOT NULL
-	);
-	CREATE TABLE sets (
-		id            TEXT PRIMARY KEY,
-		session_id    TEXT NOT NULL REFERENCES sessions(id),
-		exercise_id   TEXT NOT NULL,
-		exercise_name TEXT NOT NULL,
-		set_number    INTEGER NOT NULL,
-		reps          INTEGER NOT NULL,
-		weight_kg     REAL NOT NULL,
-		rpe           REAL,
-		volume        REAL NOT NULL,
-		timestamp     INTEGER NOT NULL,
-		updated_at    INTEGER NOT NULL
-	);
-	INSERT INTO sessions(id, routine_id, routine_name, split_day, started_at, updated_at)
-	VALUES('sess-1', 'r-1', 'Routine', 'day', 1000, 1000);
-	INSERT INTO sets(id, session_id, exercise_id, exercise_name, set_number, reps, weight_kg, rpe, volume, timestamp, updated_at)
-	VALUES('set-pre-v6', 'sess-1', 'bench', 'Bench', 1, 8, 80, 8.0, 640, 1000, 1000);
-	`
-	if _, err := db.Exec(legacySchema); err != nil {
-		t.Fatalf("setup legacy schema: %v", err)
-	}
-
-	if columnExists(db, "sets", "set_type") {
-		t.Fatalf("expected set_type to not exist before migration")
-	}
-
-	runMigrations(db)
-
-	if !columnExists(db, "sets", "set_type") {
-		t.Fatalf("expected set_type to exist after migration")
-	}
-
-	var setType string
-	if err := db.QueryRow(`SELECT set_type FROM sets WHERE id='set-pre-v6'`).Scan(&setType); err != nil {
-		t.Fatalf("scan set_type: %v", err)
-	}
-	if setType != "work" {
-		t.Fatalf("expected existing rows to default to 'work', got %q", setType)
-	}
-}
-
 func TestUpsertSet_DefaultSetType(t *testing.T) {
 	db := testDB(t)
 	insertTestSession(t, db)
@@ -895,7 +917,3 @@ func TestUpsertSet_DefaultSetType(t *testing.T) {
 		t.Errorf("expected default setType 'work', got %q", rows[0].SetType)
 	}
 }
-
-
-
-

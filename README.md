@@ -1,6 +1,6 @@
 # LedgerLift
 
-A local-first PWA workout tracker built on Jeff Nippard's science-based protocols. Logs sets in ≤ 3 taps, works offline, syncs to a self-hosted Go/SQLite backend over your home network.
+A local-first PWA workout tracker built on Jeff Nippard's science-based protocols. Logs sets in ≤ 3 taps, works offline, syncs to a Go/MongoDB Atlas backend.
 
 ## Features
 
@@ -24,7 +24,7 @@ A local-first PWA workout tracker built on Jeff Nippard's science-based protocol
 | Frontend | React 19 · TypeScript · Vite · Tailwind CSS v4 |
 | Local DB | Dexie.js (IndexedDB) |
 | PWA | `vite-plugin-pwa` · Workbox service worker |
-| Backend | Go 1.22 · SQLite (`modernc.org/sqlite`, no CGO) |
+| Backend | Go 1.25 · MongoDB Atlas (`go.mongodb.org/mongo-driver/v2`) |
 | Deployment | Docker · single binary via `go:embed` |
 | Testing | Vitest 4 (frontend) · Go stdlib `testing` (backend) |
 | Package manager | Bun |

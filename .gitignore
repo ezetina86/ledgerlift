@@ -27,6 +27,9 @@ backups/
 # Env / secrets
 .env
 .env.local
+*.env
+!.env.example
+atlas-credentials.env
 
 # OS
 .DS_Store

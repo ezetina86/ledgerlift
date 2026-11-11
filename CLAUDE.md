@@ -22,8 +22,8 @@ The app must feel native on mobile — fast, minimal UI, zero bloat, usable betw
 - **Package manager: Bun** (fast installs, native TS)
 
 ### Backend (phase 2)
-- **Go 1.22+** — REST API server
-- **SQLite** via `modernc.org/sqlite` (pure Go, no CGO)
+- **Go 1.25+** — REST API server
+- **MongoDB Atlas** via `go.mongodb.org/mongo-driver/v2`
 - **Docker** — deployed in home lab on local network
 - Sync protocol: delta-based push/pull over HTTP (no realtime needed)
 
