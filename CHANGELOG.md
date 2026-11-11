@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.14.1] - 2026-11-11
+
+### Fixed
+- **Full sync timeout on MongoDB Atlas** — refactored `UpsertSync` in `backend/db.go` to batch upserts per collection via `BulkWrite` (`SetOrdered(false)`) instead of sequential per-document `UpdateOne` calls over the network, and increased the client sync timeout from 10s to 30s.
+
+---
+
 ## [0.14.0] - 2026-11-11
 
 ### Changed
@@ -263,7 +270,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.14.1...HEAD
+[0.14.1]: https://github.com/ezetina86/ledgerlift/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/ezetina86/ledgerlift/compare/v0.13.3...v0.14.0
 [0.13.3]: https://github.com/ezetina86/ledgerlift/compare/v0.13.2...v0.13.3
 [0.13.2]: https://github.com/ezetina86/ledgerlift/compare/v0.13.1...v0.13.2
