@@ -1,519 +1,458 @@
 package main
 
 import (
-	"database/sql"
-	"encoding/json"
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	_ "modernc.org/sqlite"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-func InitDB(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		return nil, fmt.Errorf("open db: %w", err)
-	}
-	db.SetMaxOpenConns(1) // SQLite single-writer
-
-	if _, err = db.Exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;`); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("pragma: %w", err)
-	}
-
-	schema := `
-	CREATE TABLE IF NOT EXISTS routines (
-		id          TEXT PRIMARY KEY,
-		name        TEXT NOT NULL,
-		split_day   TEXT NOT NULL,
-		exercises   TEXT NOT NULL DEFAULT '[]',
-		created_at  INTEGER NOT NULL,
-		updated_at  INTEGER NOT NULL
-	);
-
-	CREATE TABLE IF NOT EXISTS sessions (
-		id            TEXT PRIMARY KEY,
-		routine_id    TEXT NOT NULL,
-		routine_name  TEXT NOT NULL,
-		split_day     TEXT NOT NULL,
-		started_at    INTEGER NOT NULL,
-		completed_at  INTEGER,
-		notes         TEXT NOT NULL DEFAULT '',
-		mesocycle_id  TEXT,
-		is_deload     INTEGER NOT NULL DEFAULT 0,
-		updated_at    INTEGER NOT NULL
-	);
-
-	CREATE TABLE IF NOT EXISTS sets (
-		id            TEXT PRIMARY KEY,
-		session_id    TEXT NOT NULL REFERENCES sessions(id),
-		exercise_id   TEXT NOT NULL,
-		exercise_name TEXT NOT NULL,
-		set_number    INTEGER NOT NULL,
-		reps          INTEGER NOT NULL,
-		weight_kg     REAL NOT NULL,
-		rpe           REAL,
-		set_type      TEXT NOT NULL DEFAULT 'work',
-		volume        REAL NOT NULL,
-		timestamp     INTEGER NOT NULL,
-		updated_at    INTEGER NOT NULL
-	);
-
-	CREATE TABLE IF NOT EXISTS mesocycles (
-		id             TEXT PRIMARY KEY,
-		number         INTEGER NOT NULL,
-		name           TEXT NOT NULL,
-		target_weeks   INTEGER NOT NULL DEFAULT 5,
-		started_at     INTEGER NOT NULL,
-		ended_at       INTEGER,
-		is_deload_week INTEGER NOT NULL DEFAULT 0,
-		updated_at     INTEGER NOT NULL
-	);
-
-	CREATE TABLE IF NOT EXISTS exercise_swaps (
-		id                  TEXT PRIMARY KEY,
-		mesocycle_id        TEXT NOT NULL,
-		routine_id          TEXT NOT NULL,
-		removed_exercise_id TEXT NOT NULL,
-		added_exercise_id   TEXT NOT NULL,
-		swapped_at          INTEGER NOT NULL
-	);
-
-	CREATE TABLE IF NOT EXISTS run_sessions (
-		id           TEXT PRIMARY KEY,
-		week         INTEGER NOT NULL,
-		day          INTEGER NOT NULL,
-		started_at   INTEGER NOT NULL,
-		completed_at INTEGER,
-		duration_sec INTEGER,
-		distance_km  REAL,
-		rpe          REAL,
-		updated_at   INTEGER NOT NULL
-	);
-
-	CREATE TABLE IF NOT EXISTS run_programs (
-		id         TEXT PRIMARY KEY,
-		number     INTEGER NOT NULL,
-		started_at INTEGER NOT NULL,
-		ended_at   INTEGER,
-		updated_at INTEGER NOT NULL
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_sessions_updated     ON sessions(updated_at);
-	CREATE INDEX IF NOT EXISTS idx_sets_updated         ON sets(updated_at);
-	CREATE INDEX IF NOT EXISTS idx_sets_session         ON sets(session_id);
-	CREATE INDEX IF NOT EXISTS idx_mesos_updated        ON mesocycles(updated_at);
-	CREATE INDEX IF NOT EXISTS idx_swaps_mesocycle      ON exercise_swaps(mesocycle_id);
-	CREATE INDEX IF NOT EXISTS idx_run_sessions_updated ON run_sessions(updated_at);
-	CREATE INDEX IF NOT EXISTS idx_run_programs_updated ON run_programs(updated_at);
-	`
-	if _, err = db.Exec(schema); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("schema: %w", err)
-	}
-	runMigrations(db)
-	return db, nil
+type Store struct {
+	Client *mongo.Client
+	DB     *mongo.Database
 }
 
-func initDB(path string) *sql.DB {
-	db, err := InitDB(path)
+func (s *Store) Close() error {
+	if s == nil || s.Client == nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return s.Client.Disconnect(ctx)
+}
+
+func (s *Store) Ping(ctx context.Context) error {
+	return s.Client.Ping(ctx, nil)
+}
+
+func InitDB(uri, dbName string) (*Store, error) {
+	if uri == "" {
+		return nil, fmt.Errorf("mongodb uri is required")
+	}
+	if dbName == "" {
+		dbName = "ledgerlift"
+	}
+
+	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	if err != nil {
+		return nil, fmt.Errorf("connect mongo: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	if err := client.Ping(ctx, nil); err != nil {
+		_ = client.Disconnect(ctx)
+		return nil, fmt.Errorf("ping mongo: %w", err)
+	}
+
+	db := client.Database(dbName)
+	store := &Store{Client: client, DB: db}
+	if err := ensureIndexes(ctx, db); err != nil {
+		_ = store.Close()
+		return nil, fmt.Errorf("ensure indexes: %w", err)
+	}
+	return store, nil
+}
+
+func initDB(uri, dbName string) *Store {
+	s, err := InitDB(uri, dbName)
 	if err != nil {
 		log.Fatalf("init db: %v", err)
 	}
-	return db
+	return s
 }
 
+func ensureIndexes(ctx context.Context, db *mongo.Database) error {
+	specs := []struct {
+		coll string
+		name string
+		keys bson.D
+	}{
+		{"routines", "idx_routines_updated", bson.D{{Key: "updatedAt", Value: 1}}},
+		{"sessions", "idx_sessions_updated", bson.D{{Key: "updatedAt", Value: 1}}},
+		{"sets", "idx_sets_updated", bson.D{{Key: "updatedAt", Value: 1}}},
+		{"sets", "idx_sets_session", bson.D{{Key: "sessionId", Value: 1}}},
+		{"mesocycles", "idx_mesos_updated", bson.D{{Key: "updatedAt", Value: 1}}},
+		{"exercise_swaps", "idx_swaps_mesocycle", bson.D{{Key: "mesocycleId", Value: 1}}},
+		{"exercise_swaps", "idx_swaps_swapped", bson.D{{Key: "swappedAt", Value: 1}}},
+		{"run_sessions", "idx_run_sessions_updated", bson.D{{Key: "updatedAt", Value: 1}}},
+		{"run_programs", "idx_run_programs_updated", bson.D{{Key: "updatedAt", Value: 1}}},
+	}
 
-// runMigrations applies additive schema changes that CREATE TABLE IF NOT EXISTS can't handle.
-// Each migration is idempotent: it checks column existence before ALTER TABLE.
-func runMigrations(db *sql.DB) {
-	// v0.7.0: mesocycle_id + is_deload added to sessions
-	if !columnExists(db, "sessions", "mesocycle_id") {
-		if _, err := db.Exec(`ALTER TABLE sessions ADD COLUMN mesocycle_id TEXT`); err != nil {
-			log.Fatalf("migrate sessions.mesocycle_id: %v", err)
+	for _, sp := range specs {
+		model := mongo.IndexModel{
+			Keys:    sp.keys,
+			Options: options.Index().SetName(sp.name),
 		}
-		log.Println("migration: added sessions.mesocycle_id")
-	}
-	if !columnExists(db, "sessions", "is_deload") {
-		if _, err := db.Exec(`ALTER TABLE sessions ADD COLUMN is_deload INTEGER NOT NULL DEFAULT 0`); err != nil {
-			log.Fatalf("migrate sessions.is_deload: %v", err)
-		}
-		log.Println("migration: added sessions.is_deload")
-	}
-	if !columnExists(db, "sets", "set_type") {
-		if _, err := db.Exec(`ALTER TABLE sets ADD COLUMN set_type TEXT NOT NULL DEFAULT 'work'`); err != nil {
-			log.Fatalf("migrate sets.set_type: %v", err)
-		}
-		log.Println("migration: added sets.set_type")
-	}
-}
-
-func columnExists(db *sql.DB, table, column string) bool {
-	rows, err := db.Query(`PRAGMA table_info(` + table + `)`)
-	if err != nil {
-		return false
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var cid, notnull, pk int
-		var name, typ string
-		var dflt interface{}
-		if err := rows.Scan(&cid, &name, &typ, &notnull, &dflt, &pk); err != nil {
-			continue
-		}
-		if name == column {
-			return true
+		if _, err := db.Collection(sp.coll).Indexes().CreateOne(ctx, model); err != nil {
+			return fmt.Errorf("index %s on %s: %w", sp.name, sp.coll, err)
 		}
 	}
-	return false
+	return nil
 }
 
 // ── Upsert helpers ────────────────────────────────────────────────────────────
 
-// upsertRoutine writes r to DB. serverNow ensures pushed records are always
-// visible to subsequent delta fetches (updated_at >= server receipt time).
-func upsertRoutine(db *sql.DB, r Routine, serverNow int64) error {
-	exJSON, _ := json.Marshal(r.Exercises)
-	effectiveUpdatedAt := max(r.UpdatedAt, serverNow)
-	_, err := db.Exec(`
-		INSERT INTO routines(id,name,split_day,exercises,created_at,updated_at)
-		VALUES(?,?,?,?,?,?)
-		ON CONFLICT(id) DO UPDATE SET
-			name=excluded.name, split_day=excluded.split_day,
-			exercises=excluded.exercises, updated_at=excluded.updated_at
-		WHERE excluded.updated_at > routines.updated_at`,
-		r.ID, r.Name, r.SplitDay, string(exJSON), r.CreatedAt, effectiveUpdatedAt,
-	)
-	return err
-}
-
-func upsertSession(db *sql.DB, s WorkoutSession, serverNow int64) error {
-	effectiveUpdatedAt := max(s.UpdatedAt, serverNow)
-	isDeloadInt := 0
-	if s.IsDeload {
-		isDeloadInt = 1
+// lwwField builds an aggregation pipeline expression that replaces field with
+// newVal only when effectiveUpdatedAt > existing updatedAt (or on initial insert).
+func lwwField(field string, newVal any, effectiveUpdatedAt int64) bson.M {
+	return bson.M{
+		"$cond": bson.A{
+			bson.M{"$gt": bson.A{effectiveUpdatedAt, bson.M{"$ifNull": bson.A{"$updatedAt", int64(-1)}}}},
+			newVal,
+			"$" + field,
+		},
 	}
-	_, err := db.Exec(`
-		INSERT INTO sessions(id,routine_id,routine_name,split_day,started_at,completed_at,notes,mesocycle_id,is_deload,updated_at)
-		VALUES(?,?,?,?,?,?,?,?,?,?)
-		ON CONFLICT(id) DO UPDATE SET
-			completed_at=excluded.completed_at, notes=excluded.notes,
-			mesocycle_id=excluded.mesocycle_id, is_deload=excluded.is_deload,
-			updated_at=excluded.updated_at
-		WHERE excluded.updated_at > sessions.updated_at`,
-		s.ID, s.RoutineID, s.RoutineName, s.SplitDay,
-		s.StartedAt, s.CompletedAt, s.Notes, s.MesocycleID, isDeloadInt, effectiveUpdatedAt,
+}
+
+// initOnlyField preserves existing field value on update, setting it only when
+// the document is first inserted.
+func initOnlyField(field string, newVal any) bson.M {
+	return bson.M{
+		"$ifNull": bson.A{"$" + field, newVal},
+	}
+}
+
+// upsertRoutine writes r to DB. serverNow ensures pushed records are always
+// visible to subsequent delta fetches (updatedAt >= server receipt time).
+func upsertRoutine(s *Store, r Routine, serverNow int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	effectiveUpdatedAt := max(r.UpdatedAt, serverNow)
+	exercises := r.Exercises
+	if exercises == nil {
+		exercises = []RoutineExercise{}
+	}
+
+	pipeline := mongo.Pipeline{
+		{{Key: "$set", Value: bson.M{
+			"name":      lwwField("name", r.Name, effectiveUpdatedAt),
+			"splitDay":  lwwField("splitDay", r.SplitDay, effectiveUpdatedAt),
+			"exercises": lwwField("exercises", exercises, effectiveUpdatedAt),
+			"createdAt": initOnlyField("createdAt", r.CreatedAt),
+			"updatedAt": lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
+		}}},
+	}
+
+	_, err := s.DB.Collection("routines").UpdateOne(
+		ctx,
+		bson.M{"_id": r.ID},
+		pipeline,
+		options.UpdateOne().SetUpsert(true),
 	)
 	return err
 }
 
-func upsertSet(db *sql.DB, s SetLog, serverNow int64) error {
-	effectiveUpdatedAt := max(s.UpdatedAt, serverNow)
-	setType := s.SetType
+func upsertSession(s *Store, sess WorkoutSession, serverNow int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	effectiveUpdatedAt := max(sess.UpdatedAt, serverNow)
+	pipeline := mongo.Pipeline{
+		{{Key: "$set", Value: bson.M{
+			"routineId":      initOnlyField("routineId", sess.RoutineID),
+			"routineName":    initOnlyField("routineName", sess.RoutineName),
+			"splitDay":       initOnlyField("splitDay", sess.SplitDay),
+			"startedAt":      initOnlyField("startedAt", sess.StartedAt),
+			"completedAt":    lwwField("completedAt", sess.CompletedAt, effectiveUpdatedAt),
+			"notes":          lwwField("notes", sess.Notes, effectiveUpdatedAt),
+			"mesocycleId":    lwwField("mesocycleId", sess.MesocycleID, effectiveUpdatedAt),
+			"isDeload":       lwwField("isDeload", sess.IsDeload, effectiveUpdatedAt),
+			"swaps":          lwwField("swaps", sess.Swaps, effectiveUpdatedAt),
+			"extraExercises": lwwField("extraExercises", sess.ExtraExercises, effectiveUpdatedAt),
+			"updatedAt":      lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
+		}}},
+	}
+
+	_, err := s.DB.Collection("sessions").UpdateOne(
+		ctx,
+		bson.M{"_id": sess.ID},
+		pipeline,
+		options.UpdateOne().SetUpsert(true),
+	)
+	return err
+}
+
+func upsertSet(s *Store, set SetLog, serverNow int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	effectiveUpdatedAt := max(set.UpdatedAt, serverNow)
+	setType := set.SetType
 	if setType == "" {
 		setType = "work"
 	}
-	_, err := db.Exec(`
-		INSERT INTO sets(id,session_id,exercise_id,exercise_name,set_number,reps,weight_kg,rpe,set_type,volume,timestamp,updated_at)
-		VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
-		ON CONFLICT(id) DO UPDATE SET
-			reps=excluded.reps, weight_kg=excluded.weight_kg, rpe=excluded.rpe,
-			set_type=excluded.set_type, volume=excluded.volume, updated_at=excluded.updated_at
-		WHERE excluded.updated_at > sets.updated_at`,
-		s.ID, s.SessionID, s.ExerciseID, s.ExerciseName,
-		s.SetNumber, s.Reps, s.WeightKg, s.RPE, setType, s.Volume, s.Timestamp, effectiveUpdatedAt,
+
+	pipeline := mongo.Pipeline{
+		{{Key: "$set", Value: bson.M{
+			"sessionId":    initOnlyField("sessionId", set.SessionID),
+			"exerciseId":   initOnlyField("exerciseId", set.ExerciseID),
+			"exerciseName": initOnlyField("exerciseName", set.ExerciseName),
+			"setNumber":    initOnlyField("setNumber", set.SetNumber),
+			"timestamp":    initOnlyField("timestamp", set.Timestamp),
+			"reps":         lwwField("reps", set.Reps, effectiveUpdatedAt),
+			"weightKg":     lwwField("weightKg", set.WeightKg, effectiveUpdatedAt),
+			"rpe":          lwwField("rpe", set.RPE, effectiveUpdatedAt),
+			"setType":      lwwField("setType", setType, effectiveUpdatedAt),
+			"volume":       lwwField("volume", set.Volume, effectiveUpdatedAt),
+			"updatedAt":    lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
+		}}},
+	}
+
+	_, err := s.DB.Collection("sets").UpdateOne(
+		ctx,
+		bson.M{"_id": set.ID},
+		pipeline,
+		options.UpdateOne().SetUpsert(true),
+	)
+	return err
+}
+
+func upsertMesocycle(s *Store, m Mesocycle, serverNow int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	effectiveUpdatedAt := max(m.UpdatedAt, serverNow)
+	targetWeeks := m.TargetWeeks
+	if targetWeeks == 0 {
+		targetWeeks = 5
+	}
+
+	pipeline := mongo.Pipeline{
+		{{Key: "$set", Value: bson.M{
+			"number":       initOnlyField("number", m.Number),
+			"targetWeeks":  initOnlyField("targetWeeks", targetWeeks),
+			"startedAt":    initOnlyField("startedAt", m.StartedAt),
+			"name":         lwwField("name", m.Name, effectiveUpdatedAt),
+			"endedAt":      lwwField("endedAt", m.EndedAt, effectiveUpdatedAt),
+			"isDeloadWeek": lwwField("isDeloadWeek", m.IsDeloadWeek, effectiveUpdatedAt),
+			"updatedAt":    lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
+		}}},
+	}
+
+	_, err := s.DB.Collection("mesocycles").UpdateOne(
+		ctx,
+		bson.M{"_id": m.ID},
+		pipeline,
+		options.UpdateOne().SetUpsert(true),
+	)
+	return err
+}
+
+func upsertExerciseSwap(s *Store, sw ExerciseSwap) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := s.DB.Collection("exercise_swaps").UpdateOne(
+		ctx,
+		bson.M{"_id": sw.ID},
+		bson.M{"$setOnInsert": bson.M{
+			"mesocycleId":       sw.MesocycleID,
+			"routineId":         sw.RoutineID,
+			"removedExerciseId": sw.RemovedExerciseID,
+			"addedExerciseId":   sw.AddedExerciseID,
+			"swappedAt":         sw.SwappedAt,
+		}},
+		options.UpdateOne().SetUpsert(true),
+	)
+	return err
+}
+
+func upsertRunSession(s *Store, rs RunSession, serverNow int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	effectiveUpdatedAt := max(rs.UpdatedAt, serverNow)
+	pipeline := mongo.Pipeline{
+		{{Key: "$set", Value: bson.M{
+			"week":        initOnlyField("week", rs.Week),
+			"day":         initOnlyField("day", rs.Day),
+			"startedAt":   initOnlyField("startedAt", rs.StartedAt),
+			"completedAt": lwwField("completedAt", rs.CompletedAt, effectiveUpdatedAt),
+			"durationSec": lwwField("durationSec", rs.DurationSec, effectiveUpdatedAt),
+			"distanceKm":  lwwField("distanceKm", rs.DistanceKm, effectiveUpdatedAt),
+			"rpe":         lwwField("rpe", rs.RPE, effectiveUpdatedAt),
+			"updatedAt":   lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
+		}}},
+	}
+
+	_, err := s.DB.Collection("run_sessions").UpdateOne(
+		ctx,
+		bson.M{"_id": rs.ID},
+		pipeline,
+		options.UpdateOne().SetUpsert(true),
+	)
+	return err
+}
+
+func upsertRunProgram(s *Store, rp RunProgram, serverNow int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	effectiveUpdatedAt := max(rp.UpdatedAt, serverNow)
+	pipeline := mongo.Pipeline{
+		{{Key: "$set", Value: bson.M{
+			"number":    lwwField("number", rp.Number, effectiveUpdatedAt),
+			"startedAt": lwwField("startedAt", rp.StartedAt, effectiveUpdatedAt),
+			"endedAt":   lwwField("endedAt", rp.EndedAt, effectiveUpdatedAt),
+			"updatedAt": lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
+		}}},
+	}
+
+	_, err := s.DB.Collection("run_programs").UpdateOne(
+		ctx,
+		bson.M{"_id": rp.ID},
+		pipeline,
+		options.UpdateOne().SetUpsert(true),
 	)
 	return err
 }
 
 // ── Fetch since ───────────────────────────────────────────────────────────────
 
-func fetchRoutinesSince(db *sql.DB, since int64) ([]Routine, error) {
-	rows, err := db.Query(`SELECT id,name,split_day,exercises,created_at,updated_at FROM routines WHERE updated_at > ?`, since)
+func findSince[T any](s *Store, coll, tsField string, since int64) ([]T, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cursor, err := s.DB.Collection(coll).Find(ctx, bson.M{tsField: bson.M{"$gt": since}})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer cursor.Close(ctx)
 
-	var out []Routine
-	for rows.Next() {
-		var r Routine
-		var exJSON string
-		if err := rows.Scan(&r.ID, &r.Name, &r.SplitDay, &exJSON, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, err
-		}
-		_ = json.Unmarshal([]byte(exJSON), &r.Exercises)
-		out = append(out, r)
-	}
-	return out, rows.Err()
-}
-
-func fetchSessionsSince(db *sql.DB, since int64) ([]WorkoutSession, error) {
-	rows, err := db.Query(`SELECT id,routine_id,routine_name,split_day,started_at,completed_at,notes,mesocycle_id,is_deload,updated_at FROM sessions WHERE updated_at > ?`, since)
-	if err != nil {
+	var out []T
+	if err := cursor.All(ctx, &out); err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var out []WorkoutSession
-	for rows.Next() {
-		var s WorkoutSession
-		var isDeloadInt int
-		if err := rows.Scan(&s.ID, &s.RoutineID, &s.RoutineName, &s.SplitDay, &s.StartedAt, &s.CompletedAt, &s.Notes, &s.MesocycleID, &isDeloadInt, &s.UpdatedAt); err != nil {
-			return nil, err
-		}
-		s.IsDeload = isDeloadInt != 0
-		out = append(out, s)
-	}
-	return out, rows.Err()
+	return out, nil
 }
 
-func fetchSetsSince(db *sql.DB, since int64) ([]SetLog, error) {
-	rows, err := db.Query(`SELECT id,session_id,exercise_id,exercise_name,set_number,reps,weight_kg,rpe,set_type,volume,timestamp,updated_at FROM sets WHERE updated_at > ?`, since)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []SetLog
-	for rows.Next() {
-		var s SetLog
-		if err := rows.Scan(&s.ID, &s.SessionID, &s.ExerciseID, &s.ExerciseName, &s.SetNumber, &s.Reps, &s.WeightKg, &s.RPE, &s.SetType, &s.Volume, &s.Timestamp, &s.UpdatedAt); err != nil {
-			return nil, err
-		}
-		out = append(out, s)
-	}
-	return out, rows.Err()
+func fetchRoutinesSince(s *Store, since int64) ([]Routine, error) {
+	return findSince[Routine](s, "routines", "updatedAt", since)
 }
 
-func upsertMesocycle(db *sql.DB, m Mesocycle, serverNow int64) error {
-	effectiveUpdatedAt := max(m.UpdatedAt, serverNow)
-	isDeloadInt := 0
-	if m.IsDeloadWeek {
-		isDeloadInt = 1
-	}
-	_, err := db.Exec(`
-		INSERT INTO mesocycles(id,number,name,target_weeks,started_at,ended_at,is_deload_week,updated_at)
-		VALUES(?,?,?,?,?,?,?,?)
-		ON CONFLICT(id) DO UPDATE SET
-			name=excluded.name, ended_at=excluded.ended_at,
-			is_deload_week=excluded.is_deload_week,
-			updated_at=excluded.updated_at
-		WHERE excluded.updated_at > mesocycles.updated_at`,
-		m.ID, m.Number, m.Name, m.TargetWeeks,
-		m.StartedAt, m.EndedAt, isDeloadInt, effectiveUpdatedAt,
-	)
-	return err
+func fetchSessionsSince(s *Store, since int64) ([]WorkoutSession, error) {
+	return findSince[WorkoutSession](s, "sessions", "updatedAt", since)
 }
 
-func upsertExerciseSwap(db *sql.DB, s ExerciseSwap) error {
-	_, err := db.Exec(`
-		INSERT OR IGNORE INTO exercise_swaps(id,mesocycle_id,routine_id,removed_exercise_id,added_exercise_id,swapped_at)
-		VALUES(?,?,?,?,?,?)`,
-		s.ID, s.MesocycleID, s.RoutineID,
-		s.RemovedExerciseID, s.AddedExerciseID, s.SwappedAt,
-	)
-	return err
+func fetchSetsSince(s *Store, since int64) ([]SetLog, error) {
+	return findSince[SetLog](s, "sets", "updatedAt", since)
 }
 
-func fetchMesocyclesSince(db *sql.DB, since int64) ([]Mesocycle, error) {
-	rows, err := db.Query(`SELECT id,number,name,target_weeks,started_at,ended_at,is_deload_week,updated_at FROM mesocycles WHERE updated_at > ?`, since)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []Mesocycle
-	for rows.Next() {
-		var m Mesocycle
-		var isDeloadInt int
-		if err := rows.Scan(&m.ID, &m.Number, &m.Name, &m.TargetWeeks, &m.StartedAt, &m.EndedAt, &isDeloadInt, &m.UpdatedAt); err != nil {
-			return nil, err
-		}
-		m.IsDeloadWeek = isDeloadInt != 0
-		out = append(out, m)
-	}
-	return out, rows.Err()
+func fetchMesocyclesSince(s *Store, since int64) ([]Mesocycle, error) {
+	return findSince[Mesocycle](s, "mesocycles", "updatedAt", since)
 }
 
-func fetchExerciseSwapsSince(db *sql.DB, since int64) ([]ExerciseSwap, error) {
-	rows, err := db.Query(`SELECT id,mesocycle_id,routine_id,removed_exercise_id,added_exercise_id,swapped_at FROM exercise_swaps WHERE swapped_at > ?`, since)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []ExerciseSwap
-	for rows.Next() {
-		var s ExerciseSwap
-		if err := rows.Scan(&s.ID, &s.MesocycleID, &s.RoutineID, &s.RemovedExerciseID, &s.AddedExerciseID, &s.SwappedAt); err != nil {
-			return nil, err
-		}
-		out = append(out, s)
-	}
-	return out, rows.Err()
+func fetchExerciseSwapsSince(s *Store, since int64) ([]ExerciseSwap, error) {
+	return findSince[ExerciseSwap](s, "exercise_swaps", "swappedAt", since)
 }
 
-func upsertRunSession(db *sql.DB, rs RunSession, serverNow int64) error {
-	effectiveUpdatedAt := max(rs.UpdatedAt, serverNow)
-	_, err := db.Exec(`
-		INSERT INTO run_sessions(id,week,day,started_at,completed_at,duration_sec,distance_km,rpe,updated_at)
-		VALUES(?,?,?,?,?,?,?,?,?)
-		ON CONFLICT(id) DO UPDATE SET
-			completed_at=excluded.completed_at, duration_sec=excluded.duration_sec,
-			distance_km=excluded.distance_km, rpe=excluded.rpe,
-			updated_at=excluded.updated_at
-		WHERE excluded.updated_at > run_sessions.updated_at`,
-		rs.ID, rs.Week, rs.Day, rs.StartedAt,
-		rs.CompletedAt, rs.DurationSec, rs.DistanceKm, rs.RPE,
-		effectiveUpdatedAt,
-	)
-	return err
+func fetchRunSessionsSince(s *Store, since int64) ([]RunSession, error) {
+	return findSince[RunSession](s, "run_sessions", "updatedAt", since)
 }
 
-func fetchRunSessionsSince(db *sql.DB, since int64) ([]RunSession, error) {
-	rows, err := db.Query(
-		`SELECT id,week,day,started_at,completed_at,duration_sec,distance_km,rpe,updated_at FROM run_sessions WHERE updated_at > ?`,
-		since,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []RunSession
-	for rows.Next() {
-		var rs RunSession
-		if err := rows.Scan(
-			&rs.ID, &rs.Week, &rs.Day, &rs.StartedAt,
-			&rs.CompletedAt, &rs.DurationSec, &rs.DistanceKm, &rs.RPE,
-			&rs.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		out = append(out, rs)
-	}
-	return out, rows.Err()
+func fetchRunProgramsSince(s *Store, since int64) ([]RunProgram, error) {
+	return findSince[RunProgram](s, "run_programs", "updatedAt", since)
 }
 
-func upsertRunProgram(db *sql.DB, rp RunProgram, serverNow int64) error {
-	effectiveUpdatedAt := max(rp.UpdatedAt, serverNow)
-	_, err := db.Exec(`
-		INSERT INTO run_programs(id,number,started_at,ended_at,updated_at)
-		VALUES(?,?,?,?,?)
-		ON CONFLICT(id) DO UPDATE SET
-			number=excluded.number,
-			started_at=excluded.started_at,
-			ended_at=excluded.ended_at,
-			updated_at=excluded.updated_at
-		WHERE excluded.updated_at > run_programs.updated_at`,
-		rp.ID, rp.Number, rp.StartedAt, rp.EndedAt, effectiveUpdatedAt,
-	)
-	return err
-}
-
-func fetchRunProgramsSince(db *sql.DB, since int64) ([]RunProgram, error) {
-	rows, err := db.Query(
-		`SELECT id,number,started_at,ended_at,updated_at FROM run_programs WHERE updated_at > ?`,
-		since,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []RunProgram
-	for rows.Next() {
-		var rp RunProgram
-		if err := rows.Scan(
-			&rp.ID, &rp.Number, &rp.StartedAt, &rp.EndedAt, &rp.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		out = append(out, rp)
-	}
-	return out, rows.Err()
-}
-
-func UpsertSync(db *sql.DB, p SyncPayload, now ...int64) (SyncResponse, error) {
+func UpsertSync(s *Store, p SyncPayload, now ...int64) (SyncResponse, error) {
 	serverNow := nowMs()
 	if len(now) > 0 {
 		serverNow = now[0]
 	}
 
 	for _, routine := range p.Routines {
-		if err := upsertRoutine(db, routine, serverNow); err != nil {
+		if err := upsertRoutine(s, routine, serverNow); err != nil {
 			log.Printf("upsert routine %s: %v", routine.ID, err)
 		}
 	}
-	for _, s := range p.Sessions {
-		if err := upsertSession(db, s, serverNow); err != nil {
-			log.Printf("upsert session %s: %v", s.ID, err)
+	for _, sess := range p.Sessions {
+		if err := upsertSession(s, sess, serverNow); err != nil {
+			log.Printf("upsert session %s: %v", sess.ID, err)
 		}
 	}
-	for _, s := range p.Sets {
-		if err := upsertSet(db, s, serverNow); err != nil {
-			log.Printf("upsert set %s: %v", s.ID, err)
+	for _, set := range p.Sets {
+		if err := upsertSet(s, set, serverNow); err != nil {
+			log.Printf("upsert set %s: %v", set.ID, err)
 		}
 	}
 	for _, m := range p.Mesocycles {
-		if err := upsertMesocycle(db, m, serverNow); err != nil {
+		if err := upsertMesocycle(s, m, serverNow); err != nil {
 			log.Printf("upsert mesocycle %s: %v", m.ID, err)
 		}
 	}
 	for _, sw := range p.ExerciseSwaps {
-		if err := upsertExerciseSwap(db, sw); err != nil {
+		if err := upsertExerciseSwap(s, sw); err != nil {
 			log.Printf("upsert exercise_swap %s: %v", sw.ID, err)
 		}
 	}
 	for _, rs := range p.RunSessions {
-		if err := upsertRunSession(db, rs, serverNow); err != nil {
+		if err := upsertRunSession(s, rs, serverNow); err != nil {
 			log.Printf("upsert run_session %s: %v", rs.ID, err)
 		}
 	}
 	for _, rp := range p.RunPrograms {
-		if err := upsertRunProgram(db, rp, serverNow); err != nil {
+		if err := upsertRunProgram(s, rp, serverNow); err != nil {
 			log.Printf("upsert run_program %s: %v", rp.ID, err)
 		}
 	}
 
-	routines, err := fetchRoutinesSince(db, p.LastSyncAt)
+	routines, err := fetchRoutinesSince(s, p.LastSyncAt)
 	if err != nil {
 		log.Printf("fetch routines: %v", err)
 	}
-	sessions, err := fetchSessionsSince(db, p.LastSyncAt)
+	sessions, err := fetchSessionsSince(s, p.LastSyncAt)
 	if err != nil {
 		log.Printf("fetch sessions: %v", err)
 	}
-	sets, err := fetchSetsSince(db, p.LastSyncAt)
+	sets, err := fetchSetsSince(s, p.LastSyncAt)
 	if err != nil {
 		log.Printf("fetch sets: %v", err)
 	}
-	mesocycles, err := fetchMesocyclesSince(db, p.LastSyncAt)
+	mesocycles, err := fetchMesocyclesSince(s, p.LastSyncAt)
 	if err != nil {
 		log.Printf("fetch mesocycles: %v", err)
 	}
-	exerciseSwaps, err := fetchExerciseSwapsSince(db, p.LastSyncAt)
+	exerciseSwaps, err := fetchExerciseSwapsSince(s, p.LastSyncAt)
 	if err != nil {
 		log.Printf("fetch exercise_swaps: %v", err)
 	}
-	runSessions, err := fetchRunSessionsSince(db, p.LastSyncAt)
+	runSessions, err := fetchRunSessionsSince(s, p.LastSyncAt)
 	if err != nil {
 		log.Printf("fetch run_sessions: %v", err)
 	}
-	runPrograms, err := fetchRunProgramsSince(db, p.LastSyncAt)
+	runPrograms, err := fetchRunProgramsSince(s, p.LastSyncAt)
 	if err != nil {
 		log.Printf("fetch run_programs: %v", err)
 	}
 
-	if routines == nil      { routines = []Routine{} }
-	if sessions == nil      { sessions = []WorkoutSession{} }
-	if sets == nil          { sets = []SetLog{} }
-	if mesocycles == nil    { mesocycles = []Mesocycle{} }
-	if exerciseSwaps == nil { exerciseSwaps = []ExerciseSwap{} }
-	if runSessions == nil   { runSessions = []RunSession{} }
-	if runPrograms == nil   { runPrograms = []RunProgram{} }
+	if routines == nil {
+		routines = []Routine{}
+	}
+	if sessions == nil {
+		sessions = []WorkoutSession{}
+	}
+	if sets == nil {
+		sets = []SetLog{}
+	}
+	if mesocycles == nil {
+		mesocycles = []Mesocycle{}
+	}
+	if exerciseSwaps == nil {
+		exerciseSwaps = []ExerciseSwap{}
+	}
+	if runSessions == nil {
+		runSessions = []RunSession{}
+	}
+	if runPrograms == nil {
+		runPrograms = []RunProgram{}
+	}
 
 	return SyncResponse{
 		SyncedAt:      serverNow,
@@ -528,4 +467,3 @@ func UpsertSync(db *sql.DB, p SyncPayload, now ...int64) (SyncResponse, error) {
 }
 
 func nowMs() int64 { return time.Now().UnixMilli() }
-

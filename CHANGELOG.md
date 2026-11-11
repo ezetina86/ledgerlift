@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.14.0] - 2026-11-11
+
+### Changed
+- **Backend database migration to MongoDB Atlas** — replaced local SQLite (`modernc.org/sqlite`) with `go.mongodb.org/mongo-driver/v2` targeting the `ledgerlift` database on MongoDB Atlas.
+- **Atomic Last-Write-Wins sync upserts** — implemented MongoDB aggregation pipeline upserts (`$cond` on `updatedAt`) and automatic index creation across all 7 collections (`routines`, `sessions`, `sets`, `mesocycles`, `exercise_swaps`, `run_sessions`, `run_programs`).
+- **Session v6 fields persisted** — added `swaps` and `extraExercises` BSON/JSON fields to `WorkoutSession` on the backend.
+- **Docker, Compose & Makefile** — removed SQLite `/data` volume mounts, added `atlas-credentials.env` support in `docker-compose.yml` and `Makefile`, and updated `make backup` / `make restore` to use containerized `mongodump` / `mongorestore`.
+- **CI/CD test pipeline** — added `mongo:7` service container to `ci.yml`, `cd-dev.yml`, and `cd-prod.yml` for hermetic backend integration tests.
+
+---
+
 ## [0.13.3] - 2026-08-31
 
 ### Fixed
@@ -252,7 +263,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jeff Nippard 4-day Upper/Lower split protocol documented
 - RPE 1-10 scale (Nippard convention) established as project standard
 
-[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.13.3...HEAD
+[Unreleased]: https://github.com/ezetina86/ledgerlift/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/ezetina86/ledgerlift/compare/v0.13.3...v0.14.0
 [0.13.3]: https://github.com/ezetina86/ledgerlift/compare/v0.13.2...v0.13.3
 [0.13.2]: https://github.com/ezetina86/ledgerlift/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/ezetina86/ledgerlift/compare/v0.13.0...v0.13.1

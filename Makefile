@@ -9,6 +9,8 @@ IMAGE   := ezetina86/ledgerlift
         test test-frontend test-backend lint ci \
         version bump-patch bump-minor bump-major tag release
 
+ENV_FILE := $(wildcard atlas-credentials.env)
+
 # ── Development ───────────────────────────────────────────────────────────────
 
 dev: ## Start frontend dev server + backend in parallel
@@ -18,7 +20,8 @@ dev-frontend:
 	cd frontend && $(BUN) run dev --host
 
 dev-backend:
-	cd backend && $(GO) run . -db ledgerlift.db
+	set -a; [ -f atlas-credentials.env ] && . ./atlas-credentials.env; set +a; \
+	cd backend && $(GO) run .
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 
@@ -58,20 +61,22 @@ logs: ## Tail container logs
 
 # ── Data ──────────────────────────────────────────────────────────────────────
 
-backup: ## Backup SQLite from Docker volume to ./backups/
+backup: ## Backup MongoDB Atlas database to ./backups/
 	@mkdir -p backups
 	$(eval TS := $(shell date +%Y%m%d_%H%M%S))
-	docker cp ledgerlift:/data/ledgerlift.db backups/ledgerlift_$(TS).db
-	@echo "Backed up → backups/ledgerlift_$(TS).db"
+	set -a; [ -f atlas-credentials.env ] && . ./atlas-credentials.env; set +a; \
+	docker run --rm -v "$(PWD)/backups:/backups" mongo:7 \
+		mongodump --uri="$$MONGODB_URI" --db="$${MONGODB_DB:-ledgerlift}" --archive="/backups/ledgerlift_$(TS).archive" --gzip
+	@echo "Backed up → backups/ledgerlift_$(TS).archive"
 
-restore: ## Restore latest backup into Docker volume (DESTRUCTIVE)
-	$(eval LATEST := $(shell ls -t backups/*.db 2>/dev/null | head -1))
+restore: ## Restore latest backup into MongoDB Atlas (DESTRUCTIVE)
+	$(eval LATEST := $(shell ls -t backups/*.archive 2>/dev/null | head -1))
 	@if [ -z "$(LATEST)" ]; then echo "No backup found in ./backups/"; exit 1; fi
-	@echo "WARNING: This will replace the live database with $(LATEST)"
+	@echo "WARNING: This will replace the live MongoDB database with $(LATEST)"
 	@read -p "Continue? [y/N] " yn; [ "$$yn" = "y" ] || exit 1
-	$(DC) stop ledgerlift
-	docker cp $(LATEST) ledgerlift:/data/ledgerlift.db
-	$(DC) start ledgerlift
+	set -a; [ -f atlas-credentials.env ] && . ./atlas-credentials.env; set +a; \
+	docker run --rm -v "$(PWD)/backups:/backups" mongo:7 \
+		mongorestore --uri="$$MONGODB_URI" --nsInclude="$${MONGODB_DB:-ledgerlift}.*" --archive="/$(LATEST)" --gzip --drop
 	@echo "Restored $(LATEST)"
 
 catalog: ## Re-export exercise catalog from xlsx → exercises.json
@@ -85,6 +90,7 @@ test-frontend: ## Run frontend Vitest suite
 	cd frontend && $(BUN) run test
 
 test-backend: ## Run backend Go tests
+	set -a; [ -f atlas-credentials.env ] && . ./atlas-credentials.env; set +a; \
 	cd backend && CGO_ENABLED=0 $(GO) test -v ./...
 
 # ── Linting ────────────────────────────────────────────────────────────────
@@ -103,8 +109,9 @@ ci: lint test build ## Full local CI simulation (lint → test → build)
 # ── Misc ──────────────────────────────────────────────────────────────────────
 
 clean:
-	rm -f backend/ledgerlift backend/ledgerlift.db
+	rm -f backend/ledgerlift
 	rm -rf frontend/dist backend/static
+	mkdir -p backend/static
 	cp -n /dev/null backend/static/index.html 2>/dev/null || true
 
 # ── Versioning ────────────────────────────────────────────────────────────────
