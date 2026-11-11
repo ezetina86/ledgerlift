@@ -96,7 +96,7 @@ func ensureIndexes(ctx context.Context, db *mongo.Database) error {
 	return nil
 }
 
-// ── Upsert helpers ────────────────────────────────────────────────────────────
+// ── Upsert model builders & helpers ───────────────────────────────────────────
 
 // lwwField builds an aggregation pipeline expression that replaces field with
 // newVal only when effectiveUpdatedAt > existing updatedAt (or on initial insert).
@@ -118,18 +118,12 @@ func initOnlyField(field string, newVal any) bson.M {
 	}
 }
 
-// upsertRoutine writes r to DB. serverNow ensures pushed records are always
-// visible to subsequent delta fetches (updatedAt >= server receipt time).
-func upsertRoutine(s *Store, r Routine, serverNow int64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func routineModel(r Routine, serverNow int64) mongo.WriteModel {
 	effectiveUpdatedAt := max(r.UpdatedAt, serverNow)
 	exercises := r.Exercises
 	if exercises == nil {
 		exercises = []RoutineExercise{}
 	}
-
 	pipeline := mongo.Pipeline{
 		{{Key: "$set", Value: bson.M{
 			"name":      lwwField("name", r.Name, effectiveUpdatedAt),
@@ -139,20 +133,10 @@ func upsertRoutine(s *Store, r Routine, serverNow int64) error {
 			"updatedAt": lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
 		}}},
 	}
-
-	_, err := s.DB.Collection("routines").UpdateOne(
-		ctx,
-		bson.M{"_id": r.ID},
-		pipeline,
-		options.UpdateOne().SetUpsert(true),
-	)
-	return err
+	return mongo.NewUpdateOneModel().SetFilter(bson.M{"_id": r.ID}).SetUpdate(pipeline).SetUpsert(true)
 }
 
-func upsertSession(s *Store, sess WorkoutSession, serverNow int64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func sessionModel(sess WorkoutSession, serverNow int64) mongo.WriteModel {
 	effectiveUpdatedAt := max(sess.UpdatedAt, serverNow)
 	pipeline := mongo.Pipeline{
 		{{Key: "$set", Value: bson.M{
@@ -169,26 +153,15 @@ func upsertSession(s *Store, sess WorkoutSession, serverNow int64) error {
 			"updatedAt":      lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
 		}}},
 	}
-
-	_, err := s.DB.Collection("sessions").UpdateOne(
-		ctx,
-		bson.M{"_id": sess.ID},
-		pipeline,
-		options.UpdateOne().SetUpsert(true),
-	)
-	return err
+	return mongo.NewUpdateOneModel().SetFilter(bson.M{"_id": sess.ID}).SetUpdate(pipeline).SetUpsert(true)
 }
 
-func upsertSet(s *Store, set SetLog, serverNow int64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func setModel(set SetLog, serverNow int64) mongo.WriteModel {
 	effectiveUpdatedAt := max(set.UpdatedAt, serverNow)
 	setType := set.SetType
 	if setType == "" {
 		setType = "work"
 	}
-
 	pipeline := mongo.Pipeline{
 		{{Key: "$set", Value: bson.M{
 			"sessionId":    initOnlyField("sessionId", set.SessionID),
@@ -204,26 +177,15 @@ func upsertSet(s *Store, set SetLog, serverNow int64) error {
 			"updatedAt":    lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
 		}}},
 	}
-
-	_, err := s.DB.Collection("sets").UpdateOne(
-		ctx,
-		bson.M{"_id": set.ID},
-		pipeline,
-		options.UpdateOne().SetUpsert(true),
-	)
-	return err
+	return mongo.NewUpdateOneModel().SetFilter(bson.M{"_id": set.ID}).SetUpdate(pipeline).SetUpsert(true)
 }
 
-func upsertMesocycle(s *Store, m Mesocycle, serverNow int64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func mesocycleModel(m Mesocycle, serverNow int64) mongo.WriteModel {
 	effectiveUpdatedAt := max(m.UpdatedAt, serverNow)
 	targetWeeks := m.TargetWeeks
 	if targetWeeks == 0 {
 		targetWeeks = 5
 	}
-
 	pipeline := mongo.Pipeline{
 		{{Key: "$set", Value: bson.M{
 			"number":       initOnlyField("number", m.Number),
@@ -235,39 +197,23 @@ func upsertMesocycle(s *Store, m Mesocycle, serverNow int64) error {
 			"updatedAt":    lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
 		}}},
 	}
-
-	_, err := s.DB.Collection("mesocycles").UpdateOne(
-		ctx,
-		bson.M{"_id": m.ID},
-		pipeline,
-		options.UpdateOne().SetUpsert(true),
-	)
-	return err
+	return mongo.NewUpdateOneModel().SetFilter(bson.M{"_id": m.ID}).SetUpdate(pipeline).SetUpsert(true)
 }
 
-func upsertExerciseSwap(s *Store, sw ExerciseSwap) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	_, err := s.DB.Collection("exercise_swaps").UpdateOne(
-		ctx,
-		bson.M{"_id": sw.ID},
-		bson.M{"$setOnInsert": bson.M{
+func exerciseSwapModel(sw ExerciseSwap) mongo.WriteModel {
+	return mongo.NewUpdateOneModel().
+		SetFilter(bson.M{"_id": sw.ID}).
+		SetUpdate(bson.M{"$setOnInsert": bson.M{
 			"mesocycleId":       sw.MesocycleID,
 			"routineId":         sw.RoutineID,
 			"removedExerciseId": sw.RemovedExerciseID,
 			"addedExerciseId":   sw.AddedExerciseID,
 			"swappedAt":         sw.SwappedAt,
-		}},
-		options.UpdateOne().SetUpsert(true),
-	)
-	return err
+		}}).
+		SetUpsert(true)
 }
 
-func upsertRunSession(s *Store, rs RunSession, serverNow int64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func runSessionModel(rs RunSession, serverNow int64) mongo.WriteModel {
 	effectiveUpdatedAt := max(rs.UpdatedAt, serverNow)
 	pipeline := mongo.Pipeline{
 		{{Key: "$set", Value: bson.M{
@@ -281,20 +227,10 @@ func upsertRunSession(s *Store, rs RunSession, serverNow int64) error {
 			"updatedAt":   lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
 		}}},
 	}
-
-	_, err := s.DB.Collection("run_sessions").UpdateOne(
-		ctx,
-		bson.M{"_id": rs.ID},
-		pipeline,
-		options.UpdateOne().SetUpsert(true),
-	)
-	return err
+	return mongo.NewUpdateOneModel().SetFilter(bson.M{"_id": rs.ID}).SetUpdate(pipeline).SetUpsert(true)
 }
 
-func upsertRunProgram(s *Store, rp RunProgram, serverNow int64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func runProgramModel(rp RunProgram, serverNow int64) mongo.WriteModel {
 	effectiveUpdatedAt := max(rp.UpdatedAt, serverNow)
 	pipeline := mongo.Pipeline{
 		{{Key: "$set", Value: bson.M{
@@ -304,20 +240,51 @@ func upsertRunProgram(s *Store, rp RunProgram, serverNow int64) error {
 			"updatedAt": lwwField("updatedAt", effectiveUpdatedAt, effectiveUpdatedAt),
 		}}},
 	}
+	return mongo.NewUpdateOneModel().SetFilter(bson.M{"_id": rp.ID}).SetUpdate(pipeline).SetUpsert(true)
+}
 
-	_, err := s.DB.Collection("run_programs").UpdateOne(
-		ctx,
-		bson.M{"_id": rp.ID},
-		pipeline,
-		options.UpdateOne().SetUpsert(true),
-	)
+func bulkExec(s *Store, coll string, models []mongo.WriteModel) error {
+	if len(models) == 0 {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, err := s.DB.Collection(coll).BulkWrite(ctx, models, options.BulkWrite().SetOrdered(false))
 	return err
+}
+
+func upsertRoutine(s *Store, r Routine, serverNow int64) error {
+	return bulkExec(s, "routines", []mongo.WriteModel{routineModel(r, serverNow)})
+}
+
+func upsertSession(s *Store, sess WorkoutSession, serverNow int64) error {
+	return bulkExec(s, "sessions", []mongo.WriteModel{sessionModel(sess, serverNow)})
+}
+
+func upsertSet(s *Store, set SetLog, serverNow int64) error {
+	return bulkExec(s, "sets", []mongo.WriteModel{setModel(set, serverNow)})
+}
+
+func upsertMesocycle(s *Store, m Mesocycle, serverNow int64) error {
+	return bulkExec(s, "mesocycles", []mongo.WriteModel{mesocycleModel(m, serverNow)})
+}
+
+func upsertExerciseSwap(s *Store, sw ExerciseSwap) error {
+	return bulkExec(s, "exercise_swaps", []mongo.WriteModel{exerciseSwapModel(sw)})
+}
+
+func upsertRunSession(s *Store, rs RunSession, serverNow int64) error {
+	return bulkExec(s, "run_sessions", []mongo.WriteModel{runSessionModel(rs, serverNow)})
+}
+
+func upsertRunProgram(s *Store, rp RunProgram, serverNow int64) error {
+	return bulkExec(s, "run_programs", []mongo.WriteModel{runProgramModel(rp, serverNow)})
 }
 
 // ── Fetch since ───────────────────────────────────────────────────────────────
 
 func findSince[T any](s *Store, coll, tsField string, since int64) ([]T, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	cursor, err := s.DB.Collection(coll).Find(ctx, bson.M{tsField: bson.M{"$gt": since}})
@@ -367,40 +334,60 @@ func UpsertSync(s *Store, p SyncPayload, now ...int64) (SyncResponse, error) {
 		serverNow = now[0]
 	}
 
-	for _, routine := range p.Routines {
-		if err := upsertRoutine(s, routine, serverNow); err != nil {
-			log.Printf("upsert routine %s: %v", routine.ID, err)
-		}
+	routineModels := make([]mongo.WriteModel, 0, len(p.Routines))
+	for _, r := range p.Routines {
+		routineModels = append(routineModels, routineModel(r, serverNow))
 	}
+	if err := bulkExec(s, "routines", routineModels); err != nil {
+		log.Printf("bulk upsert routines: %v", err)
+	}
+
+	sessionModels := make([]mongo.WriteModel, 0, len(p.Sessions))
 	for _, sess := range p.Sessions {
-		if err := upsertSession(s, sess, serverNow); err != nil {
-			log.Printf("upsert session %s: %v", sess.ID, err)
-		}
+		sessionModels = append(sessionModels, sessionModel(sess, serverNow))
 	}
+	if err := bulkExec(s, "sessions", sessionModels); err != nil {
+		log.Printf("bulk upsert sessions: %v", err)
+	}
+
+	setModels := make([]mongo.WriteModel, 0, len(p.Sets))
 	for _, set := range p.Sets {
-		if err := upsertSet(s, set, serverNow); err != nil {
-			log.Printf("upsert set %s: %v", set.ID, err)
-		}
+		setModels = append(setModels, setModel(set, serverNow))
 	}
+	if err := bulkExec(s, "sets", setModels); err != nil {
+		log.Printf("bulk upsert sets: %v", err)
+	}
+
+	mesoModels := make([]mongo.WriteModel, 0, len(p.Mesocycles))
 	for _, m := range p.Mesocycles {
-		if err := upsertMesocycle(s, m, serverNow); err != nil {
-			log.Printf("upsert mesocycle %s: %v", m.ID, err)
-		}
+		mesoModels = append(mesoModels, mesocycleModel(m, serverNow))
 	}
+	if err := bulkExec(s, "mesocycles", mesoModels); err != nil {
+		log.Printf("bulk upsert mesocycles: %v", err)
+	}
+
+	swapModels := make([]mongo.WriteModel, 0, len(p.ExerciseSwaps))
 	for _, sw := range p.ExerciseSwaps {
-		if err := upsertExerciseSwap(s, sw); err != nil {
-			log.Printf("upsert exercise_swap %s: %v", sw.ID, err)
-		}
+		swapModels = append(swapModels, exerciseSwapModel(sw))
 	}
+	if err := bulkExec(s, "exercise_swaps", swapModels); err != nil {
+		log.Printf("bulk upsert exercise_swaps: %v", err)
+	}
+
+	rsModels := make([]mongo.WriteModel, 0, len(p.RunSessions))
 	for _, rs := range p.RunSessions {
-		if err := upsertRunSession(s, rs, serverNow); err != nil {
-			log.Printf("upsert run_session %s: %v", rs.ID, err)
-		}
+		rsModels = append(rsModels, runSessionModel(rs, serverNow))
 	}
+	if err := bulkExec(s, "run_sessions", rsModels); err != nil {
+		log.Printf("bulk upsert run_sessions: %v", err)
+	}
+
+	rpModels := make([]mongo.WriteModel, 0, len(p.RunPrograms))
 	for _, rp := range p.RunPrograms {
-		if err := upsertRunProgram(s, rp, serverNow); err != nil {
-			log.Printf("upsert run_program %s: %v", rp.ID, err)
-		}
+		rpModels = append(rpModels, runProgramModel(rp, serverNow))
+	}
+	if err := bulkExec(s, "run_programs", rpModels); err != nil {
+		log.Printf("bulk upsert run_programs: %v", err)
 	}
 
 	routines, err := fetchRoutinesSince(s, p.LastSyncAt)

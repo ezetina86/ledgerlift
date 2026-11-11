@@ -81,7 +81,7 @@ export async function syncWithBackend(): Promise<SyncResult> {
         runSessions: stampedRunSessions,
         runPrograms: stampedRunPrograms,
       }),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(30_000),
     })
   } catch (e) {
     return { status: 'error', message: `Network error: ${(e as Error).message}`, pushed: 0, pulled: 0 }
